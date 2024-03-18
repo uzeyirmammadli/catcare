@@ -1,10 +1,14 @@
-from usecases import report_cat_status
+from usecases import report_cat_status, scan_cats
 
 
 
-photo = '~/Downloads/Sacvan.jpg'
+#report inputs 
+# photo = '~/Downloads/Sacvan.jpg'
+# area = 'Mayakovski 1'
+# print(report_cat_status.execute(photo, area))
+
+#scan 
 area = 'Mayakovski 1'
-
-print(report_cat_status.execute(photo, area))
+print(scan_cats.execute(area))
 
 
