@@ -6,3 +6,4 @@ def execute(photo, area, status='NEEDS_FOOD'):
   }
   result = f'Cat report created with {report_body.values()}'
   return result
+
