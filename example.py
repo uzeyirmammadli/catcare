@@ -28,7 +28,7 @@ def update_case(db,id,updated_case):
     reader = csv.DictReader(csvfile)
     for row in reader:
       if row['id'] == id:
-        # updated_case['updated_at'] = current_time
+        updated_case['updated_at'] = current_time
         row.update(updated_case)
       data.append(row)
   with open(db, 'w') as csvfile:
@@ -86,7 +86,7 @@ def seed():
 # VIEW
 def present(cases):
   for case in cases:
-    print(f"ID: {case['id']} | Photo: {case['photo']} | Location: {case['location']}")  
+    print(f"ID: {case['id']} | Photo: {case['photo']} | Location: {case['location']} | Created_at: {case['created_at']} | Updated_at: {case['updated_at']}")  
 
 #Inputs
 def report_inputs():
