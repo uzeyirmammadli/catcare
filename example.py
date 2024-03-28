@@ -14,7 +14,7 @@ def initialize(db):
 
 def create_case(db, report):
   fieldnames = [
-      'id', 'photo', 'location', 'need', 'status', 'created_at', 'udpated_at'
+      'id', 'photo', 'location', 'need', 'status', 'created_at', 'updated_at'
   ]
   with open(db, 'a') as csvfile:
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -84,7 +84,13 @@ def seed():
 def present(cases):
   for case in cases:
     print(f"ID: {case['id']} | Photo: {case['photo']} | Location: {case['location']}")  
-  
+
+#Inputs
+def report_inputs():
+  photo  = input("A photo about case\t")
+  area   = input("An area name to tag\t")
+  need = input("What should be done?\t")
+  return {'photo': photo, 'area': area, 'need': need}
 
 
 
@@ -97,29 +103,34 @@ if x == 'y':
   seed()
 
 #PROGRM
-print("1. Report case\n2. Scan area for cats\n3. Resolve case")
-command = input("What would you like to do?")
-
-if command == "1":
-  print('You chose reporting case')
-  photo = input("Photo ->")
-  area = input("Area ->")
-  need = input("Need ->")
-  report = {
-      'id': f'{random.random()}',
-      'photo': photo,
-      'location': area,
-      'need': need,
-      'status': 'OPEN'
-  }
-  create_case('cats.csv', report)
-elif command == "2":
-  print('You chose scanning area for cats')
-  area = input("Area ->")
-  found = scan_case('cats.csv', area)
-  present(found)
-elif command == "3":
-  case_id = input("ID -> ")
-  result = resolve_case('cats.csv', case_id)
-  present([result])
-  
+while True:
+  print("1. Report case\n2. Scan area for cats\n3. Resolve case")
+  command = input("What would you like to do?")
+  if command == "1":
+    print('You chose reporting case')
+    r = report_inputs()
+    report = {
+        'id': f'{random.random()}',
+        'photo': r['photo'],
+        'location': r['area'],
+        'need': r['need'],
+        'status': 'OPEN'
+    }
+    create_case('cats.csv', report)
+  elif command == "2":
+    print('You chose scanning area for cats')
+    area = input("Area ->")
+    found = scan_case('cats.csv', area)
+    present(found)
+  elif command == "3":
+    case_id = input("ID -> ")
+    result = resolve_case('cats.csv', case_id)
+    present([result])
+  else:
+    print("Invalid command")
+  command = input("Do you want to proceed or quit? (p/q)")
+  if command == 'p':
+    continue
+  else:
+    print('Bye')
+    break
