@@ -14,10 +14,6 @@ def initialize(db):
   return os.path.isfile(db)
 
 def create_case(db, report):
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    report['created_at'] = current_time
-    report['updated_at'] = current_time
-    
     fieldnames = [
         'id', 'photo', 'location', 'need', 'status', 'created_at', 'updated_at'
     ]
@@ -27,10 +23,12 @@ def create_case(db, report):
 
 def update_case(db,id,updated_case):
   data = []
+  current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
   with open(db, 'r') as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
       if row['id'] == id:
+        # updated_case['updated_at'] = current_time
         row.update(updated_case)
       data.append(row)
   with open(db, 'w') as csvfile:
@@ -115,7 +113,8 @@ def build_report(r):
         'location': r['area'],
         'need': r['need'],
         'status': 'OPEN',
-        'created_at': current_time
+        'created_at': current_time,
+        'updated_at': current_time
     }    
 
 
