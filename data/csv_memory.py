@@ -15,6 +15,8 @@ def initialize(db):
             return os.path.isfile(db)
     except (IOError, OSError) as e:
         print(f"Error writing to database: {e}")
+
+
 def create_case(db, report):
     fieldnames = [
         'id', 'photo', 'location', 'need', 'status', 'created_at', 'updated_at'
@@ -25,6 +27,8 @@ def create_case(db, report):
             writer.writerow(report)
     except (IOError, OSError) as e:
         print(f"Error writing to database: {e}")
+
+
 def update_case(db,id,updated_case):
     data = []
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -38,6 +42,7 @@ def update_case(db,id,updated_case):
                 data.append(row)
     except (IOError, OSError) as e:
         print(f"Error writing to database: {e}")
+
     try:
         with open(db, 'w') as csvfile:
             fieldnames = [
