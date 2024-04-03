@@ -1,6 +1,6 @@
-from data.sqlite_memory import initialize, create_case, scan_case, resolve_case, seed
-from domain.view import build_report, present
-from port.inputs import report_inputs, scan_inputs, resolve_inputs
+from sqlite_memory import initialize, create_case, delete_cat, select_cats_by_status, scan_case, resolve_case, seed
+from view import build_report, present
+from inputs import report_inputs, scan_inputs, resolve_inputs, delete_inputs
 import sys
 
 #BOOT
@@ -30,8 +30,16 @@ try:
             case_id = resolve_inputs()
             result = resolve_case('cats.db', case_id)
             present([result])
+        elif command == "4":
+            print('Viewing cases by OPEN or RESOLVED status:')
+            select_cats_by_status('cats.db')
+        elif command == "5":
+            print('You chose to delete a case')
+            cat_id = delete_inputs()
+            delete_cat('cats.db', cat_id)
         else:
             print("Invalid command")
+            
         command = input("Do you want to proceed or quit? (p/q)")
         if command == 'p':
             continue
