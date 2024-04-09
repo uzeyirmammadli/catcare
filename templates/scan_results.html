@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scan Results</title>
+</head>
+<body>
+    <h1>Scan Results</h1>
+    {% if found %}
+        <ul>
+        {% for case in found %}
+            <li>{{ case.location }} - {{ case.need }}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No cases found in the specified location.</p>
+    {% endif %}
+    <a href="/scan">Scan another location</a>
+</body>
+</html>

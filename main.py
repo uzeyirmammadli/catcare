@@ -1,50 +1,75 @@
-from sqlite_memory import initialize, create_case, delete_cat, select_cats_by_status, scan_case, resolve_case, seed
-from view import build_report, present
-from inputs import report_inputs, scan_inputs, resolve_inputs, delete_inputs
-import sys
+import uuid
+from datetime import datetime
+from flask import Flask, request, render_template, redirect, url_for
+from .sqlite_memory import initialize, create_case, delete_cat, select_cats_by_status, scan_case, resolve_case, seed, get_all_cases
+from .view import prepare_cases_for_display
 
-#BOOT
-# db_created = initialize('cats.csv')
+app = Flask(__name__)
+
+# Initialize or seed the database as needed
 db_path = 'cats.db'
-db_created = initialize('cats.db')
-x = input('Do you want to seed the database? (y/n)')
-if x == 'y':
-  seed(db_path)
+initialize(db_path)
 
-#PROGRAM
-try:
-    while True:
-        print("1. Report case\n2. Scan area for cats\n3. Resolve case")
-        command = input("What would you like to do?")
-        if command == "1":
-            print('You chose reporting case')
-            r = report_inputs()
-            report = build_report(r)
-            create_case('cats.db', report)
-        elif command == "2":
-            print('You chose scanning area for cats')
-            area = scan_inputs()
-            found = scan_case('cats.db', area)
-            present(found)
-        elif command == "3":
-            case_id = resolve_inputs()
-            result = resolve_case('cats.db', case_id)
-            present([result])
-        elif command == "4":
-            print('Viewing cases by OPEN or RESOLVED status:')
-            select_cats_by_status('cats.db')
-        elif command == "5":
-            print('You chose to delete a case')
-            cat_id = delete_inputs()
-            delete_cat('cats.db', cat_id)
-        else:
-            print("Invalid command")
-            
-        command = input("Do you want to proceed or quit? (p/q)")
-        if command == 'p':
-            continue
-        else:
-            print('Bye')
-            break
-except Exception as e:
-    print(f"An unexpected error occurred: {e}")
+@app.route('/')
+def index():
+    open_cases = select_cats_by_status(db_path)
+    return render_template('index.html', open_cases=open_cases)
+
+@app.route('/seed', methods=['GET', 'POST'])
+
+def seed_database():
+    if request.method == 'POST':
+        seed(db_path)
+        return redirect(url_for('index'))
+    return render_template('seed.html') 
+
+@app.route('/report', methods=['GET', 'POST'])
+def report():
+    print(request.form)
+    if request.method == 'POST':
+        report = {
+            'id': str(uuid.uuid4()),  # Generate a unique ID
+            'photo': request.form['photo'],
+            'location': request.form['location'],
+            'need': request.form['need'],
+            'status': 'OPEN',  # Set initial status to OPEN
+            'created_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'updated_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        create_case(db_path, report)
+        return redirect(url_for('index'))
+    return render_template('report.html')
+
+@app.route('/cases')
+def show_cases(db_path):
+    # Assume get_cases() fetches a list of case dictionaries
+    cases = get_all_cases(db_path)  
+    prepared_cases = prepare_cases_for_display(cases)
+    return render_template('cases.html', cases=prepared_cases)
+
+@app.route('/scan', methods=['GET', 'POST'])
+def scan():
+    if request.method == 'POST':
+        location = request.form['location']
+        found = scan_case(db_path, location)
+        return render_template('scan_results.html', found=found)
+    return render_template('scan.html')
+
+@app.route('/resolve', methods=['POST'])
+def resolve():
+    case_id = request.form['case_id']
+    result = resolve_case(db_path, case_id)
+    return redirect(url_for('index'))
+
+@app.route('/delete/<case_id>', methods=['POST'])
+def delete(case_id):
+    delete_cat(db_path, case_id)
+    return redirect(url_for('index'))  # Redirect back to the main page
+
+@app.route('/view/<status>', methods=['GET'])
+def view_by_status(status):
+    cases = select_cats_by_status(db_path, status.upper())  # Convert status to uppercase
+    return render_template('view_cases.html', cases=cases, status=status)
+
+if __name__ == '__main__':
+    app.run(debug=True)

@@ -15,6 +15,10 @@ def build_report(r):
     }    
 
 # VIEW
-def present(cases):
-  for case in cases:
-    print(f"ID: {case['id']} | Photo: {case['photo']} | Location: {case['location']} | Status: {case['status']} | Created_at: {case['created_at']} | Updated_at: {case['updated_at']}")  
+def prepare_cases_for_display(cases):
+    # This function remains the same as present, but now it prepares data for rendering in a template.
+    prepared_cases = []
+    for case in cases:
+        prepared_case = f"ID: {case['id']} | Photo: {case['photo']} | Location: {case['location']} | Status: {case['status']} | Created_at: {case['created_at']} | Updated_at: {case['updated_at']}"
+        prepared_cases.append(prepared_case)
+    return prepared_cases

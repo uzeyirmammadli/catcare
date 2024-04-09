@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Seed Database</title>
+</head>
+<body>
+  <h1>Seed Database</h1>
+  {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+      <ul class="flashes">
+        {% for category, message in messages %}
+          <li class="flash {{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+  {% if request.method == 'GET' %}
+    <p>Seeding the database will populate it with sample data. Are you sure you want to proceed?</p>
+    <form action="{{ url_for('seed_database') }}" method="post">
+      <button type="submit">Seed Database</button>
+    </form>
+  {% else %}
+    <p>Database seeded successfully!</p>
+  {% endif %}
+</body>
+</html>
