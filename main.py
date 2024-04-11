@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime
 from flask import Flask, request, render_template, redirect, url_for
-from .sqlite_memory import initialize, create_case, delete_cat, select_cats_by_status, scan_case, resolve_case, seed, get_all_cases
-from .view import prepare_cases_for_display
+from sqlite_memory import initialize, create_case, delete_cat, select_cats_by_status, scan_case, resolve_case, seed, get_all_cases
+from view import prepare_cases_for_display
 
 app = Flask(__name__)
 
