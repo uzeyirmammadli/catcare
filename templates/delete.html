@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Delete Case</title>
+</head>
+<body>
+  <h1>Delete Case Confirmation</h1>
+  <p>Are you sure you want to delete the case with ID {{ case_id }}?</p>
+  <form action="{{ url_for('delete', case_id=case_id) }}" method="POST">
+    <label for="case_id">Enter Case ID to Delete:</label>
+    <input type="text" id="case_id" name="case_id" required>
+    <button type="submit">Delete Case</button>
+    <a href="{{ url_for('index') }}">Cancel</a>
+  </form>
+</body>
+</html>

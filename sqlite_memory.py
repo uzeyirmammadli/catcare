@@ -42,26 +42,49 @@ def update_case(db, case_id, updated_case):
     conn.close()
     return True
 
-def delete_cat(db_name, cat_id):
-    conn = sqlite3.connect(db_name)
-    c = conn.cursor()
-    c.execute('DELETE FROM cats WHERE id=?', (cat_id,))
+# def update_case(db, case_dict):
+#     conn = sqlite3.connect(db)
+#     cursor = conn.cursor()
+
+#     # Construct the update SQL statement with placeholders for values
+#     sql = """
+#         UPDATE cases 
+#         SET photo = ?, location = ?, need = ?, status = ?, updated_at = ?
+#         WHERE id = ?
+#     """
+#     values = (case_dict['photo'], case_dict['location'], case_dict['need'],
+#               case_dict['status'], datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+#               case_dict['id'])
+
+#     # Execute the update statement with the values
+#     cursor.execute(sql, values)
+
+#     # Assuming successful update returns True, otherwise False
+#     return cursor.rowcount > 0  # Check if at least one row was updated
+
+#     conn.close()
+
+def delete_cat(db, case_id):
+    conn = sqlite3.connect(db)
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM cases WHERE id=?', (case_id,))
     conn.commit()
     conn.close()
 
-def select_cats_by_status(db):
-    status = input("Enter the status to filter by (OPEN/RESOLVED): ").upper()
-    
+
+def select_cats_by_status(db, status):
+    status = status.upper()  # Convert status to uppercase for consistency
+
     if status not in ["OPEN", "RESOLVED"]:
-        print("Invalid input. Please enter either 'OPEN' or 'RESOLVED'.")
-        return []
-    
+        raise ValueError("Invalid status. Please provide 'OPEN' or 'RESOLVED'.")  # Raise an exception for invalid status
+
     conn = sqlite3.connect(db)
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM cases WHERE status=?', (status,))
     cases = cursor.fetchall()
     conn.close()
     return [dict(zip(['id', 'photo', 'location', 'need', 'status', 'created_at', 'updated_at'], row)) for row in cases]
+
 
 
 def scan_case(db, location):
@@ -94,6 +117,30 @@ def resolve_case(db, case_id):
             return case_dict
     conn.close()
     
+# def resolve_case(db, case_id):
+#     conn = sqlite3.connect(db)
+#     cursor = conn.cursor()
+
+#     # Fetch the case by ID
+#     cursor.execute('SELECT * FROM cases WHERE id=?', (case_id,))
+#     case = cursor.fetchone()
+
+#     if case:
+#         case_dict = dict(zip(['id', 'photo', 'location', 'need', 'status', 'created_at', 'updated_at'], case))
+#         case_dict['status'] = 'RESOLVED'
+
+#         # Implement update_case function to update the database with the modified dictionary
+#         if update_case(db, case_dict):
+#             conn.commit()  # Commit the changes if update is successful
+#             return case_dict
+#         else:
+#             # Handle update failure (consider logging the error)
+#             return False  # Or provide a specific error message
+#     else:
+#         # Handle case not found (consider logging or returning a specific error message)
+#         return None
+
+#     conn.close()
 
 # SEED
 def seed(db):

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Resolve Case</title>
+</head>
+<body>
+    <h1>Resolve Case</h1>
+
+    {% if message %}
+        <div class="{{ 'success' if success else 'error' }}">
+            {{ message }}
+        </div>
+    {% endif %}
+
+    <form action="{{ url_for('resolve', case_id=case_id) }}" method="POST">
+        <label for="case_id">Enter Case ID to Resolve:</label>
+        <input type="text" id="case_id" name="case_id" required>
+        <button type="submit">Resolve Case</button>
+    </form>
+
+    {% if success %}
+        <p>Case with ID {{ case_id }} has been resolved.</p>
+    {% endif %}
+
+    <a href="{{ url_for('index') }}">Back to Home</a>
+</body>
+</html>

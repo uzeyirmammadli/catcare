@@ -9,7 +9,7 @@
     {% if found %}
         <ul>
         {% for case in found %}
-            <li>{{ case.location }} - {{ case.need }}</li>
+            <li>{{case.id}} - {{ case.location }} - {{ case.need }} - {{case.status}}</li>
         {% endfor %}
         </ul>
     {% else %}

@@ -6,14 +6,17 @@
 </head>
 <body>
     <h1>Report a New Case</h1>
-    <form action="/report" method="POST">
+    <form action="{{ url_for('report') }}" method="post">
         <label for="photo">Photo URL:</label>
         <input type="text" id="photo" name="photo" required><br><br>
+        
         <label for="location">Location:</label>
         <input type="text" id="location" name="location" required><br><br>
+        
         <label for="need">Need:</label>
         <input type="text" id="need" name="need" required><br><br>
-        <input type="submit" value="Submit">
+        
+        <button type="submit">Submit Report</button>
     </form>
 </body>
 </html>

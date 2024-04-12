@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime
 from flask import Flask, request, render_template, redirect, url_for
-from sqlite_memory import initialize, create_case, delete_cat, select_cats_by_status, scan_case, resolve_case, seed, get_all_cases
-from view import prepare_cases_for_display
+from .sqlite_memory import initialize, create_case, delete_cat, select_cats_by_status, scan_case, resolve_case, seed, get_all_cases
+from .view import prepare_cases_for_display
 
 app = Flask(__name__)
 
@@ -12,7 +12,7 @@ initialize(db_path)
 
 @app.route('/')
 def index():
-    open_cases = select_cats_by_status(db_path)
+    open_cases = select_cats_by_status(db_path, 'OPEN')
     return render_template('index.html', open_cases=open_cases)
 
 @app.route('/seed', methods=['GET', 'POST'])
@@ -55,16 +55,34 @@ def scan():
         return render_template('scan_results.html', found=found)
     return render_template('scan.html')
 
-@app.route('/resolve', methods=['POST'])
-def resolve():
-    case_id = request.form['case_id']
-    result = resolve_case(db_path, case_id)
+@app.route('/resolve/<case_id>', methods=['GET','POST'])
+def resolve(case_id):
+    if request.method == 'GET':
+        return render_template('resolve_cases.html', case_id=case_id)
+    if request.method == 'POST':
+        case_id = request.form['case_id']
+        result = resolve_case(db_path, case_id)  # Assumes resolve_case returns something useful
+        if result:
+            message = 'Case resolved successfully.'
+            return render_template('resolve_cases.html', message=message, success=True, case_id=case_id)
+        else:
+            message = 'Failed to resolve the case. Please check the case ID.'
+            return render_template('resolve_cases.html', message=message, success=False, case_id=case_id)
+
+    # Optional: Redirect to another page if accessed via GET or other non-POST method
     return redirect(url_for('index'))
 
-@app.route('/delete/<case_id>', methods=['POST'])
+
+@app.route('/delete/<case_id>', methods=['GET', 'POST'])
 def delete(case_id):
-    delete_cat(db_path, case_id)
-    return redirect(url_for('index'))  # Redirect back to the main page
+    if request.method == 'GET':
+        return render_template('delete.html', case_id=case_id)
+    elif request.method == 'POST':
+        # Handle case deletion logic (using delete_cat)
+        case_id = request.form['case_id']
+        delete_cat(db_path, case_id)
+        return redirect(url_for('index'))  # Redirect back to index
+
 
 @app.route('/view/<status>', methods=['GET'])
 def view_by_status(status):
