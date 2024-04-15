@@ -48,7 +48,7 @@ def delete_cat(db, case_id):
 
 def select_cats_by_status(db, status):
     status = status.upper()  # Convert status to uppercase for consistency
-
+    print(status)
     if status not in ["OPEN", "RESOLVED"]:
         raise ValueError("Invalid status. Please provide 'OPEN' or 'RESOLVED'.")
 
@@ -57,7 +57,6 @@ def select_cats_by_status(db, status):
         cursor.execute('SELECT * FROM cases WHERE status=?', (status,))
         cases = cursor.fetchall()
         return [dict(zip(['id', 'photo', 'location', 'need', 'status', 'created_at', 'updated_at'], row)) for row in cases]
-
 
 def scan_case(db, location):
     with sqlite3.connect(db) as conn:

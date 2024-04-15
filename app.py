@@ -1,18 +1,20 @@
 import uuid
 from datetime import datetime
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template, redirect, url_for, jsonify
 from .sqlite_memory import initialize, create_case, delete_cat, select_cats_by_status, scan_case, resolve_case, seed, get_all_cases
 from .view import prepare_cases_for_display
 
 app = Flask(__name__)
 
-# Initialize or seed the database as needed
+# Initialize or seed the database as 
+print("Fetching records")
 db_path = 'cats.db'
 initialize(db_path)
 
 @app.route('/')
 def index():
     open_cases = select_cats_by_status(db_path, 'OPEN')
+    print("sfsdgsdfg") 
     return render_template('index.html', open_cases=open_cases) 
 
 @app.route('/report', methods=['GET', 'POST'])
@@ -78,7 +80,14 @@ def delete(case_id):
 
 @app.route('/view/<status>', methods=['GET'])
 def view_by_status(status):
-    cases = select_cats_by_status(db_path, status.upper())  # Convert status to uppercase
+    default_status = 'OPEN'  # Choose your preferred default value
+    print(f"Received status: {status}")  # Before fixing
+    status = status.upper() if status else default_status
+    print(f"Using status: {status}")  # After fixing
+    cases = select_cats_by_status(db_path, status)
+
+
+
     return render_template('view_cases.html', cases=cases, status=status)
 
 if __name__ == '__main__':
