@@ -13,15 +13,7 @@ initialize(db_path)
 @app.route('/')
 def index():
     open_cases = select_cats_by_status(db_path, 'OPEN')
-    return render_template('index.html', open_cases=open_cases)
-
-@app.route('/seed', methods=['GET', 'POST'])
-
-def seed_database():
-    if request.method == 'POST':
-        seed(db_path)
-        return redirect(url_for('index'))
-    return render_template('seed.html') 
+    return render_template('index.html', open_cases=open_cases) 
 
 @app.route('/report', methods=['GET', 'POST'])
 def report():
