@@ -81,14 +81,18 @@ def delete(case_id):
 @app.route('/view/<status>', methods=['GET'])
 def view_by_status(status):
     default_status = 'OPEN'  # Choose your preferred default value
-    print(f"Received status: {status}")  # Before fixing
-    status = status.upper() if status else default_status
-    print(f"Using status: {status}")  # After fixing
-    cases = select_cats_by_status(db_path, status)
+    print(f"Received status: {status}")  # Optional for debugging
+    status = status.upper() or default_status
+    print(f"Using status: {status}")  # Optional for debugging
+    try:
+        cases = select_cats_by_status(db_path, status)
+        # Process and return cases data (your existing logic)
+        return jsonify(cases)
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400  # Return error response with details and status cod
 
 
-
-    return render_template('view_cases.html', cases=cases, status=status)
+    # return render_template('view_cases.html', cases=cases, status=status)
 
 if __name__ == '__main__':
     app.run(debug=True)
