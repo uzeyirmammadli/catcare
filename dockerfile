@@ -1,13 +1,12 @@
-FROM python:3.10
+FROM python:3.10-slim
 
 WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY . .
+COPY . ./
 
-EXPOSE 5225
+RUN pip install --no-cache-dir -r requirements.txt
 
-CMD [ "gunicorn", "--bind", "0.0.0.0:5225", "app:app" ]
-
+CMD exec gunicorn --bind :8080 --workers 1 --threads 8 --timeout 0 app:app

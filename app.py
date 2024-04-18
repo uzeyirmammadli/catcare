@@ -1,10 +1,10 @@
 import uuid
 from datetime import datetime
 from flask import Flask, request, render_template, redirect, url_for, jsonify
-from sqlite_memory import initialize, create_case, delete_cat, select_cats_by_status, scan_case, resolve_case, seed, get_all_cases
-from view import prepare_cases_for_display
+from .sqlite_memory import initialize, create_case, delete_cat, select_cats_by_status, scan_case, resolve_case, get_case_by_id, get_all_cases
+from .view import prepare_cases_for_display
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static') 
 
 # Initialize or seed the database as 
 print("Fetching records")
@@ -14,7 +14,6 @@ initialize(db_path)
 @app.route('/')
 def index():
     open_cases = select_cats_by_status(db_path, 'OPEN')
-    print("sfsdgsdfg") 
     return render_template('index.html', open_cases=open_cases) 
 
 @app.route('/report', methods=['GET', 'POST'])
@@ -72,18 +71,22 @@ def delete(case_id):
     if request.method == 'GET':
         return render_template('delete.html', case_id=case_id)
     elif request.method == 'POST':
-        # Handle case deletion logic (using delete_cat)
         case_id = request.form['case_id']
         delete_cat(db_path, case_id)
         return redirect(url_for('index'))  # Redirect back to index
 
+@app.route('/case/<case_id>', methods=['GET'])  # Route with integer case ID capture
+def view_case_by_id(case_id):
+  case_data = get_case_by_id(db_path,case_id)  # Call the function from sqlite_memory.py
+  if case_data:
+    return render_template('case.html', case=case_data)  # Pass retrieved data to template
+  else:
+    return render_template('case.html', case=None, error_message="Case not found")
 
 @app.route('/view/<status>', methods=['GET'])
 def view_by_status(status):
     default_status = 'OPEN'  # Choose your preferred default value
-    print(f"Received status: {status}")  # Optional for debugging
     status = status.upper() or default_status
-    print(f"Using status: {status}")  # Optional for debugging
     try:
         cases = select_cats_by_status(db_path, status)
         # Process and return cases data (your existing logic)
