@@ -5,8 +5,8 @@ p{
     font-size: 30px;
 }
 .case-image {
-    width: 1000px; /* Control the size of the image */
-    height: auto;
+    width: 900px; /* Control the size of the image */
+    height: 800px;
     float: left; /* This makes elements float to the right of the image */
     margin-right: 20px; /* Adds space between the image and the text */
 }

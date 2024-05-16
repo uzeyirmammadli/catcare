@@ -77,11 +77,11 @@ def delete(case_id):
 
 @app.route('/case/<case_id>', methods=['GET'])  # Route with integer case ID capture
 def view_case_by_id(case_id):
-  case_data = get_case_by_id(db_path,case_id)  # Call the function from sqlite_memory.py
-  if case_data:
-    return render_template('case.html', case=case_data)  # Pass retrieved data to template
-  else:
-    return render_template('case.html', case=None, error_message="Case not found")
+    case_data = get_case_by_id(db_path,case_id)  # Call the function from sqlite_memory.py
+    if case_data:
+         return render_template('case.html', case=case_data)  # Pass retrieved data to template
+    else:
+         return render_template('case.html', case=None, error_message="Case not found")
 
 @app.route('/view/<status>', methods=['GET'])
 def view_by_status(status):

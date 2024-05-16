@@ -11,7 +11,7 @@
     <p>ID: {{ case.id }}</p>
     <p>Details: Missing Cat Meow - {{ case.status }} Case</p>
     <div class="case-info">
-      <img src="{{ url_for('static', filename='images/catcare.png') }}" class="case-image">
+      <img src="{{ case.photo }}" alt="Case Image" class="case-image">
       <div>
         <p class="case-location">{{ case.location }}</p>
         <p class="case-need">{{ case.need }}</p>
