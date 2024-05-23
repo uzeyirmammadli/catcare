@@ -1,0 +1,33 @@
+h1{
+    font-size: 50px;
+}
+p{
+    font-size: 30px;
+}
+.case-image {
+    width: 900px; /* Control the size of the image */
+    height: 800px;
+    float: left; /* This makes elements float to the right of the image */
+    margin-right: 20px; /* Adds space between the image and the text */
+}
+
+.case-info {
+    display: flex;
+    align-items: center; /* This centers the text vertically */
+    margin-bottom: 50px; /* Adds space below the block for spacing */
+}
+
+.case-location {
+    flex-grow: 2; /* This allows the location to take up any remaining space */
+    border-bottom: 50%;
+    margin-bottom: 50px;
+    font-size: 100px;
+}
+
+.case-need {
+    width: 100%; /* Takes full width to ensure it is displayed under the location */
+    margin-top: 40px;
+    clear: both; /* Clears the float effect */
+    display: block; /* Ensures it behaves as a block element */
+    font-size: 100px;
+}

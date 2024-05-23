@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Case Details</title>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/case.css') }}">
+</head>
+<body>
+  <h1>Case Details</h1>
+  {% if case %}
+    <p>ID: {{ case.id }}</p>
+    <p>Details: Missing Cat Meow - {{ case.status }} Case</p>
+    <div class="case-info">
+      <img src="{{ case.photo }}" alt="Case Image" class="case-image">
+      <div>
+        <p class="case-location">{{ case.location }}</p>
+        <p class="case-need">{{ case.need }}</p>
+      </div>
+    </div>
+  {% else %}
+    <p>{{ error_message }}</p>
+  {% endif %}
+</body>
+</html>

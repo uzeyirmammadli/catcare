@@ -73,6 +73,16 @@ def get_all_cases(db):
         all_cases = cursor.fetchall()
         return [dict(zip(['id', 'photo', 'location', 'need', 'status', 'created_at', 'updated_at'], row)) for row in all_cases]
 
+def get_case_by_id(db,case_id):
+    with sqlite3.connect(db) as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM cases WHERE id=?', (case_id,))
+        case = cursor.fetchone()
+        if case:
+            case_dict = dict(zip(['id', 'photo', 'location', 'need', 'status', 'created_at', 'updated_at'], case))
+            return case_dict
+        else:
+            return None
 
 def resolve_case(db, case_id):
     with sqlite3.connect(db) as conn:
