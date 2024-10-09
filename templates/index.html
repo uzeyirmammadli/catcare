@@ -2,20 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cat Rescue App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>Welcome to the Cat Rescue App</h1>
-    <nav>
-        <ul>
-            <li><a href="/report">Report a New Case</a></li>
-            <li><a href="/scan">Scan for Cats</a></li>
-            <li><a href="/case/id">View case by Id</a></li>
-            <li><a href="/view/status">View Cases by Status</a></li>
-            <li><a href="/resolve/id">Resolve cases</a></li>
-            <li><a href="/delete/id">Delete cases</a></li>
-            <!-- Add more navigation links as needed -->
-        </ul>
-    </nav>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Welcome to the Cat Rescue App</h1>
+        
+        <nav class="bg-white shadow-md rounded-lg p-4">
+            <ul class="flex flex-wrap justify-center gap-4">
+                <li><a href="/report" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition duration-300">Report a New Case</a></li>
+                <li><a href="/cases" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition duration-300">List of All Cases</a></li>
+                <li><a href="/resolve/id" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition duration-300">Resolve cases</a></li>
+                <li><a href="/delete/id" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition duration-300">Delete cases</a></li>
+            </ul>
+        </nav>
+    </div>
 </body>
 </html>

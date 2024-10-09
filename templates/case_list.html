@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Case List</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <h1>Case List</h1>
+
+    <!-- Search and Filter Form -->
+    <form method="GET" action="{{ url_for('list_cases') }}">
+        <div>
+            <label for="search">Search:</label>
+            <input type="text" id="search" name="search" placeholder="Search by keyword" value="{{ request.args.get('search', '') }}">
+        </div>
+        <div>
+            <label for="location">Location:</label>
+            <input type="text" id="location" name="location" placeholder="Enter location" value="{{ request.args.get('location', '') }}">
+        </div>
+        <div>
+            <label for="status">Status:</label>
+            <select id="status" name="status">
+                <option value="">All</option>
+                <option value="open" {% if request.args.get('status') == 'open' %}selected{% endif %}>Open</option>
+                <option value="resolved" {% if request.args.get('status') == 'resolved' %}selected{% endif %}>Resolved</option>
+            </select>
+        </div>
+        <div>
+            <label for="need">Need:</label>
+            <input type="text" id="need" name="need" placeholder="Enter need" value="{{ request.args.get('need', '') }}">
+        </div>
+        <div>
+            <label for="created_at">Created After:</label>
+            <input type="date" id="created_at" name="created_at" value="{{ request.args.get('created_at', '') }}">
+        </div>
+        <button type="submit">Search</button>
+    </form>
+
+    <!-- Case List -->
+    <ul>
+        {% for case in cases %}
+            <li>
+                <p><strong>Location:</strong> {{ case['location'] }}</p>
+                <p><strong>Status:</strong> {{ case['status'] }}</p>
+                <p><strong>Need:</strong> {{ case['need'] }}</p>
+                <p><strong>Created At:</strong> {{ case['created_at'] }}</p>
+            </li>
+        {% else %}
+            <li>No cases found</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

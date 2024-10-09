@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from flask import Flask, request, render_template, redirect, url_for, jsonify
-from .sqlite_memory import initialize, create_case, delete_cat, select_cats_by_status, scan_case, resolve_case, seed, get_all_cases, get_case_by_id
+from .sqlite_memory import initialize, create_case, delete_cat, select_cats_by_status, scan_case, resolve_case, seed, get_all_cases, get_case_by_id, search_and_filter_cases
 from .view import prepare_cases_for_display
 
 app = Flask(__name__)
@@ -15,7 +15,13 @@ initialize(db_path)
 def index():
     open_cases = select_cats_by_status(db_path, 'OPEN')
     print("sfsdgsdfg") 
-    return render_template('index.html', open_cases=open_cases) 
+    return render_template('index.html', open_cases=open_cases)
+
+@app.route('/search')
+def search():
+    open_cases = select_cats_by_status(db_path, 'OPEN')
+    return render_template('search.html', open_cases=open_cases) 
+
 
 @app.route('/report', methods=['GET', 'POST'])
 def report():
@@ -35,11 +41,22 @@ def report():
     return render_template('report.html')
 
 @app.route('/cases')
-def show_cases(db_path):
+def show_cases():
     # Assume get_cases() fetches a list of case dictionaries
-    cases = get_all_cases(db_path)  
-    prepared_cases = prepare_cases_for_display(cases)
-    return render_template('cases.html', cases=prepared_cases)
+
+    #prepared_cases = prepare_cases_for_display(cases)
+    # Example data fetching logic
+    page = request.args.get('page', 1, type=int)
+    cases = get_all_cases(db_path)  # Fetch your cases from the database or API
+    total_cases = len(cases)
+    per_page = 10  # Set how many cases to show per page
+    total_pages = (total_cases + per_page - 1) // per_page
+    start = (page - 1) * per_page
+    end = start + per_page
+    paginated_cases = cases[start:end]  # Get the cases for the current page
+
+    return render_template('cases.html', cases=paginated_cases, current_page=page, total_pages=total_pages)
+
 
 @app.route('/scan', methods=['GET', 'POST'])
 def scan():
@@ -100,6 +117,16 @@ def view_by_status(status):
 
 
     # return render_template('view_cases.html', cases=cases, status=status)
+@app.route('/case_list', methods=['GET'])
+def case_list():
+    search = request.args.get('search')
+    location = request.args.get('location')
+    status = request.args.get('status')
+    need = request.args.get('need')
+    created_at = request.args.get('created_at')
 
+    # Fetch filtered and searched cases
+    filtered_cases = search_and_filter_cases(db_path, search, location, status, need, created_at)
+    return render_template('case_list.html', case_list=filtered_cases)
 if __name__ == '__main__':
     app.run(debug=True)

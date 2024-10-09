@@ -1,6 +1,71 @@
-<ul>
-    {% for case in cases %}
-      <li>{{ case }}</li>
-    {% endfor %}
-    </ul>
-    
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cat Rescue App - Cases</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">List of Cases</h1>
+        
+        <nav class="bg-white shadow-md rounded-lg px-4 py-2 flex items-center justify-between">
+            <a href="/report" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition duration-300">Report a New Case</a>
+            <ul class="flex items-center gap-4">
+                <li><a href="/search" class="text-gray-600 hover:text-blue-500">Search for Cats</a></li>
+                <li><a href="/resolve/id" class="text-gray-600 hover:text-blue-500">Resolve Cases</a></li>
+                <li><a href="/delete/id" class="text-gray-600 hover:text-blue-500">Delete Cases</a></li>
+            </ul>
+        </nav>
+
+        <table class="w-full table-auto shadow-md rounded-lg overflow-x-auto mt-4">
+            <thead>
+                <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                    <th class="py-3 px-4 text-left">Photo</th>
+                    <th class="py-3 px-4 text-left">Location</th>
+                    <th class="py-3 px-4 text-left">Status</th>
+                    <th class="py-3 px-4 text-left">Updated At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for case in cases %}
+                    <tr class="border-b border-gray-200 hover:bg-gray-100">
+                        <td class="py-3 px-4">
+                            <img src="{{ case.photo }}" alt="Cat Photo" class="w-10 h-10 object-cover rounded-full" />
+                        </td>
+                        <td class="py-3 px-4 text-sm font-semibold">{{ case['location'] }}</td>
+                        <td class="py-3 px-4 text-sm">{{ case.status }}</td>
+                        <td class="py-3 px-4 text-sm">{{ case.updated_at }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div class="flex justify-center mt-6">
+            <nav aria-label="Pagination">
+                <ul class="flex list-none">
+                    <li>
+                        <a href="?page={{ current_page - 1 }}" class="px-4 py-2 text-blue-500 hover:bg-blue-200 rounded-l" {% if current_page == 1 %} class="disabled" aria-disabled="true" {% endif %}>
+                            Previous
+                        </a>
+                    </li>
+                    {% for page in range(1, total_pages + 1) %}
+                        <li>
+                            <a href="?page={{ page }}" class="px-4 py-2 text-blue-500 hover:bg-blue-200 {% if page == current_page %} bg-blue-500 text-white {% endif %} rounded">
+                                {{ page }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                    <li>
+                        <a href="?page={{ current_page + 1 }}" class="px-4 py-2 text-blue-500 hover:bg-blue-200 rounded-r" {% if current_page == total_pages %} class="disabled" aria-disabled="true" {% endif %}>
+                            Next
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</body>
+</html>
