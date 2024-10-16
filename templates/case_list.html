@@ -9,7 +9,7 @@
     <h1>Case List</h1>
 
     <!-- Search and Filter Form -->
-    <form method="GET" action="{{ url_for('list_cases') }}">
+    <form method="GET" action="{{ url_for('main.list_cases') }}">
         <div>
             <label for="search">Search:</label>
             <input type="text" id="search" name="search" placeholder="Search by keyword" value="{{ request.args.get('search', '') }}">

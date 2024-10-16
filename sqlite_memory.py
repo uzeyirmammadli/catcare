@@ -2,6 +2,11 @@ import sqlite3
 from datetime import datetime
 import uuid
 import random
+import logging
+from werkzeug.security import generate_password_hash, check_password_hash
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 DATABASE_NAME = 'cats.db'
 
@@ -10,12 +15,33 @@ DATABASE_NAME = 'cats.db'
 def initialize(db):
     with sqlite3.connect(db) as conn:
         cursor = conn.cursor()
+        cursor.execute('''CREATE TABLE IF NOT EXISTS user
+                          (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                           username TEXT NOT NULL UNIQUE,
+                           password_hash TEXT NOT NULL)''')
         cursor.execute('''CREATE TABLE IF NOT EXISTS cases
                           (id TEXT PRIMARY KEY, photo TEXT, location TEXT, need TEXT, 
                            status TEXT, created_at TEXT, updated_at TEXT)''')
         conn.commit()
+        print("Database tables created.")
 
-
+def create_test_user(db):
+    with sqlite3.connect(db) as conn:
+        cursor = conn.cursor()
+        
+        # Check if the test user already exists
+        cursor.execute("SELECT * FROM user WHERE username = ?", ('testuser',))
+        existing_user = cursor.fetchone()
+        
+        if existing_user is None:
+            hashed_password = generate_password_hash('testpassword')
+            cursor.execute('''INSERT INTO user (username, password_hash)
+                              VALUES (?, ?)''', ('testuser', hashed_password))
+            conn.commit()
+            print("Test user created.")
+        else:
+            
+            print("Test user already exists.")
 def create_case(db, report):
     with sqlite3.connect(db) as conn:
         cursor = conn.cursor()
@@ -45,18 +71,34 @@ def delete_cat(db, case_id):
         cursor.execute('DELETE FROM cases WHERE id=?', (case_id,))
         conn.commit()
 
-
 def select_cats_by_status(db, status):
-    status = status.upper()  # Convert status to uppercase for consistency
-    print(status)
+    logger.debug(f"Selecting cats with status: {status} from database: {db}")
+    status = status.upper()
     if status not in ["OPEN", "RESOLVED"]:
         raise ValueError("Invalid status. Please provide 'OPEN' or 'RESOLVED'.")
 
-    with sqlite3.connect(db) as conn:
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM cases WHERE status=?', (status,))
-        cases = cursor.fetchall()
-        return [dict(zip(['id', 'photo', 'location', 'need', 'status', 'created_at', 'updated_at'], row)) for row in cases]
+    try:
+        with sqlite3.connect(db) as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM cases WHERE status=?', (status,))
+            cases = cursor.fetchall()
+            return [dict(zip(['id', 'photo', 'location', 'need', 'status', 'created_at', 'updated_at'], row)) for row in cases]
+    except sqlite3.Error as e:
+        logger.error(f"Database error: {e}")
+        raise
+# def select_cats_by_status(db, status):
+#     logger.debug(f"Selecting cats with status: {status} from database: {db}")
+#     print(f"Connecting to database: {db}") 
+#     status = status.upper()  # Convert status to uppercase for consistency
+#     print(status)
+#     if status not in ["OPEN", "RESOLVED"]:
+#         raise ValueError("Invalid status. Please provide 'OPEN' or 'RESOLVED'.")
+
+#     with sqlite3.connect(db) as conn:
+#         cursor = conn.cursor()
+#         cursor.execute('SELECT * FROM cases WHERE status=?', (status,))
+#         cases = cursor.fetchall()
+#         return [dict(zip(['id', 'photo', 'location', 'need', 'status', 'created_at', 'updated_at'], row)) for row in cases]
 
 def scan_case(db, location):
     with sqlite3.connect(db) as conn:
