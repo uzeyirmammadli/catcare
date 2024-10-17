@@ -1,53 +1,130 @@
 import os
-import uuid
-from datetime import datetime
-from flask import Flask, request, render_template, redirect, url_for, jsonify, flash, current_app
+from uuid import UUID, uuid4
+from datetime import datetime, timedelta
+from flask import Flask, request, render_template, redirect, url_for, jsonify, flash, abort, current_app
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.exceptions import NotFound
 from flask import Blueprint
-from .models import db, User
-from .forms import RegistrationForm, LoginForm
+from typing import Dict, Any
+from .models import db, User, Comment, Case
+from .forms import RegistrationForm, LoginForm, CommentForm
 from .sqlite_memory import (
     initialize, create_case, delete_cat, select_cats_by_status,
-    scan_case, resolve_case, seed, get_all_cases, get_case_by_id,
-    search_and_filter_cases
+    scan_case, resolve_case, seed, get_all_cases, get_case_by_id
 )
 from .view import prepare_cases_for_display
 from . import db, login_manager
 
 main = Blueprint('main', __name__)
-# main = Flask(__name__)
-
-# # Configuration
-# main.config.update(
-#     SQLALCHEMY_DATABASE_URI='sqlite:///cats.db',
-#     SQLALCHEMY_TRACK_MODIFICATIONS=False,
-#     SECRET_KEY='GqOOhMcXCi0dH3a_sHdJgFBSu2ZnDbXHPoMlca4eGUI',
-#     DATABASE_PATH='cats.db'  # Add this line
-    
-# )
-
-# # Initialize extensions
-# db.init_app(main)
-# login_manager = LoginManager()
-# login_manager.init_app(main)
-# login_manager.login_view = 'login'
-
-# # Initialize databases
-# def init_db():
-#     with main.app_context():
-#         try:
-#             db.create_all()
-#             print("Database created successfully!")
-#         except Exception as e:
-#             print(f"Error creating database: {str(e)}")
-
 
 @main.route('/')
 def index():
     open_cases = select_cats_by_status(current_app.config['DATABASE_PATH'], 'OPEN')
     return render_template('index.html', open_cases=open_cases)
         
+@main.route('/case/<case_id>', methods=['GET', 'POST'])
+@login_required
+def view_case(case_id):
+    # Validate UUID format
+    try:
+        UUID(case_id)  # Validate UUID format
+    except ValueError:
+        raise NotFound("Invalid case ID format")
+    
+    case = Case.query.get_or_404(case_id)
+    
+    # Add some debug logging
+    current_app.logger.debug(f"Looking up case with ID: {case_id}")
+    
+    if not case:
+        current_app.logger.error(f"Case not found with ID: {case_id}")
+        raise NotFound("Case not found")
+        
+    form = CommentForm()
+
+    if form.validate_on_submit():
+        comment = Comment(
+            content=form.content.data,
+            case_id=case.id,
+            user_id=current_user.id
+        )
+        db.session.add(comment)
+        
+        try:
+            db.session.commit()
+            flash('Comment added successfully!', 'success')
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            current_app.logger.error(f"Database error adding comment: {e}")
+            flash('Error adding comment. Please try again.', 'error')
+        
+        return redirect(url_for('main.view_case', case_id=case_id))
+
+    # Paginate comments
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config.get('COMMENTS_PER_PAGE', 10)
+    
+    comments = case.comments.paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False
+    )
+    
+    return render_template('case.html',
+                         case=case,
+                         form=form,
+                         comments=comments)
+
+@main.route('/comment/<int:comment_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_comment(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    
+    # Check if user is authorized to edit the comment
+    if comment.user_id != current_user.id:
+        flash('You are not authorized to edit this comment.', 'error')
+        return redirect(url_for('main.view_case', case_id=comment.case_id))
+    
+    form = CommentForm()
+    
+    if request.method == 'GET':
+        form.content.data = comment.content
+    
+    elif form.validate_on_submit():
+        comment.content = form.content.data
+        try:
+            db.session.commit()
+            flash('Comment updated successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error updating comment: {e}")
+            flash('Error updating comment. Please try again.', 'error')
+        
+        return redirect(url_for('main.view_case', case_id=comment.case_id))
+    
+    return render_template('edit_comment.html', form=form, comment=comment)
+
+@main.route('/comment/<int:comment_id>/delete', methods=['POST'])
+@login_required
+def delete_comment(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    
+    # Check if user is authorized to delete the comment
+    if comment.user_id != current_user.id:
+        flash('You are not authorized to delete this comment.', 'error')
+        return redirect(url_for('main.view_case', case_id=comment.case_id))
+    
+    try:
+        db.session.delete(comment)
+        db.session.commit()
+        flash('Comment deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting comment: {e}")
+        flash('Error deleting comment. Please try again.', 'error')
+    
+    return redirect(url_for('main.view_case', case_id=comment.case_id))
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -142,20 +219,39 @@ def search():
     return render_template('search.html', open_cases=open_cases) 
 
 @main.route('/report', methods=['GET', 'POST'])
+@login_required  # Add this decorator to ensure only logged-in users can report
 def report():
     if request.method == 'POST':
-        report = {
-            'id': str(uuid.uuid4()),  # Generate a unique ID
-            'photo': request.form['photo'],
-            'location': request.form['location'],
-            'need': request.form['need'],
-            'status': 'OPEN',  # Set initial status to OPEN
-            'created_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'updated_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        }
-        create_case(current_app.config['DATABASE_PATH'], report)  # Assuming create_case handles photo validation
-        flash('Case reported successfully!', 'success')
-        return redirect(url_for('main.index'))
+        try:
+            # Create new Case instance using the SQLAlchemy model
+            new_case = Case(
+                id=str(uuid4()),
+                photo=request.form['photo'],
+                location=request.form['location'],
+                need=request.form['need'],
+                status='OPEN',
+                user_id=current_user.id,  # Associate the case with the current user
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+            
+            # Add to database session
+            db.session.add(new_case)
+            
+            # Commit the transaction
+            try:
+                db.session.commit()
+                flash('Case reported successfully!', 'success')
+                return redirect(url_for('main.index'))
+            except Exception as e:
+                db.session.rollback()
+                current_app.logger.error(f"Database error creating case: {e}")
+                flash('Error creating case. Please try again.', 'error')
+                
+        except Exception as e:
+            current_app.logger.error(f"Error creating case: {e}")
+            flash('Error creating case. Please try again.', 'error')
+    
     return render_template('report.html')
 
 @main.route('/cases')
@@ -195,7 +291,7 @@ def resolve(case_id):
             flash(message, 'danger')
             return render_template('resolve_cases.html', message=message, success=False, case_id=case_id)
 
-    return redirect(url_for('index'))
+    return redirect(url_for('main.index'))
 
 @main.route('/delete/<case_id>', methods=['GET', 'POST'])
 def delete(case_id):
@@ -206,13 +302,13 @@ def delete(case_id):
         flash('Case deleted successfully!', 'success')
         return redirect(url_for('main.index'))
 
-@main.route('/case/<case_id>', methods=['GET'])
-def view_case_by_id(case_id):
-    case_data = get_case_by_id(current_app.config['DATABASE_PATH'], case_id)
-    if case_data:
-        return render_template('case.html', case=case_data)
-    else:
-        return render_template('case.html', case=None, error_message="Case not found")
+# @main.route('/case/<case_id>', methods=['GET'])
+# def view_case_by_id(case_id):
+#     case_data = get_case_by_id(current_app.config['DATABASE_PATH'], case_id)
+#     if case_data:
+#         return render_template('case.html', case=case_data)
+#     else:
+#         return render_template('case.html', case=None, error_message="Case not found")
 
 @main.route('/view/<status>', methods=['GET'])
 def view_by_status(status):
@@ -224,16 +320,6 @@ def view_by_status(status):
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
 
-@main.route('/case_list', methods=['GET'])
-def case_list():
-    search = request.args.get('search')
-    location = request.args.get('location')
-    status = request.args.get('status')
-    need = request.args.get('need')
-    created_at = request.args.get('created_at')
-
-    filtered_cases = search_and_filter_cases(current_app.config['DATABASE_PATH'], search, location, status, need, created_at)
-    return render_template('case_list.html', case_list=filtered_cases)
 
 # def create_app():
 #     init_db()

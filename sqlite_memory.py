@@ -139,37 +139,6 @@ def resolve_case(db, case_id):
         else:
             return None
         
-def search_and_filter_cases(db, search=None, location=None, status=None, need=None, created_at=None):
-    query = 'SELECT * FROM cases WHERE 1=1'  # Base query
-    params = []
-
-    if search:
-        query += ' AND (location LIKE ? OR need LIKE ?)'
-        search_param = f"%{search}%"
-        params.extend([search_param, search_param])
-
-    if location:
-        query += ' AND location LIKE ?'
-        params.append(f"%{location}%")
-
-    if status:
-        query += ' AND status = ?'
-        params.append(status)
-
-    if need:
-        query += ' AND need LIKE ?'
-        params.append(f"%{need}%")
-
-    if created_at:
-        query += ' AND created_at >= ?'
-        params.append(created_at)
-
-    with sqlite3.connect(db) as conn:
-        cursor = conn.cursor()
-        cursor.execute(query, params)
-        cases = cursor.fetchall()
-        case_dicts = [dict(zip(['id', 'photo', 'location', 'need', 'status', 'created_at', 'updated_at'], case)) for case in cases]
-        return case_dicts
 # SEED
 def seed(db):
     locations = ['Nasirov', 'Rajabli', 'Mayakovski']
