@@ -33,7 +33,7 @@ def create_app():
         from . import sqlite_memory
         try:
             sqlite_memory.initialize(app.config['DATABASE_PATH'])
-            sqlite_memory.create_test_user(app.config['DATABASE_PATH'])
+            # sqlite_memory.create_test_user(app.config['DATABASE_PATH'])
         except Exception as e:
             print(f"An error occurred during database initialization: {e}")
 

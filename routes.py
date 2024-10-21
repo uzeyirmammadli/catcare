@@ -6,23 +6,23 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.exceptions import NotFound
 from flask import Blueprint
+from flask_sqlalchemy import SQLAlchemy
 from typing import Dict, Any
 from .models import db, User, Comment, Case
 from .forms import RegistrationForm, LoginForm, CommentForm
-from .sqlite_memory import (
-    initialize, create_case, delete_cat, select_cats_by_status,
-    scan_case, resolve_case, seed, get_all_cases, get_case_by_id
-)
-from .view import prepare_cases_for_display
 from . import db, login_manager
 
 main = Blueprint('main', __name__)
 
 @main.route('/')
 def index():
-    open_cases = select_cats_by_status(current_app.config['DATABASE_PATH'], 'OPEN')
-    return render_template('index.html', open_cases=open_cases)
-        
+    """Display open cases on the homepage."""
+    try:
+        open_cases = Case.query.filter_by(status='OPEN').all()
+        return render_template('index.html', open_cases=open_cases)
+    except Exception as e:
+        flash(f'Error loading cases: {str(e)}', 'danger')
+        return render_template('index.html', open_cases=[])
 @main.route('/case/<case_id>', methods=['GET', 'POST'])
 @login_required
 def view_case(case_id):
@@ -213,11 +213,6 @@ def internal_error(error):
     db.session.rollback()
     return render_template('500.html'), 500
 
-@main.route('/search')
-def search():
-    open_cases = select_cats_by_status(current_app.config['DATABASE_PATH'], 'OPEN')
-    return render_template('search.html', open_cases=open_cases) 
-
 @main.route('/report', methods=['GET', 'POST'])
 @login_required  # Add this decorator to ensure only logged-in users can report
 def report():
@@ -256,70 +251,274 @@ def report():
 
 @main.route('/cases')
 def show_cases():
+    """Show all cases with pagination."""
     page = request.args.get('page', 1, type=int)
-    cases = get_all_cases(current_app.config['DATABASE_PATH'])
-    total_cases = len(cases)
-    per_page = 10  # Set how many cases to show per page
-    total_pages = (total_cases + per_page - 1) // per_page
-    start = (page - 1) * per_page
-    end = start + per_page
-    paginated_cases = cases[start:end]  # Get the cases for the current page
+    per_page = 10
+    
+    try:
+        # Get paginated cases
+        pagination = Case.query.order_by(Case.created_at.desc()).paginate(
+            page=page, per_page=per_page, error_out=False)
+        
+        return render_template('cases.html',
+                             cases=pagination.items,
+                             pagination=pagination,
+                             current_page=page,
+                             total_pages=pagination.pages)
+    except Exception as e:
+        flash(f'Error loading cases: {str(e)}', 'danger')
+        return render_template('cases.html', 
+                             cases=[],
+                             pagination=None,
+                             current_page=1,
+                             total_pages=1)
 
-    return render_template('cases.html', cases=paginated_cases, current_page=page, total_pages=total_pages)
 
+@main.route('/search', methods=['GET', 'POST'])
+def search():
+    """Search for cases by location and status."""
+    query = request.args.get('query', '')
+    status = request.args.get('status', 'OPEN')
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config.get('CASES_PER_PAGE', 10)
+    
+    try:
+        # Base query
+        query_obj = Case.query
+        
+        # Apply filters if provided
+        if query:
+            query_obj = query_obj.filter(Case.location.ilike(f'%{query}%'))
+        if status:
+            query_obj = query_obj.filter(Case.status == status.upper())
+            
+        # Order by most recent first
+        query_obj = query_obj.order_by(Case.created_at.desc())
+        
+        # Paginate results
+        pagination = query_obj.paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+        
+        # Get distinct locations for the dropdown
+        locations = db.session.query(Case.location).distinct().all()
+        locations = [loc[0] for loc in locations]
+        
+        return render_template('search.html',
+                             cases=pagination.items,
+                             pagination=pagination,
+                             current_page=page,
+                             total_pages=pagination.pages,
+                             query=query,
+                             status=status,
+                             locations=locations)
+                             
+    except Exception as e:
+        current_app.logger.error(f"Search error: {str(e)}")
+        flash('An error occurred while searching. Please try again.', 'error')
+        return render_template('search.html',
+                             cases=[],
+                             pagination=None,
+                             current_page=1,
+                             total_pages=1,
+                             query=query,
+                             status=status,
+                             locations=[])
+ 
+@main.route('/advanced-search', methods=['GET'])
+def advanced_search():
+    """Advanced search endpoint with multiple filter criteria."""
+    # Get all filter parameters
+    filters = {
+        'location': request.args.get('location'),
+        'status': request.args.get('status'),
+        'need': request.args.get('need'),
+        'date_from': request.args.get('date_from'),
+        'date_to': request.args.get('date_to'),
+        'sort_by': request.args.get('sort_by', 'created_at'),
+        'sort_order': request.args.get('sort_order', 'desc')
+    }
+    
+    page = request.args.get('page', 1, type=int)
+    per_page = current_app.config.get('CASES_PER_PAGE', 10)
+    
+    try:
+        # Start with base query
+        query = Case.query
+        
+        # Apply filters
+        if filters['location']:
+            query = query.filter(Case.location.ilike(f"%{filters['location']}%"))
+        
+        if filters['status']:
+            query = query.filter(Case.status == filters['status'].upper())
+            
+        if filters['need']:
+            query = query.filter(Case.need.ilike(f"%{filters['need']}%"))
+        
+        # Date range filtering
+        if filters['date_from']:
+            date_from = datetime.strptime(filters['date_from'], '%Y-%m-%d')
+            query = query.filter(Case.created_at >= date_from)
+            
+        if filters['date_to']:
+            date_to = datetime.strptime(filters['date_to'], '%Y-%m-%d')
+            # Add one day to include the entire end date
+            date_to = date_to + timedelta(days=1)
+            query = query.filter(Case.created_at < date_to)
+        
+        # Apply sorting
+        sort_column = getattr(Case, filters['sort_by'])
+        if filters['sort_order'] == 'desc':
+            query = query.order_by(sort_column.desc())
+        else:
+            query = query.order_by(sort_column.asc())
+        
+        # Execute query with pagination
+        pagination = query.paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+        
+        # Get distinct values for dropdowns
+        locations = db.session.query(Case.location).distinct().all()
+        needs = db.session.query(Case.need).distinct().all()
+        
+        # Prepare data for template
+        template_data = {
+            'cases': pagination.items,
+            'pagination': pagination,
+            'current_page': page,
+            'total_pages': pagination.pages,
+            'filters': filters,
+            'locations': [loc[0] for loc in locations],
+            'needs': [need[0] for need in needs],
+            'statuses': ['OPEN', 'RESOLVED'],
+            'sort_options': [
+                ('created_at', 'Creation Date'),
+                ('updated_at', 'Last Updated'),
+                ('location', 'Location'),
+                ('status', 'Status')
+            ]
+        }
+        
+        return render_template('advanced_search.html', **template_data)
+        
+    except Exception as e:
+        current_app.logger.error(f"Search error: {str(e)}")
+        flash('An error occurred while searching. Please try again.', 'error')
+        return render_template('advanced_search.html', 
+                             cases=[],
+                             pagination=None,
+                             current_page=1,
+                             total_pages=1,
+                             filters=filters,
+                             locations=[],
+                             needs=[],
+                             statuses=['OPEN', 'RESOLVED'],
+                             sort_options=[])
 @main.route('/scan', methods=['GET', 'POST'])
 def scan():
+    """Search cases by location."""
     if request.method == 'POST':
         location = request.form['location']
-        found = scan_case(current_app.config['DATABASE_PATH'], location)
-        return render_template('scan_results.html', found=found)
+        try:
+            found = Case.get_by_location(location)
+            return render_template('scan_results.html', found=found)
+        except Exception as e:
+            flash(f'Error scanning location: {str(e)}', 'danger')
+            return render_template('scan_results.html', found=[])
     return render_template('scan.html')
 
-@main.route('/resolve/<case_id>', methods=['GET','POST'])
-def resolve(case_id):
+@main.route('/resolve/<case_id>', methods=['GET', 'POST'])
+@login_required
+def resolve_case(case_id):
+    case = Case.query.get(case_id)
+    
     if request.method == 'GET':
+        if not case:
+            flash('Case not found', 'danger')
+            return redirect(url_for('main.index'))
         return render_template('resolve_cases.html', case_id=case_id)
+    
     if request.method == 'POST':
-        case_id = request.form['case_id']
-        result = resolve_case(current_app.config['DATABASE_PATH'], case_id)
-        if result:
-            message = 'Case resolved successfully.'
-            flash(message, 'success')
-            return render_template('resolve_cases.html', message=message, success=True, case_id=case_id)
+        # If case is found, resolve it
+        if case:
+            try:
+                case.resolve()  # Call the resolve method
+                flash('Case resolved successfully.', 'success')
+            except Exception as e:
+                db.session.rollback()
+                current_app.logger.error(f"Error resolving case: {e}")
+                flash('Error resolving case. Please try again.', 'danger')
+            return render_template('resolve_cases.html', case_id=case_id, message='Case resolved', success=True)
         else:
-            message = 'Failed to resolve the case. Please check the case ID.'
-            flash(message, 'danger')
-            return render_template('resolve_cases.html', message=message, success=False, case_id=case_id)
+            flash('Case not found', 'danger')
+            return redirect(url_for('main.index'))
 
-    return redirect(url_for('main.index'))
+@main.route('/update/<case_id>', methods=['GET', 'POST'])
+@login_required
+def update(case_id):
+    case = Case.query.get(case_id)
+    
+    if not case:
+        flash('Case not found', 'danger')
+        return redirect(url_for('main.index'))
 
-@main.route('/delete/<case_id>', methods=['GET', 'POST'])
+    if request.method == 'POST':
+        photo = request.form.get('photo')
+        location = request.form.get('location')
+        need = request.form.get('need')
+        status = request.form.get('status')
+
+        try:
+            case.update(photo=photo, location=location, need=need, status=status)
+            flash('Case updated successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error updating case: {e}")
+            flash('Error updating case. Please try again.', 'danger')
+
+        return redirect(url_for('main.index'))
+    
+    return render_template('update_case.html', case=case)
+
+@main.route('/delete_case/<case_id>', methods=['GET', 'POST'])
+@login_required
 def delete(case_id):
     if request.method == 'GET':
         return render_template('delete.html', case_id=case_id)
-    elif request.method == 'POST':
-        delete_cat(current_app.config['DATABASE_PATH'], case_id)
-        flash('Case deleted successfully!', 'success')
+    
+    if request.method == 'POST':
+        if Case.delete_case(case_id):
+            flash('Case deleted successfully!', 'success')
+        else:
+            flash('Case not found or could not be deleted.', 'danger')
         return redirect(url_for('main.index'))
 
-# @main.route('/case/<case_id>', methods=['GET'])
-# def view_case_by_id(case_id):
-#     case_data = get_case_by_id(current_app.config['DATABASE_PATH'], case_id)
-#     if case_data:
-#         return render_template('case.html', case=case_data)
-#     else:
-#         return render_template('case.html', case=None, error_message="Case not found")
-
-@main.route('/view/<status>', methods=['GET'])
-def view_by_status(status):
-    default_status = 'OPEN'  
-    status = status.upper() or default_status  # Ensure status is uppercase
+@main.route('/case/<case_id>/details', methods=['GET'])  # Changed route path
+def view_case_details(case_id):  # Changed function name
+    """View a single case and its comments."""
     try:
-        cases = select_cats_by_status(main.config['DATABASE_PATH'], status)
-        return jsonify(cases)
+        case = Case.query.get_or_404(case_id)
+        return render_template('case.html', case=case)
+    except Exception as e:
+        flash(f'Error loading case: {str(e)}', 'danger')
+        return redirect(url_for('main.show_cases'))
+
+@main.route('/cases/status/<status>')  # Changed route path
+def list_cases_by_status(status):  # Changed function name
+    """API endpoint to view cases by status."""
+    try:
+        cases = Case.get_by_status(status)
+        return jsonify([case.to_dict() for case in cases])
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
-
+    except Exception as e:
+        return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
 
 # def create_app():
 #     init_db()

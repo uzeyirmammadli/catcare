@@ -30,7 +30,7 @@
                 </div>
             {% endif %}
 
-            <form action="{{ url_for('main.resolve', case_id=case_id) }}" method="POST" class="space-y-4">
+            <form action="{{ url_for('main.resolve_case', case_id=case_id) }}" method="POST" class="space-y-4">
                 <div>
                     <label for="case_id" class="block text-sm font-medium text-gray-700 mb-1">Enter Case ID to Resolve:</label>
                     <input type="text" id="case_id" name="case_id" required 
