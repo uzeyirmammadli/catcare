@@ -433,7 +433,7 @@ def scan():
             return render_template('scan_results.html', found=[])
     return render_template('scan.html')
 
-@main.route('/resolve/<case_id>', methods=['GET', 'POST'])
+@main.route('/resolve/<int:case_id>', methods=['GET', 'POST'])
 @login_required
 def resolve_case(case_id):
     case = Case.query.get(case_id)
@@ -459,32 +459,58 @@ def resolve_case(case_id):
             flash('Case not found', 'danger')
             return redirect(url_for('main.index'))
 
+
 @main.route('/update/<case_id>', methods=['GET', 'POST'])
 @login_required
 def update(case_id):
-    case = Case.query.get(case_id)
-    
-    if not case:
-        flash('Case not found', 'danger')
-        return redirect(url_for('main.index'))
-
-    if request.method == 'POST':
-        photo = request.form.get('photo')
-        location = request.form.get('location')
-        need = request.form.get('need')
-        status = request.form.get('status')
-
-        try:
-            case.update(photo=photo, location=location, need=need, status=status)
-            flash('Case updated successfully!', 'success')
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"Error updating case: {e}")
-            flash('Error updating case. Please try again.', 'danger')
-
-        return redirect(url_for('main.index'))
-    
-    return render_template('update_case.html', case=case)
+    try:
+        # Get the case or return 404
+        case = Case.query.get_or_404(case_id)
+        
+        if request.method == 'POST':
+            # Get form data
+            photo = request.form.get('photo')
+            location = request.form.get('location')
+            need = request.form.get('need')
+            status = request.form.get('status')
+            
+            # Validate required fields
+            if not all([photo, location, need, status]):
+                flash('All fields are required', 'error')
+                return render_template('update_case.html', case=case)
+            
+            # Validate status
+            if status not in ['OPEN', 'RESOLVED']:
+                flash('Invalid status value', 'error')
+                return render_template('update_case.html', case=case)
+            
+            try:
+                # Update case
+                case.photo = photo
+                case.location = location
+                case.need = need
+                case.status = status
+                case.updated_at = datetime.utcnow()
+                
+                # Commit changes
+                db.session.commit()
+                
+                flash('Case updated successfully!', 'success')
+                return redirect(url_for('main.show_cases'))
+                
+            except Exception as e:
+                db.session.rollback()
+                current_app.logger.error(f"Database error while updating case: {str(e)}")
+                flash('Error updating case. Please try again.', 'error')
+                return render_template('update_case.html', case=case)
+        
+        # GET request - show form
+        return render_template('update_case.html', case=case)
+        
+    except Exception as e:
+        current_app.logger.error(f"Error in update route: {str(e)}")
+        flash('An error occurred. Please try again.', 'error')
+        return redirect(url_for('main.show_cases'))
 
 @main.route('/delete_case/<case_id>', methods=['GET', 'POST'])
 @login_required

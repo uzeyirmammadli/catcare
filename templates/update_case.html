@@ -6,35 +6,99 @@
     <title>Update Case</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center py-6">
     <div class="w-full max-w-md">
         <h1 class="text-2xl font-bold text-center mb-6">Update Case</h1>
-        <form action="{{ url_for('main.update', case_id=case.id) }}" method="POST" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-4 rounded {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form id="updateForm" action="{{ url_for('main.update', case_id=case.id) }}" method="POST" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
             <div class="mb-4">
                 <label for="photo" class="block text-gray-700 text-sm font-bold mb-2">Photo URL</label>
-                <input type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="photo" value="{{ case.photo }}">
+                <input type="text" 
+                       id="photo"
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                       name="photo" 
+                       value="{{ case.photo }}"
+                       required>
             </div>
+
             <div class="mb-4">
                 <label for="location" class="block text-gray-700 text-sm font-bold mb-2">Location</label>
-                <input type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="location" value="{{ case.location }}">
+                <input type="text" 
+                       id="location"
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                       name="location" 
+                       value="{{ case.location }}"
+                       required>
             </div>
+
             <div class="mb-4">
                 <label for="need" class="block text-gray-700 text-sm font-bold mb-2">Need</label>
-                <input type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="need" value="{{ case.need }}">
+                <input type="text" 
+                       id="need"
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                       name="need" 
+                       value="{{ case.need }}"
+                       required>
             </div>
+
             <div class="mb-6">
                 <label for="status" class="block text-gray-700 text-sm font-bold mb-2">Status</label>
-                <select class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" name="status">
+                <select id="status"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                        name="status"
+                        required>
                     <option value="OPEN" {% if case.status == 'OPEN' %}selected{% endif %}>OPEN</option>
                     <option value="RESOLVED" {% if case.status == 'RESOLVED' %}selected{% endif %}>RESOLVED</option>
                 </select>
             </div>
+
             <div class="flex items-center justify-between">
-                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                <button type="submit" 
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                     Update Case
                 </button>
+                <a href="{{ url_for('main.index') }}" 
+                   class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Cancel
+                </a>
             </div>
         </form>
     </div>
+
+    <script>
+        document.getElementById('updateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(this);
+            
+            // Submit form
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = "{{ url_for('main.index') }}";
+                } else {
+                    throw new Error('Failed to update case');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to update case. Please try again.');
+            });
+        });
+    </script>
 </body>
 </html>

@@ -12,7 +12,7 @@ def init_db():
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -48,33 +48,39 @@ class Case(db.Model):
     
     @classmethod
     def get_by_location(cls, location):
-        """Retrieve cases by location."""
+        if not location:
+            raise ValueError("Location cannot be empty")
         return cls.query.filter_by(location=location).all()
     
-    def update(self, photo=None, location=None, need=None, status=None):
+    def update_case(self, case_id, photo=None, location=None, need=None, status=None):
         """Update case details"""
-        self.photo = photo or self.photo
-        self.location = location or self.location
-        self.need = need or self.need
-        self.status = status or self.status
-        self.updated_at = datetime.utcnow()
+        case = self.query.get(case_id)
+        if not case:
+            raise ValueError("Case not found")
+        case.photo = photo or case.photo
+        case.location = location or case.location
+        case.need = need or case.need
+        case.status = status or case.status
+        case.updated_at = datetime.utcnow()
         db.session.commit()
 
-    def resolve(self):
+    def resolve(self, case_id):
         """Mark case as resolved."""
-        self.status = 'RESOLVED'
-        self.updated_at = datetime.utcnow()
+        case = self.query.get(case_id)
+        if not case:
+            raise ValueError("Case not found")
+        case.status = 'RESOLVED'
+        case.updated_at = datetime.utcnow()
         db.session.commit()
-    
-    @staticmethod
-    def delete_case(case_id):
-        """Delete case from database"""
-        case = Case.query.get(case_id)
-        if case:
-            db.session.delete(case)
-            db.session.commit()
-            return True
-        return False
+
+    @classmethod
+    def delete_case(cls, case_id):
+        case = cls.query.get(case_id)
+        if not case:
+            raise ValueError("Case not found")
+        db.session.delete(case)
+        db.session.commit()
+        return True
     
     def to_dict(self):
         """Convert case to dictionary representation."""
@@ -84,8 +90,8 @@ class Case(db.Model):
             'location': self.location,
             'need': self.need,
             'status': self.status,
-            'created_at': self.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-            'updated_at': self.updated_at.strftime("%Y-%m-%d %H:%M:%S")
+            'created_at': self.created_at.strftime('%A %d %B %Y, %I:%M%p'),
+            'updated_at': self.updated_at.strftime('%A %d %B %Y, %I:%M%p')
         }
     def __repr__(self):
         return f'<Case {self.id}: {self.title}>'
@@ -107,23 +113,26 @@ class Comment(db.Model):
         return f'<Comment {self.id} on Case {self.case_id}>'
     
 def seed_database():
-    """Seed the database with sample cases."""
-    locations = ['Nasirov', 'Rajabli', 'Mayakovski']
-    test_user = User.query.filter_by(username='testuser').first()
+    try:
+        locations = ['Nasirov', 'Rajabli', 'Mayakovski']
+        test_user = User.query.filter_by(username='testuser').first()
 
-    if not test_user:
-        test_user = User(username='testuser')
-        test_user.set_password('testpassword')
-        db.session.add(test_user)
+        if not test_user:
+            test_user = User(username='testuser')
+            test_user.set_password('testpassword')
+            db.session.add(test_user)
 
-    for _ in range(9):
-        case = Case(
-            photo='https://picsum.photos/200/300',
-            location=random.choice(locations),
-            need='Medicine',
-            status='OPEN',
-            user_id=test_user.id
-        )
-        db.session.add(case)
+        for _ in range(9):
+            case = Case(
+                photo='https://picsum.photos/200/300',
+                location=random.choice(locations),
+                need='Medicine',
+                status='OPEN',
+                user_id=test_user.id
+            )
+            db.session.add(case)
 
-    db.session.commit()
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise e

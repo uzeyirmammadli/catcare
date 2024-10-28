@@ -5,65 +5,112 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cat Rescue App - Cases</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/lucide-static/font/lucide.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">List of Cases</h1>
+        <h1 class="text-4xl font-bold text-center mb-8 text-gray-800 flex items-center justify-center gap-3">
+            <i class="icon-cat text-blue-600"></i>
+            List of Cases
+        </h1>
         
-        <nav class="bg-white shadow-md rounded-lg px-4 py-2 flex items-center justify-between">
-            <a href="/report" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition duration-300">Report a New Case</a>
-            <ul class="flex items-center gap-4">
-                <li><a href="/search" class="text-gray-600 hover:text-blue-500">Search for Cats</a></li>
-                <li><a href="/resolve/id" class="text-gray-600 hover:text-blue-500">Resolve Cases</a></li>
-                <li><a href="/delete/id" class="text-gray-600 hover:text-blue-500">Delete Cases</a></li>
-            </ul>
+        <nav class="bg-white shadow-lg rounded-xl px-6 py-4 mb-8">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <a href="/" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300 shadow-md hover:shadow-lg">
+                    <i class="icon-home mr-2"></i>
+                    Home
+                </a>
+                <div class="flex flex-wrap gap-3">
+                    <a href="/report" class="inline-flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition duration-300 shadow-md hover:shadow-lg">
+                        <i class="icon-plus-circle mr-2"></i>
+                        Report a New Case
+                    </a>
+                    <a href="/advanced-search" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition duration-300 shadow-md hover:shadow-lg">
+                        <i class="icon-search mr-2"></i>
+                        Search for Cats
+                    </a>
+                    <a href="/resolve/id" class="inline-flex items-center px-4 py-2 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 transition duration-300 shadow-md hover:shadow-lg">
+                        <i class="icon-check-circle mr-2"></i>
+                        Resolve Cases
+                    </a>
+                    <a href="/delete_case/id" class="inline-flex items-center px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-300 shadow-md hover:shadow-lg">
+                        <i class="icon-trash-2 mr-2"></i>
+                        Delete Cases
+                    </a>
+                </div>
+            </div>
         </nav>
 
-        <table class="w-full table-auto shadow-md rounded-lg overflow-x-auto mt-4">
-            <thead>
-                <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                    <th class="py-3 px-4 text-left">Photo</th>
-                    <th class="py-3 px-4 text-left">Location</th>
-                    <th class="py-3 px-4 text-left">Status</th>
-                    <th class="py-3 px-4 text-left">Updated At</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for case in cases %}
-                    <tr class="border-b border-gray-200 hover:bg-gray-100">
-                        <td class="py-3 px-4">
-                            <img src="{{ case.photo }}" alt="Cat Photo" class="w-10 h-10 object-cover rounded-full" />
-                        </td>
-                        <td class="py-3 px-4 text-sm font-semibold">{{ case['location'] }}</td>
-                        <td class="py-3 px-4 text-sm">{{ case.status }}</td>
-                        <td class="py-3 px-4 text-sm">{{ case.updated_at }}</td>
+        <div class="bg-white shadow-xl rounded-xl overflow-hidden">
+            <table class="w-full table-auto">
+                <thead>
+                    <tr class="bg-gray-800 text-white text-sm uppercase">
+                        <th class="py-4 px-6 text-left">Photo</th>
+                        <th class="py-4 px-6 text-left">Location</th>
+                        <th class="py-4 px-6 text-left">Status</th>
+                        <th class="py-4 px-6 text-left">Updated At</th>
+                        <th class="py-4 px-6 text-left">Actions</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <!-- Pagination -->
-        <div class="flex justify-center mt-6">
-            <nav aria-label="Pagination">
-                <ul class="flex list-none">
-                    <li>
-                        <a href="?page={{ current_page - 1 }}" class="px-4 py-2 text-blue-500 hover:bg-blue-200 rounded-l" {% if current_page == 1 %} class="disabled" aria-disabled="true" {% endif %}>
-                            Previous
-                        </a>
-                    </li>
-                    {% for page in range(1, total_pages + 1) %}
-                        <li>
-                            <a href="?page={{ page }}" class="px-4 py-2 text-blue-500 hover:bg-blue-200 {% if page == current_page %} bg-blue-500 text-white {% endif %} rounded">
-                                {{ page }}
-                            </a>
-                        </li>
+                </thead>
+                <tbody>
+                    {% for case in cases %}
+                        <tr class="border-b border-gray-100 hover:bg-blue-50 transition duration-150">
+                            <td class="py-4 px-6">
+                                <div class="w-12 h-12 rounded-full overflow-hidden ring-2 ring-blue-500 ring-offset-2">
+                                    <img src="{{ case.photo }}" alt="Cat Photo" class="w-full h-full object-cover" />
+                                </div>
+                            </td>
+                            <td class="py-4 px-6">
+                                <div class="font-semibold text-gray-800">{{ case['location'] }}</div>
+                            </td>
+                            <td class="py-4 px-6">
+                                <span class="px-3 py-1 rounded-full text-sm font-semibold inline-flex items-center gap-1
+                                    {% if case.status == 'OPEN' %}
+                                        bg-amber-100 text-amber-800
+                                    {% else %}
+                                        bg-green-100 text-green-800
+                                    {% endif %}">
+                                    <i class="icon-circle w-2 h-2 {% if case.status == 'OPEN' %}text-amber-500{% else %}text-green-500{% endif %}"></i>
+                                    {{ case.status }}
+                                </span>
+                            </td>
+                            <td class="py-4 px-6 text-gray-600">
+                                <div class="flex items-center gap-2">
+                                    <i class="icon-clock text-gray-400"></i>
+                                    {{ case.updated_at.strftime('%a %d %b %Y, %I:%M%p') }}
+                                </div>
+                            </td>
+                            <td class="py-4 px-6">
+                                <a href="{{ url_for('main.update', case_id=case.id) }}" 
+                                   class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition duration-300 shadow-sm hover:shadow-md">
+                                    <i class="icon-edit-2 mr-2"></i>
+                                    Update
+                                </a>
+                            </td>
+                        </tr>
                     {% endfor %}
-                    <li>
-                        <a href="?page={{ current_page + 1 }}" class="px-4 py-2 text-blue-500 hover:bg-blue-200 rounded-r" {% if current_page == total_pages %} class="disabled" aria-disabled="true" {% endif %}>
-                            Next
-                        </a>
-                    </li>
-                </ul>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flex justify-center mt-8">
+            <nav class="inline-flex rounded-lg shadow-lg bg-white" aria-label="Pagination">
+                <a href="?page={{ current_page - 1 }}" 
+                   class="px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-l-lg border-r {% if current_page == 1 %}opacity-50 cursor-not-allowed{% endif %}"
+                   {% if current_page == 1 %}tabindex="-1"{% endif %}>
+                    <i class="icon-chevron-left"></i>
+                </a>
+                {% for page in range(1, total_pages + 1) %}
+                    <a href="?page={{ page }}" 
+                       class="px-4 py-2 {% if page == current_page %}bg-blue-600 text-white{% else %}text-blue-600 hover:bg-blue-50{% endif %} border-r">
+                        {{ page }}
+                    </a>
+                {% endfor %}
+                <a href="?page={{ current_page + 1 }}" 
+                   class="px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-r-lg {% if current_page == total_pages %}opacity-50 cursor-not-allowed{% endif %}"
+                   {% if current_page == total_pages %}tabindex="-1"{% endif %}>
+                    <i class="icon-chevron-right"></i>
+                </a>
             </nav>
         </div>
     </div>
