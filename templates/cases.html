@@ -9,10 +9,15 @@
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-4xl font-bold text-center mb-8 text-gray-800 flex items-center justify-center gap-3">
-            <i class="icon-cat text-blue-600"></i>
-            List of Cases
-        </h1>
+        <header class="text-center space-y-4">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 tracking-tight">
+                <i class="icon-cat text-blue-600"></i>
+                Cat Rescue App
+            </h1>
+            <p class="text-gray-600 max-w-2xl mx-auto">
+                Help us make a difference in the lives of cats in need. Report, track, and resolve cases to support our feline friends.
+            </p>
+        </header>
         
         <nav class="bg-white shadow-lg rounded-xl px-6 py-4 mb-8">
             <div class="flex flex-wrap items-center justify-between gap-4">
@@ -28,14 +33,6 @@
                     <a href="/advanced-search" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition duration-300 shadow-md hover:shadow-lg">
                         <i class="icon-search mr-2"></i>
                         Search for Cats
-                    </a>
-                    <a href="/resolve/id" class="inline-flex items-center px-4 py-2 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 transition duration-300 shadow-md hover:shadow-lg">
-                        <i class="icon-check-circle mr-2"></i>
-                        Resolve Cases
-                    </a>
-                    <a href="/delete_case/id" class="inline-flex items-center px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-300 shadow-md hover:shadow-lg">
-                        <i class="icon-trash-2 mr-2"></i>
-                        Delete Cases
                     </a>
                 </div>
             </div>
@@ -53,42 +50,75 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for case in cases %}
-                        <tr class="border-b border-gray-100 hover:bg-blue-50 transition duration-150">
-                            <td class="py-4 px-6">
-                                <div class="w-12 h-12 rounded-full overflow-hidden ring-2 ring-blue-500 ring-offset-2">
-                                    <img src="{{ case.photo }}" alt="Cat Photo" class="w-full h-full object-cover" />
+                    {% if cases %}
+                        {% for case in cases %}
+                            <tr class="border-b border-gray-100 hover:bg-blue-50 transition duration-150">
+                                <td class="py-4 px-6">
+                                    <div class="w-12 h-12 rounded-full overflow-hidden ring-2 ring-blue-500 ring-offset-2">
+                                        {% if case.photo %}
+                                            <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}" alt="Case Photo">
+                                        {% else %}
+                                            <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                                                <i class="icon-image text-gray-400"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <div class="font-semibold text-gray-800">{{ case.location }}</div>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span class="px-3 py-1 rounded-full text-sm font-semibold inline-flex items-center gap-1
+                                        {% if case.status == 'OPEN' %}
+                                            bg-amber-100 text-amber-800
+                                        {% else %}
+                                            bg-green-100 text-green-800
+                                        {% endif %}">
+                                        <i class="icon-circle w-2 h-2 {% if case.status == 'OPEN' %}text-amber-500{% else %}text-green-500{% endif %}"></i>
+                                        {{ case.status }}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-6 text-gray-600">
+                                    <div class="flex items-center gap-2">
+                                        <i class="icon-clock text-gray-400"></i>
+                                        {{ case.updated_at.strftime('%Y-%m-%d %H:%M') if case.updated_at else 'N/A' }}
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <div class="flex gap-2">
+                                        <a href="{{ url_for('main.view_case', case_id=case.id) }}" 
+                       class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition duration-300 ease-in-out transform hover:scale-105">
+                        View Details
+                    </a>
+                                        <a href="{{ url_for('main.update', case_id=case.id) }}" 
+                                           class="inline-flex items-center px-3 py-1.5 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition duration-300 shadow-sm hover:shadow-md">
+                                            <i class="icon-edit-2 mr-1"></i>
+                                            Update
+                                        </a>
+                                        <a href="{{ url_for('main.delete', case_id=case.id) }}" 
+                                        class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition duration-300 shadow-sm hover:shadow-md">
+                                         <i class="icon-edit-2 mr-1"></i>
+                                         Delete
+                                     </a>
+                                     <a href="{{ url_for('main.resolve_case', case_id=case.id) }}" 
+                                        class="inline-flex items-center px-3 py-1.5 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition duration-300 shadow-sm hover:shadow-md">
+                                         <i class="icon-edit-2 mr-1"></i>
+                                         Resolve
+                                     </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="py-8 text-center text-gray-500">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="icon-inbox text-4xl"></i>
+                                    No cases found
                                 </div>
-                            </td>
-                            <td class="py-4 px-6">
-                                <div class="font-semibold text-gray-800">{{ case['location'] }}</div>
-                            </td>
-                            <td class="py-4 px-6">
-                                <span class="px-3 py-1 rounded-full text-sm font-semibold inline-flex items-center gap-1
-                                    {% if case.status == 'OPEN' %}
-                                        bg-amber-100 text-amber-800
-                                    {% else %}
-                                        bg-green-100 text-green-800
-                                    {% endif %}">
-                                    <i class="icon-circle w-2 h-2 {% if case.status == 'OPEN' %}text-amber-500{% else %}text-green-500{% endif %}"></i>
-                                    {{ case.status }}
-                                </span>
-                            </td>
-                            <td class="py-4 px-6 text-gray-600">
-                                <div class="flex items-center gap-2">
-                                    <i class="icon-clock text-gray-400"></i>
-                                    {{ case.updated_at.strftime('%a %d %b %Y, %I:%M%p') }}
-                                </div>
-                            </td>
-                            <td class="py-4 px-6">
-                                <a href="{{ url_for('main.update', case_id=case.id) }}" 
-                                   class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition duration-300 shadow-sm hover:shadow-md">
-                                    <i class="icon-edit-2 mr-2"></i>
-                                    Update
-                                </a>
                             </td>
                         </tr>
-                    {% endfor %}
+                    {% endif %}
                 </tbody>
             </table>
         </div>
@@ -114,5 +144,11 @@
             </nav>
         </div>
     </div>
+    <!-- Footer -->
+    <footer class="mt-12 bg-white shadow-md py-6">
+        <div class="container mx-auto px-4 text-center text-gray-600">
+            <p>&copy; 2024 Cat Rescue App. Making a difference, one cat at a time.</p>
+        </div>
+    </footer>
 </body>
 </html>

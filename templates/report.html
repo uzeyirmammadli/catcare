@@ -3,32 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report a Case - Cat Rescue App</title>
+    <title>Cat Rescue App - Cases</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/lucide-static/font/lucide.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Cat Rescue App</h1>
-        
-        <!-- Dashboard Navigation Bar -->
-        <nav class="bg-white shadow-md rounded-lg p-4 mb-8">
-            <ul class="flex flex-wrap justify-center gap-4">
-                <li><a href="/" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition duration-300">Home</a></li>
-                <li><a href="/report" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition duration-300">Report a New Case</a></li>
-                <li><a href="/search" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition duration-300">Search for Cats</a></li>
-                <li><a href="/resolve/id" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition duration-300">Resolve cases</a></li>
-                <li><a href="/update/id" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition duration-300">Update cases</a></li>
-                <li><a href="/delete_case/id" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition duration-300">Delete cases</a></li>
-            </ul>
+        <header class="text-center space-y-4">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 tracking-tight">
+                <i class="icon-cat text-blue-600"></i>
+                Cat Rescue App
+            </h1>
+            <p class="text-gray-600 max-w-2xl mx-auto">
+                Help us make a difference in the lives of cats in need. Report, track, and resolve cases to support our feline friends.
+            </p>
+        </header>
+        <body class="bg-gray-100 min-h-screen">
+            <div class="container mx-auto px-4 py-8">
+                <h1 class="text-3xl font-bold mb-6 text-center text-red-800">Report</h1>
+        <nav class="bg-white shadow-lg rounded-xl px-6 py-4 mb-8">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <a href="/" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300 shadow-md hover:shadow-lg">
+                    <i class="icon-home mr-2"></i>
+                    Home
+                </a>
+                <div class="flex flex-wrap gap-3">
+                    <a href="/report" class="inline-flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition duration-300 shadow-md hover:shadow-lg">
+                        <i class="icon-plus-circle mr-2"></i>
+                        Report a New Case
+                    </a>
+                    <a href="/advanced-search" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition duration-300 shadow-md hover:shadow-lg">
+                        <i class="icon-search mr-2"></i>
+                        Search for Cats
+                    </a>
+                </div>
+            </div>
         </nav>
 
-        <!-- Report a New Case Form -->
-        <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md mx-auto">
+         <!-- Report a New Case Form -->
+         <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md mx-auto">
             <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Report a New Case</h2>
-            <form action="{{ url_for('main.report') }}" method="post" class="space-y-4">
+            <form action="/report" method="POST" enctype="multipart/form-data" class="space-y-4">
                 <div>
-                    <label for="photo" class="block text-sm font-medium text-gray-700 mb-1">Photo URL:</label>
-                    <input type="text" id="photo" name="photo" required 
+                    <label for="photo" class="block text-sm font-medium text-gray-700 mb-1">Upload Photo:</label>
+                    <input type="file" id="photo" name="photo" accept="image/*" required 
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 
@@ -40,8 +58,15 @@
                 
                 <div>
                     <label for="need" class="block text-sm font-medium text-gray-700 mb-1">Need:</label>
-                    <input type="text" id="need" name="need" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select id="need" name="need" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select a need</option>
+                        <option value="medical">Medical Care</option>
+                        <option value="food">Food/Water</option>
+                        <option value="shelter">Shelter</option>
+                        <option value="rescue">Rescue/Relocation</option>
+                        <option value="other">Other</option>
+                    </select>
                 </div>
                 
                 <button type="submit" 
@@ -51,5 +76,11 @@
             </form>
         </div>
     </div>
+    <!-- Footer -->
+    <footer class="mt-12 bg-white shadow-md py-6">
+        <div class="container mx-auto px-4 text-center text-gray-600">
+            <p>&copy; 2024 Cat Rescue App. Making a difference, one cat at a time.</p>
+        </div>
+    </footer>
 </body>
 </html>

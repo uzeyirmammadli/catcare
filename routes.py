@@ -1,11 +1,13 @@
 import os
 from uuid import UUID, uuid4
 from datetime import datetime, timedelta
+import logging
 from flask import Flask, request, render_template, redirect, url_for, jsonify, flash, abort, current_app
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.exceptions import NotFound
-from flask import Blueprint
+from werkzeug.utils import secure_filename
+from flask import Blueprint, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from typing import Dict, Any
 from .models import db, User, Comment, Case
@@ -13,8 +15,9 @@ from .forms import RegistrationForm, LoginForm, CommentForm
 from . import db, login_manager
 
 main = Blueprint('main', __name__)
+logging.basicConfig(level=logging.DEBUG)
 
-@main.route('/')
+@main.route('/index')
 def index():
     """Display open cases on the homepage."""
     try:
@@ -179,7 +182,7 @@ def login():
             if user and user.check_password(form.password.data):
                 login_user(user)
                 next_page = request.args.get('next')
-                return redirect(next_page if next_page else url_for('main.index'))
+                return redirect(next_page if next_page else url_for('main.show_cases'))
             else:
                 flash('Invalid username or password', 'error')
                 return render_template('login.html', form=form)
@@ -201,7 +204,7 @@ def logout():
     print("Logging out user")
     logout_user()
     print(f"User authenticated: {current_user.is_authenticated}")
-    return redirect(url_for('main.index'))
+    return redirect(url_for('main.show_cases'))
 
 # Error handlers
 @main.errorhandler(404)
@@ -213,19 +216,32 @@ def internal_error(error):
     db.session.rollback()
     return render_template('500.html'), 500
 
+import os
+from flask import current_app
+
 @main.route('/report', methods=['GET', 'POST'])
-@login_required  # Add this decorator to ensure only logged-in users can report
+@login_required
 def report():
     if request.method == 'POST':
         try:
+            # Get the photo file
+            photo = request.files.get('photo')
+            if photo:
+                # Save the file to a designated upload directory
+                filename = f"{str(uuid4())}_{photo.filename}"
+                filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+                photo.save(filepath)
+            else:
+                filename = None
+            
             # Create new Case instance using the SQLAlchemy model
             new_case = Case(
                 id=str(uuid4()),
-                photo=request.form['photo'],
+                photo=filename,
                 location=request.form['location'],
                 need=request.form['need'],
                 status='OPEN',
-                user_id=current_user.id,  # Associate the case with the current user
+                user_id=current_user.id,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow()
             )
@@ -237,7 +253,7 @@ def report():
             try:
                 db.session.commit()
                 flash('Case reported successfully!', 'success')
-                return redirect(url_for('main.index'))
+                return redirect(url_for('main.show_cases'))
             except Exception as e:
                 db.session.rollback()
                 current_app.logger.error(f"Database error creating case: {e}")
@@ -249,7 +265,11 @@ def report():
     
     return render_template('report.html')
 
-@main.route('/cases')
+
+@main.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
+@main.route('/')
 def show_cases():
     """Show all cases with pagination."""
     page = request.args.get('page', 1, type=int)
@@ -433,32 +453,36 @@ def scan():
             return render_template('scan_results.html', found=[])
     return render_template('scan.html')
 
-@main.route('/resolve/<int:case_id>', methods=['GET', 'POST'])
-@login_required
+@main.route('/resolve/<case_id>', methods=['GET', 'POST'])
 def resolve_case(case_id):
-    case = Case.query.get(case_id)
-    
-    if request.method == 'GET':
-        if not case:
-            flash('Case not found', 'danger')
-            return redirect(url_for('main.index'))
-        return render_template('resolve_cases.html', case_id=case_id)
+    """Resolve a case by updating its status."""
+    case = Case.query.get_or_404(case_id)
+    success = False
+    message = None
     
     if request.method == 'POST':
-        # If case is found, resolve it
-        if case:
-            try:
-                case.resolve()  # Call the resolve method
-                flash('Case resolved successfully.', 'success')
-            except Exception as e:
-                db.session.rollback()
-                current_app.logger.error(f"Error resolving case: {e}")
-                flash('Error resolving case. Please try again.', 'danger')
-            return render_template('resolve_cases.html', case_id=case_id, message='Case resolved', success=True)
-        else:
-            flash('Case not found', 'danger')
-            return redirect(url_for('main.index'))
-
+        try:
+            new_status = request.form.get('status')
+            if new_status in ['OPEN', 'RESOLVED']:
+                case.status = new_status
+                db.session.commit()
+                message = f'Case with ID {case_id} has been updated to {new_status}.'
+                success = True
+            else:
+                message = 'Invalid status provided.'
+                success = False
+        except Exception as e:
+            db.session.rollback()
+            message = f'Error updating case: {str(e)}'
+            success = False
+    
+    return render_template(
+        'resolve_case.html',
+        case=case,
+        case_id=case_id,
+        message=message,
+        success=success
+    )
 
 @main.route('/update/<case_id>', methods=['GET', 'POST'])
 @login_required
@@ -468,15 +492,15 @@ def update(case_id):
         case = Case.query.get_or_404(case_id)
         
         if request.method == 'POST':
-            # Get form data
-            photo = request.form.get('photo')
+            # Check if there is a file in the request
+            file = request.files.get('photo')
             location = request.form.get('location')
             need = request.form.get('need')
             status = request.form.get('status')
             
-            # Validate required fields
-            if not all([photo, location, need, status]):
-                flash('All fields are required', 'error')
+            # Validate required fields (excluding photo, as it might be optional)
+            if not all([location, need, status]):
+                flash('Location, need, and status are required', 'error')
                 return render_template('update_case.html', case=case)
             
             # Validate status
@@ -485,8 +509,14 @@ def update(case_id):
                 return render_template('update_case.html', case=case)
             
             try:
-                # Update case
-                case.photo = photo
+                # Update fields
+                if file and file.filename:
+                    # Save the file securely
+                    filename = secure_filename(file.filename)
+                    file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+                    file.save(file_path)
+                    case.photo = filename  # Update the photo field with the new filename
+                
                 case.location = location
                 case.need = need
                 case.status = status
@@ -523,7 +553,7 @@ def delete(case_id):
             flash('Case deleted successfully!', 'success')
         else:
             flash('Case not found or could not be deleted.', 'danger')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.show_cases'))
 
 @main.route('/case/<case_id>/details', methods=['GET'])  # Changed route path
 def view_case_details(case_id):  # Changed function name

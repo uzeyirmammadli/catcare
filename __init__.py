@@ -15,7 +15,8 @@ def create_app():
         SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:dominations@localhost:5432/cats',
         SQLALCHEMY_TRACK_MODIFICATIONS = False,
         SECRET_KEY='GqOOhMcXCi0dH3a_sHdJgFBSu2ZnDbXHPoMlca4eGUI',
-        DATABASE_PATH = os.path.join(basedir, 'cats.db')
+        DATABASE_PATH = os.path.join(basedir, 'cats.db'),
+        UPLOAD_FOLDER = 'upload/photos'
     )
 
     db.init_app(app)

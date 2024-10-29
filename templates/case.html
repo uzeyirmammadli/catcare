@@ -3,106 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Case Details</title>
+    <title>Cat Rescue App - Cases</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/lucide-static/font/lucide.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
+        <header class="text-center space-y-4">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 tracking-tight">
+                <i class="icon-cat text-blue-600"></i>
+                Cat Rescue App
+            </h1>
+            <p class="text-gray-600 max-w-2xl mx-auto">
+                Help us make a difference in the lives of cats in need. Report, track, and resolve cases to support our feline friends.
+            </p>
+        </header>
+        
+        <nav class="bg-white shadow-lg rounded-xl px-6 py-4 mb-8">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <a href="/" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300 shadow-md hover:shadow-lg">
+                    <i class="icon-home mr-2"></i>
+                    Home
+                </a>
+                <div class="flex flex-wrap gap-3">
+                    <a href="/report" class="inline-flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition duration-300 shadow-md hover:shadow-lg">
+                        <i class="icon-plus-circle mr-2"></i>
+                        Report a New Case
+                    </a>
+                    <a href="/advanced-search" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition duration-300 shadow-md hover:shadow-lg">
+                        <i class="icon-search mr-2"></i>
+                        Search for Cats
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+<body class="bg-gray-50 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
         <!-- Case Details Card -->
-        <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
-            <div class="p-6">
-                <h1 class="text-3xl font-bold text-gray-900 mb-4">Case Details</h1>
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8 border border-gray-100">
+            <div class="p-8">
+                <h1 class="text-4xl font-bold text-gray-900 mb-6 tracking-tight">Case Details</h1>
                 {% if case %}
-                    <div class="mb-4">
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                    <div class="mb-6">
+                        <span class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold tracking-wide
                             {% if case.status == 'OPEN' %}
-                                bg-green-100 text-green-800
+                                bg-green-100 text-green-800 ring-1 ring-green-600/20
                             {% else %}
-                                bg-gray-100 text-gray-800
+                                bg-gray-100 text-gray-800 ring-1 ring-gray-600/20
                             {% endif %}
                         ">
                             {{ case.status }}
                         </span>
                     </div>
 
-                    <div class="grid md:grid-cols-2 gap-6">
+                    <div class="grid md:grid-cols-2 gap-8">
                         <!-- Image Section -->
-                        <div class="rounded-lg overflow-hidden shadow-md">
+                        <div class="rounded-xl overflow-hidden shadow-md border border-gray-200">
                             {% if case.photo %}
-                                <img src="{{ case.photo }}" 
-                                     alt="Case Photo" 
-                                     class="w-full h-64 object-cover">
+                                <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}" alt="Case Photo">
+                                     
                             {% else %}
-                                <div class="w-full h-64 bg-gray-200 flex items-center justify-center">
-                                    <span class="text-gray-500">No image available</span>
+                                <div class="w-full h-80 bg-gray-100 flex items-center justify-center">
+                                    <span class="text-gray-400 text-lg">No image available</span>
                                 </div>
                             {% endif %}
                         </div>
 
                         <!-- Details Section -->
-                        <div class="space-y-4">
+                        <div class="space-y-6 bg-gray-50 p-6 rounded-xl">
                             <div>
-                                <h2 class="text-sm font-medium text-gray-500">Case ID</h2>
-                                <p class="mt-1 text-gray-900">{{ case.id }}</p>
+                                <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Case ID</h2>
+                                <p class="mt-2 text-gray-900 font-medium">{{ case.id }}</p>
                             </div>
                             
                             <div>
-                                <h2 class="text-sm font-medium text-gray-500">Location</h2>
-                                <p class="mt-1 text-gray-900">{{ case.location }}</p>
+                                <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Location</h2>
+                                <p class="mt-2 text-gray-900 font-medium">{{ case.location }}</p>
                             </div>
                             
                             <div>
-                                <h2 class="text-sm font-medium text-gray-500">Need</h2>
-                                <p class="mt-1 text-gray-900">{{ case.need }}</p>
+                                <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Need</h2>
+                                <p class="mt-2 text-gray-900 font-medium">{{ case.need }}</p>
                             </div>
                             
                             <div>
-                                <h2 class="text-sm font-medium text-gray-500">Created At</h2>
-                                <p class="mt-1 text-gray-900">{{ case.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                                <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Created At</h2>
+                                <p class="mt-2 text-gray-900 font-medium">{{ case.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Comments Section -->
                     {% if current_user.is_authenticated %}
-                        <div class="mt-8">
-                            <h2 class="text-2xl font-bold text-gray-900 mb-4">Add Comment</h2>
+                        <div class="mt-12">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-6">Add Comment</h2>
                             <form method="POST" class="space-y-4">
                                 {{ form.hidden_tag() }}
                                 <div>
-                                    {{ form.content.label(class="block text-sm font-medium text-gray-700") }}
-                                    {{ form.content(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm") }}
+                                    {{ form.content.label(class="block text-sm font-semibold text-gray-700 mb-2") }}
+                                    {{ form.content(class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition duration-150 ease-in-out") }}
                                     {% if form.content.errors %}
                                         {% for error in form.content.errors %}
-                                            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                                            <p class="mt-2 text-sm text-red-600">{{ error }}</p>
                                         {% endfor %}
                                     {% endif %}
                                 </div>
-                                {{ form.submit(class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500") }}
+                                {{ form.submit(class="inline-flex justify-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200") }}
                             </form>
                         </div>
                     {% endif %}
 
                     <!-- Comments List -->
-                    <div class="mt-8">
-                        <h2 class="text-2xl font-bold text-gray-900 mb-4">Comments</h2>
+                    <div class="mt-12">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6">Comments</h2>
                         {% if comments.items %}
-                            <div class="space-y-4">
+                            <div class="space-y-6">
                                 {% for comment in comments.items %}
-                                    <div class="bg-gray-50 rounded-lg p-4">
+                                    <div class="bg-gray-50 rounded-xl p-6 border border-gray-100 hover:shadow-md transition duration-200">
                                         <div class="flex justify-between items-start">
                                             <div>
-                                                <p class="font-medium text-gray-900">{{ comment.user.username }}</p>
-                                                <p class="text-sm text-gray-500">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                                                <p class="font-semibold text-gray-900">{{ comment.user.username }}</p>
+                                                <p class="text-sm text-gray-500 mt-1">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
                                             </div>
                                             {% if current_user.id == comment.user_id %}
-                                                <div class="flex space-x-2">
+                                                <div class="flex space-x-4">
                                                     <a href="{{ url_for('main.edit_comment', comment_id=comment.id) }}"
-                                                       class="text-sm text-blue-600 hover:text-blue-800">Edit</a>
+                                                       class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200">Edit</a>
                                                     <form method="POST"
                                                           action="{{ url_for('main.delete_comment', comment_id=comment.id) }}"
                                                           class="inline">
                                                         <button type="submit"
-                                                                class="text-sm text-red-600 hover:text-red-800"
+                                                                class="text-sm font-medium text-red-600 hover:text-red-800 transition-colors duration-200"
                                                                 onclick="return confirm('Are you sure you want to delete this comment?')">
                                                             Delete
                                                         </button>
@@ -110,32 +142,37 @@
                                                 </div>
                                             {% endif %}
                                         </div>
-                                        <p class="mt-2 text-gray-700">{{ comment.content }}</p>
+                                        <p class="mt-4 text-gray-700">{{ comment.content }}</p>
                                     </div>
                                 {% endfor %}
                             </div>
 
                             <!-- Pagination -->
                             {% if comments.pages > 1 %}
-                                <div class="flex justify-center space-x-1 mt-6">
+                                <div class="flex justify-center space-x-2 mt-8">
                                     {% for page in comments.iter_pages() %}
                                         {% if page %}
                                             <a href="{{ url_for('main.view_case', case_id=case.id, page=page) }}"
-                                               class="px-4 py-2 border rounded-md {% if page == comments.page %}bg-blue-600 text-white{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
+                                               class="px-4 py-2 border rounded-lg font-medium transition-colors duration-200 
+                                                    {% if page == comments.page %}
+                                                        bg-blue-600 text-white border-blue-600 hover:bg-blue-700
+                                                    {% else %}
+                                                        text-gray-700 border-gray-300 hover:bg-gray-50
+                                                    {% endif %}">
                                                 {{ page }}
                                             </a>
                                         {% else %}
-                                            <span class="px-4 py-2">...</span>
+                                            <span class="px-4 py-2 text-gray-500">...</span>
                                         {% endif %}
                                     {% endfor %}
                                 </div>
                             {% endif %}
                         {% else %}
-                            <p class="text-gray-500">No comments yet.</p>
+                            <p class="text-gray-500 text-center py-8 bg-gray-50 rounded-xl">No comments yet.</p>
                         {% endif %}
                     </div>
                 {% else %}
-                    <div class="bg-red-50 border-l-4 border-red-400 p-4">
+                    <div class="bg-red-50 border-l-4 border-red-400 p-6 rounded-r-xl">
                         <div class="flex">
                             <div class="ml-3">
                                 <p class="text-sm text-red-700">
@@ -148,5 +185,11 @@
             </div>
         </div>
     </div>
+       <!-- Footer -->
+       <footer class="mt-12 bg-white shadow-md py-6">
+        <div class="container mx-auto px-4 text-center text-gray-600">
+            <p>&copy; 2024 Cat Rescue App. Making a difference, one cat at a time.</p>
+        </div>
+    </footer>
 </body>
 </html>

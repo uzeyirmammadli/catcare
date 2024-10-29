@@ -3,14 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Update Case</title>
+    <title>Cat Rescue App - Cases</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/lucide-static/font/lucide.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center py-6">
-    <div class="w-full max-w-md">
-        <h1 class="text-2xl font-bold text-center mb-6">Update Case</h1>
+<body class="bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center space-y-4">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 tracking-tight">
+                <i class="icon-cat text-blue-600"></i>
+                Cat Rescue App
+            </h1>
+            <p class="text-gray-600 max-w-2xl mx-auto">
+                Help us make a difference in the lives of cats in need. Report, track, and resolve cases to support our feline friends.
+            </p>
+        </header>
         
-        {% with messages = get_flashed_messages(with_categories=true) %}
+        <nav class="bg-white shadow-lg rounded-xl px-6 py-4 mb-8">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <a href="/" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300 shadow-md hover:shadow-lg">
+                    <i class="icon-home mr-2"></i>
+                    Home
+                </a>
+                <div class="flex flex-wrap gap-3">
+                    <a href="/report" class="inline-flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition duration-300 shadow-md hover:shadow-lg">
+                        <i class="icon-plus-circle mr-2"></i>
+                        Report a New Case
+                    </a>
+                    <a href="/advanced-search" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition duration-300 shadow-md hover:shadow-lg">
+                        <i class="icon-search mr-2"></i>
+                        Search for Cats
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+    <body class="bg-gray-100 min-h-screen flex items-center justify-center py-6">
+         <div class="w-full max-w-md">
+          <h1 class="text-2xl font-bold text-center mb-6">Update Case</h1>
+        
+        <!-- {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
                     <div class="mb-4 p-4 rounded {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
@@ -18,17 +50,16 @@
                     </div>
                 {% endfor %}
             {% endif %}
-        {% endwith %}
+        {% endwith %} -->
 
-        <form id="updateForm" action="{{ url_for('main.update', case_id=case.id) }}" method="POST" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        <form id="updateForm" action="{{ url_for('main.update', case_id=case.id) }}" method="POST" enctype="multipart/form-data" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
             <div class="mb-4">
-                <label for="photo" class="block text-gray-700 text-sm font-bold mb-2">Photo URL</label>
-                <input type="text" 
+                <label for="photo" class="block text-gray-700 text-sm font-bold mb-2">Upload New Photo</label>
+                <input type="file" 
                        id="photo"
                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                       name="photo" 
-                       value="{{ case.photo }}"
-                       required>
+                       name="photo"
+                       accept="image/*">
             </div>
 
             <div class="mb-4">
@@ -41,15 +72,19 @@
                        required>
             </div>
 
-            <div class="mb-4">
-                <label for="need" class="block text-gray-700 text-sm font-bold mb-2">Need</label>
-                <input type="text" 
-                       id="need"
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                       name="need" 
-                       value="{{ case.need }}"
-                       required>
+            <div>
+                <label for="need" class="block text-sm font-medium text-gray-700 mb-1">Need:</label>
+                <select id="need" name="need" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Select a need</option>
+                    <option value="medical" {{ 'selected' if case.need == 'medical' else '' }}>Medical Care</option>
+                    <option value="food" {{ 'selected' if case.need == 'food' else '' }}>Food/Water</option>
+                    <option value="shelter" {{ 'selected' if case.need == 'shelter' else '' }}>Shelter</option>
+                    <option value="rescue" {{ 'selected' if case.need == 'rescue' else '' }}>Rescue/Relocation</option>
+                    <option value="other" {{ 'selected' if case.need == 'other' else '' }}>Other</option>
+                </select>
             </div>
+            
 
             <div class="mb-6">
                 <label for="status" class="block text-gray-700 text-sm font-bold mb-2">Status</label>
@@ -67,7 +102,7 @@
                         class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                     Update Case
                 </button>
-                <a href="{{ url_for('main.index') }}" 
+                <a href="{{ url_for('main.show_cases') }}" 
                    class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                     Cancel
                 </a>
@@ -89,7 +124,7 @@
             })
             .then(response => {
                 if (response.ok) {
-                    window.location.href = "{{ url_for('main.index') }}";
+                    window.location.href = "{{ url_for('main.show_cases') }}";
                 } else {
                     throw new Error('Failed to update case');
                 }
@@ -100,5 +135,11 @@
             });
         });
     </script>
+    <!-- Footer -->
+    <footer class="mt-12 bg-white shadow-md py-6">
+        <div class="container mx-auto px-4 text-center text-gray-600">
+            <p>&copy; 2024 Cat Rescue App. Making a difference, one cat at a time.</p>
+        </div>
+    </footer>
 </body>
 </html>
