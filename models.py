@@ -37,7 +37,8 @@ class Case(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('cases', lazy=True))
     comments = db.relationship('Comment', back_populates='case', lazy='dynamic',
-                             order_by="desc(Comment.created_at)")
+                             cascade="all, delete-orphan")
+    
     @classmethod
     def get_by_status(cls, status):
         """Retrieve cases by status."""

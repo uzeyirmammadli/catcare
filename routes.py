@@ -26,88 +26,44 @@ def index():
     except Exception as e:
         flash(f'Error loading cases: {str(e)}', 'danger')
         return render_template('index.html', open_cases=[])
-@main.route('/case/<case_id>', methods=['GET', 'POST'])
-@login_required
-def view_case(case_id):
-    # Validate UUID format
-    try:
-        UUID(case_id)  # Validate UUID format
-    except ValueError:
-        raise NotFound("Invalid case ID format")
-    
-    case = Case.query.get_or_404(case_id)
-    
-    # Add some debug logging
-    current_app.logger.debug(f"Looking up case with ID: {case_id}")
-    
-    if not case:
-        current_app.logger.error(f"Case not found with ID: {case_id}")
-        raise NotFound("Case not found")
-        
-    form = CommentForm()
 
-    if form.validate_on_submit():
-        comment = Comment(
-            content=form.content.data,
-            case_id=case.id,
-            user_id=current_user.id
-        )
-        db.session.add(comment)
-        
-        try:
-            db.session.commit()
-            flash('Comment added successfully!', 'success')
-        except SQLAlchemyError as e:
-            db.session.rollback()
-            current_app.logger.error(f"Database error adding comment: {e}")
-            flash('Error adding comment. Please try again.', 'error')
-        
-        return redirect(url_for('main.view_case', case_id=case_id))
-
-    # Paginate comments
-    page = request.args.get('page', 1, type=int)
-    per_page = current_app.config.get('COMMENTS_PER_PAGE', 10)
-    
-    comments = case.comments.paginate(
-        page=page,
-        per_page=per_page,
-        error_out=False
-    )
-    
-    return render_template('case.html',
-                         case=case,
-                         form=form,
-                         comments=comments)
-
-@main.route('/comment/<int:comment_id>/edit', methods=['GET', 'POST'])
+@main.route('/comment/<comment_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_comment(comment_id):
-    comment = Comment.query.get_or_404(comment_id)
+    # Get the comment by id
+    comment = Comment.query.get(comment_id)
     
-    # Check if user is authorized to edit the comment
-    if comment.user_id != current_user.id:
-        flash('You are not authorized to edit this comment.', 'error')
-        return redirect(url_for('main.view_case', case_id=comment.case_id))
-    
-    form = CommentForm()
-    
-    if request.method == 'GET':
-        form.content.data = comment.content
-    
-    elif form.validate_on_submit():
-        comment.content = form.content.data
-        try:
-            db.session.commit()
-            flash('Comment updated successfully!', 'success')
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"Error updating comment: {e}")
-            flash('Error updating comment. Please try again.', 'error')
-        
-        return redirect(url_for('main.view_case', case_id=comment.case_id))
-    
-    return render_template('edit_comment.html', form=form, comment=comment)
+    # If the comment doesn't exist, redirect with an error message
+    if not comment:
+        flash("Comment not found.", "error")
+        return redirect(url_for('view_case_details', case_id=comment.case_id))
 
+    # Get updated data from the request
+    content = request.form.get("content")
+    case_id = request.form.get("case_id")  # Make sure this is provided in the request
+    
+    # Validate that the case exists in the database
+    case = Case.query.get(case_id)
+    if not case:
+        flash("The referenced case does not exist.", "error")
+        return redirect(url_for('main.view_case_details', case_id=comment.case_id))
+
+    # Update the comment fields
+    comment.content = content if content else comment.content
+    comment.case_id = case.id  # Ensure `case_id` is set correctly
+    comment.updated_at = datetime.utcnow()
+
+    try:
+        # Commit changes to the database
+        db.session.commit()
+        flash("Comment updated successfully!", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash("An error occurred while updating the comment.", "error")
+        print(e)  # For debugging
+
+    return redirect(url_for('main.view_case_details', case_id=comment.case_id))
+ 
 @main.route('/comment/<int:comment_id>/delete', methods=['POST'])
 @login_required
 def delete_comment(comment_id):
@@ -116,7 +72,7 @@ def delete_comment(comment_id):
     # Check if user is authorized to delete the comment
     if comment.user_id != current_user.id:
         flash('You are not authorized to delete this comment.', 'error')
-        return redirect(url_for('main.view_case', case_id=comment.case_id))
+        return redirect(url_for('main.view_case_details', case_id=comment.case_id))
     
     try:
         db.session.delete(comment)
@@ -127,7 +83,7 @@ def delete_comment(comment_id):
         current_app.logger.error(f"Error deleting comment: {e}")
         flash('Error deleting comment. Please try again.', 'error')
     
-    return redirect(url_for('main.view_case', case_id=comment.case_id))
+    return redirect(url_for('main.view_case_details', case_id=comment.case_id))
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -555,15 +511,28 @@ def delete(case_id):
             flash('Case not found or could not be deleted.', 'danger')
         return redirect(url_for('main.show_cases'))
 
-@main.route('/case/<case_id>/details', methods=['GET'])  # Changed route path
-def view_case_details(case_id):  # Changed function name
-    """View a single case and its comments."""
-    try:
-        case = Case.query.get_or_404(case_id)
-        return render_template('case.html', case=case)
-    except Exception as e:
-        flash(f'Error loading case: {str(e)}', 'danger')
-        return redirect(url_for('main.show_cases'))
+@main.route('/case/<case_id>/details', methods=['GET', 'POST'])
+@login_required
+def view_case_details(case_id):
+    """View a single case and its comments, with a form to add a new comment."""
+    case = Case.query.get_or_404(case_id)
+    form = CommentForm()
+    page = request.args.get('page', 1, type=int)
+    
+    # Paginate comments
+    # comments = Comment.query.filter_by(case_id=case.id).order_by(Comment.created_at.desc()).paginate(page, per_page=5)
+    comments = Comment.query.filter_by(case_id=case.id).order_by(Comment.created_at.desc()).paginate(page=page, per_page=5)
+
+    
+    if form.validate_on_submit():
+        # Add a new comment
+        comment = Comment(content=form.content.data, user_id=current_user.id, case_id=case.id)
+        db.session.add(comment)
+        db.session.commit()
+        flash('Comment added successfully!', 'success')
+        return redirect(url_for('main.view_case_details', case_id=case.id))
+
+    return render_template('case.html', case=case, comments=comments, form=form)
 
 @main.route('/cases/status/<status>')  # Changed route path
 def list_cases_by_status(status):  # Changed function name
