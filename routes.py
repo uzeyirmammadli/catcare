@@ -1,18 +1,15 @@
 import os
-from uuid import UUID, uuid4
+from uuid import  uuid4
 from datetime import datetime, timedelta
 import logging
-from flask import Flask, request, render_template, redirect, url_for, jsonify, flash, abort, current_app
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.exceptions import NotFound
+from flask import request, render_template, redirect, url_for, jsonify, flash, abort, current_app
+from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 from flask import Blueprint, send_from_directory
-from flask_sqlalchemy import SQLAlchemy
-from typing import Dict, Any
 from .models import db, User, Comment, Case
 from .forms import RegistrationForm, LoginForm, CommentForm
 from . import db, login_manager
+
 
 main = Blueprint('main', __name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -172,8 +169,6 @@ def internal_error(error):
     db.session.rollback()
     return render_template('500.html'), 500
 
-import os
-from flask import current_app
 
 @main.route('/report', methods=['GET', 'POST'])
 @login_required
@@ -248,7 +243,6 @@ def show_cases():
                              pagination=None,
                              current_page=1,
                              total_pages=1)
-
 
 @main.route('/search', methods=['GET', 'POST'])
 def search():
@@ -519,8 +513,6 @@ def view_case_details(case_id):
     form = CommentForm()
     page = request.args.get('page', 1, type=int)
     
-    # Paginate comments
-    # comments = Comment.query.filter_by(case_id=case.id).order_by(Comment.created_at.desc()).paginate(page, per_page=5)
     comments = Comment.query.filter_by(case_id=case.id).order_by(Comment.created_at.desc()).paginate(page=page, per_page=5)
 
     
@@ -544,11 +536,3 @@ def list_cases_by_status(status):  # Changed function name
         return jsonify({'error': str(e)}), 400
     except Exception as e:
         return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
-
-# def create_app():
-#     init_db()
-#     return main
-
-# if __name__ == '__main__':
-#     main = create_app()
-#     main.run(debug=True)

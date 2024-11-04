@@ -6,6 +6,7 @@
     <title>Cat Rescue App - Cases</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://unpkg.com/lucide-static/font/lucide.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
@@ -54,14 +55,12 @@
                         {% for case in cases %}
                             <tr class="border-b border-gray-100 hover:bg-blue-50 transition duration-150">
                                 <td class="py-4 px-6">
-                                    <div class="w-12 h-12 rounded-full overflow-hidden ring-2 ring-blue-500 ring-offset-2">
-                                        {% if case.photo %}
-                                            <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}" alt="Case Photo">
-                                        {% else %}
-                                            <div class="w-full h-full bg-gray-200 flex items-center justify-center">
-                                                <i class="icon-image text-gray-400"></i>
-                                            </div>
-                                        {% endif %}
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 my-4">
+                                        <div class="relative aspect-square">
+                                            <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}"
+                                                 alt="Case image"
+                                                 class="object-cover w-24 h-24 rounded-lg shadow-md">
+                                        </div>
                                     </div>
                                 </td>
                                 <td class="py-4 px-6">
@@ -87,25 +86,26 @@
                                 <td class="py-4 px-6">
                                     <div class="flex gap-2">
                                         <a href="{{ url_for('main.view_case_details', case_id=case.id) }}" 
-                       class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition duration-300 ease-in-out transform hover:scale-105">
-                        View Details
-                    </a>
-                                        <a href="{{ url_for('main.update', case_id=case.id) }}" 
-                                           class="inline-flex items-center px-3 py-1.5 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition duration-300 shadow-sm hover:shadow-md">
-                                            <i class="icon-edit-2 mr-1"></i>
-                                            Update
+                                           class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition duration-300 ease-in-out transform hover:scale-105">
+                                            <i class="fas fa-eye mr-1"></i> View Details
                                         </a>
+                                        
+                                        <a href="{{ url_for('main.update', case_id=case.id) }}" 
+                                           class="inline-flex items-center px-3 py-1.5 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700 transition duration-300 shadow-sm hover:shadow-md">
+                                            <i class="fas fa-pencil-alt mr-1"></i> Update
+                                        </a>
+                                        
                                         <a href="{{ url_for('main.delete', case_id=case.id) }}" 
-                                        class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition duration-300 shadow-sm hover:shadow-md">
-                                         <i class="icon-edit-2 mr-1"></i>
-                                         Delete
-                                     </a>
-                                     <a href="{{ url_for('main.resolve_case', case_id=case.id) }}" 
-                                        class="inline-flex items-center px-3 py-1.5 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition duration-300 shadow-sm hover:shadow-md">
-                                         <i class="icon-edit-2 mr-1"></i>
-                                         Resolve
-                                     </a>
+                                           class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition duration-300 shadow-sm hover:shadow-md">
+                                            <i class="fas fa-trash mr-1"></i> Delete
+                                        </a>
+                                        
+                                        <a href="{{ url_for('main.resolve_case', case_id=case.id) }}" 
+                                           class="inline-flex items-center px-3 py-1.5 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 transition duration-300 shadow-sm hover:shadow-md">
+                                            <i class="fas fa-check-circle mr-1"></i> Resolve
+                                        </a>
                                     </div>
+                                    
                                 </td>
                             </tr>
                         {% endfor %}
@@ -123,27 +123,35 @@
             </table>
         </div>
 
+        <!-- Pagination Links -->
+        {% if pagination and pagination.pages > 1 %}
         <div class="flex justify-center mt-8">
             <nav class="inline-flex rounded-lg shadow-lg bg-white" aria-label="Pagination">
-                <a href="?page={{ current_page - 1 }}" 
-                   class="px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-l-lg border-r {% if current_page == 1 %}opacity-50 cursor-not-allowed{% endif %}"
-                   {% if current_page == 1 %}tabindex="-1"{% endif %}>
+                <a href="{{ url_for('main.show_cases', page=current_page - 1) }}" 
+                   class="px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-l-lg border-r {% if not pagination.has_prev %}opacity-50 cursor-not-allowed{% endif %}"
+                   {% if not pagination.has_prev %}tabindex="-1"{% endif %}>
                     <i class="icon-chevron-left"></i>
                 </a>
-                {% for page in range(1, total_pages + 1) %}
-                    <a href="?page={{ page }}" 
-                       class="px-4 py-2 {% if page == current_page %}bg-blue-600 text-white{% else %}text-blue-600 hover:bg-blue-50{% endif %} border-r">
-                        {{ page }}
-                    </a>
+                {% for page_num in pagination.iter_pages() %}
+                    {% if page_num %}
+                        <a href="{{ url_for('main.show_cases', page=page_num) }}" 
+                           class="px-4 py-2 {% if page_num == current_page %}bg-blue-600 text-white{% else %}text-blue-600 hover:bg-blue-50{% endif %} border-r">
+                            {{ page_num }}
+                        </a>
+                    {% else %}
+                        <span class="px-4 py-2 text-gray-500">...</span>
+                    {% endif %}
                 {% endfor %}
-                <a href="?page={{ current_page + 1 }}" 
-                   class="px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-r-lg {% if current_page == total_pages %}opacity-50 cursor-not-allowed{% endif %}"
-                   {% if current_page == total_pages %}tabindex="-1"{% endif %}>
+                <a href="{{ url_for('main.show_cases', page=current_page + 1) }}" 
+                   class="px-4 py-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-r-lg {% if not pagination.has_next %}opacity-50 cursor-not-allowed{% endif %}"
+                   {% if not pagination.has_next %}tabindex="-1"{% endif %}>
                     <i class="icon-chevron-right"></i>
                 </a>
             </nav>
         </div>
-    </div>
+        {% endif %}
+        
+
     <!-- Footer -->
     <footer class="mt-12 bg-white shadow-md py-6">
         <div class="container mx-auto px-4 text-center text-gray-600">

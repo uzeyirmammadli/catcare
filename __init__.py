@@ -16,7 +16,7 @@ def create_app():
         SQLALCHEMY_TRACK_MODIFICATIONS = False,
         SECRET_KEY='GqOOhMcXCi0dH3a_sHdJgFBSu2ZnDbXHPoMlca4eGUI',
         DATABASE_PATH = os.path.join(basedir, 'cats.db'),
-        UPLOAD_FOLDER = 'upload/photos'
+        UPLOAD_FOLDER = 'static/uploads'
     )
 
     db.init_app(app)
