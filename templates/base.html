@@ -3,37 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cat Rescue App</title>
+    <title>{% block title %}Cat Rescue App{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://unpkg.com/lucide-static/font/lucide.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @media (max-width: 640px) {
+            .container { padding-left: 1rem; padding-right: 1rem; }
+        }
+        .nav-link { transition: transform 0.2s; }
+        .nav-link:hover { transform: translateY(-1px); }
+    </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <!-- Header -->
-        <header class="text-center space-y-4">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 tracking-tight flex items-center justify-center gap-3">
-                <i class="icon-cat text-blue-600 h-10 w-10"></i>
-                Cat Rescue App
+        <header class="text-center space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 tracking-tight flex items-center justify-center gap-3">
+                <i class="icon-cat text-blue-600 h-8 sm:h-10 w-8 sm:w-10"></i>
+                <span class="relative">
+                    Cat Rescue App
+                    <span class="absolute -bottom-1 left-0 w-full h-1 bg-blue-600 transform scale-x-0 transition-transform duration-300 group-hover:scale-x-100"></span>
+                </span>
             </h1>
-            <p class="text-gray-600 max-w-2xl mx-auto">
+            <p class="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto px-4">
                 Help us make a difference in the lives of cats in need. Report, track, and resolve cases to support our feline friends.
             </p>
         </header>
 
         <!-- Navigation -->
-        <nav class="bg-white shadow-lg rounded-xl px-6 py-4 mb-8">
-            <div class="flex flex-wrap items-center justify-between gap-4">
-                <a href="/" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300 shadow-md hover:shadow-lg">
-                    <i class="icon-home w-5 h-5 mr-2"></i>
+        <nav class="bg-white shadow-lg rounded-xl px-4 sm:px-6 py-3 sm:py-4 mb-6 sm:mb-8">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+                <a href="/" class="nav-link w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                    <i class="icon-home w-4 h-4 sm:w-5 sm:h-5 mr-2"></i>
                     Home
                 </a>
-                <div class="flex flex-wrap gap-3">
-                    <a href="/report" class="inline-flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition duration-300 shadow-md hover:shadow-lg">
-                        <i class="icon-plus-circle w-5 h-5 mr-2"></i>
+                <div class="flex flex-col sm:flex-row w-full sm:w-auto gap-2 sm:gap-3">
+                    <a href="/report" class="nav-link w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                        <i class="icon-plus-circle w-4 h-4 sm:w-5 sm:h-5 mr-2"></i>
                         Report a New Case
                     </a>
-                    <a href="/advanced-search" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition duration-300 shadow-md hover:shadow-lg">
-                        <i class="icon-search w-5 h-5 mr-2"></i>
+                    <a href="/advanced-search" class="nav-link w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                        <i class="icon-search w-4 h-4 sm:w-5 sm:h-5 mr-2"></i>
                         Search for Cats
                     </a>
                 </div>
@@ -41,16 +52,48 @@
         </nav>
 
         <!-- Main Content -->
-        <main>
+        <main class="min-h-[60vh]">
             {% block content %}{% endblock %}
         </main>
 
         <!-- Footer -->
-        <footer class="mt-12 bg-white shadow-md py-6 rounded-xl">
-            <div class="container mx-auto px-4 text-center text-gray-600">
-                <p>&copy; <script>document.write(new Date().getFullYear())</script> Cat Rescue App. Making a difference, one cat at a time.</p>
+        <footer class="mt-8 sm:mt-12 bg-white shadow-md py-4 sm:py-6 rounded-xl">
+            <div class="container mx-auto px-4 text-center">
+                <p class="text-sm sm:text-base text-gray-600">
+                    &copy; <script>document.write(new Date().getFullYear())</script> Cat Rescue App. 
+                    <span class="block sm:inline">Making a difference, one cat at a time.</span>
+                </p>
             </div>
         </footer>
     </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="fixed bottom-4 right-4 z-50 space-y-2">
+                {% for category, message in messages %}
+                    <div class="animate-fade-in-up bg-white rounded-lg shadow-lg p-4 max-w-md {% if category == 'error' %}border-l-4 border-red-500{% else %}border-l-4 border-green-500{% endif %}">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                {% if category == 'error' %}
+                                    <i class="icon-alert-circle text-red-500"></i>
+                                {% else %}
+                                    <i class="icon-check-circle text-green-500"></i>
+                                {% endif %}
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-gray-800">{{ message }}</p>
+                            </div>
+                            <button onclick="this.parentElement.parentElement.remove()" class="ml-auto flex-shrink-0 text-gray-400 hover:text-gray-500">
+                                <i class="icon-x w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block scripts %}{% endblock %}
 </body>
 </html>
