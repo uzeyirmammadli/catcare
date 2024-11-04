@@ -1,46 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cat Rescue App - Cases</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://unpkg.com/lucide-static/font/lucide.css" rel="stylesheet">
-</head>
+{% extends "base.html" %}
 
-<body class="bg-gray-50 min-h-screen font-sans">
-    <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <header class="text-center space-y-4 mb-8">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 tracking-tight">
-                <i class="icon-cat text-blue-600"></i>
-                Cat Rescue App
-            </h1>
-            <p class="text-gray-600 max-w-2xl mx-auto">
-                Help us make a difference in the lives of cats in need. Report, track, and resolve cases to support our feline friends.
-            </p>
-        </header>
-        
-        <!-- Navigation -->
-        <nav class="bg-white shadow-lg rounded-xl px-6 py-4 mb-8">
-            <div class="flex flex-wrap items-center justify-between gap-4">
-                <a href="/" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300 shadow-md hover:shadow-lg">
-                    <i class="icon-home mr-2"></i> Home
-                </a>
-                <div class="flex flex-wrap gap-3">
-                    <a href="/report" class="inline-flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition duration-300 shadow-md hover:shadow-lg">
-                        <i class="icon-plus-circle mr-2"></i> Report a New Case
-                    </a>
-                    <a href="/advanced-search" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition duration-300 shadow-md hover:shadow-lg">
-                        <i class="icon-search mr-2"></i> Search for Cats
-                    </a>
-                </div>
-            </div>
-        </nav>
+{% block content %}
 
        <!-- Case Details Section -->
-<div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8 border border-gray-100 flex">
-    <!-- Image Section -->
+<body class="bg-gray-50 min-h-screen font-sans">
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8 border border-gray-100 flex">
+        <!-- Image Section -->
     <div class="w-1/2 rounded-xl overflow-hidden shadow-md border border-gray-200">
         {% if case.photo %}
             <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}" alt="Case Photo" class="w-350 h-350 object-cover">
@@ -189,12 +154,6 @@
             </div>
         {% endif %}
     </div>
-    
-    <!-- Footer -->
-    <footer class="mt-12 bg-white shadow-md py-6">
-        <div class="container mx-auto px-4 text-center text-gray-600">
-            <p>&copy; 2024 Cat Rescue App. Making a difference, one cat at a time.</p>
-        </div>
-    </footer>
-</body>
-</html>
+
+    </body>
+    {% endblock %}

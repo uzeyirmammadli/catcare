@@ -14,16 +14,6 @@ from . import db, login_manager
 main = Blueprint('main', __name__)
 logging.basicConfig(level=logging.DEBUG)
 
-@main.route('/index')
-def index():
-    """Display open cases on the homepage."""
-    try:
-        open_cases = Case.query.filter_by(status='OPEN').all()
-        return render_template('index.html', open_cases=open_cases)
-    except Exception as e:
-        flash(f'Error loading cases: {str(e)}', 'danger')
-        return render_template('index.html', open_cases=[])
-
 @main.route('/comment/<comment_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_comment(comment_id):
@@ -216,10 +206,10 @@ def report():
     
     return render_template('report.html')
 
-
 @main.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
+
 @main.route('/')
 def show_cases():
     """Show all cases with pagination."""
@@ -243,59 +233,6 @@ def show_cases():
                              pagination=None,
                              current_page=1,
                              total_pages=1)
-
-@main.route('/search', methods=['GET', 'POST'])
-def search():
-    """Search for cases by location and status."""
-    query = request.args.get('query', '')
-    status = request.args.get('status', 'OPEN')
-    page = request.args.get('page', 1, type=int)
-    per_page = current_app.config.get('CASES_PER_PAGE', 10)
-    
-    try:
-        # Base query
-        query_obj = Case.query
-        
-        # Apply filters if provided
-        if query:
-            query_obj = query_obj.filter(Case.location.ilike(f'%{query}%'))
-        if status:
-            query_obj = query_obj.filter(Case.status == status.upper())
-            
-        # Order by most recent first
-        query_obj = query_obj.order_by(Case.created_at.desc())
-        
-        # Paginate results
-        pagination = query_obj.paginate(
-            page=page,
-            per_page=per_page,
-            error_out=False
-        )
-        
-        # Get distinct locations for the dropdown
-        locations = db.session.query(Case.location).distinct().all()
-        locations = [loc[0] for loc in locations]
-        
-        return render_template('search.html',
-                             cases=pagination.items,
-                             pagination=pagination,
-                             current_page=page,
-                             total_pages=pagination.pages,
-                             query=query,
-                             status=status,
-                             locations=locations)
-                             
-    except Exception as e:
-        current_app.logger.error(f"Search error: {str(e)}")
-        flash('An error occurred while searching. Please try again.', 'error')
-        return render_template('search.html',
-                             cases=[],
-                             pagination=None,
-                             current_page=1,
-                             total_pages=1,
-                             query=query,
-                             status=status,
-                             locations=[])
  
 @main.route('/advanced-search', methods=['GET'])
 def advanced_search():
@@ -390,18 +327,6 @@ def advanced_search():
                              needs=[],
                              statuses=['OPEN', 'RESOLVED'],
                              sort_options=[])
-@main.route('/scan', methods=['GET', 'POST'])
-def scan():
-    """Search cases by location."""
-    if request.method == 'POST':
-        location = request.form['location']
-        try:
-            found = Case.get_by_location(location)
-            return render_template('scan_results.html', found=found)
-        except Exception as e:
-            flash(f'Error scanning location: {str(e)}', 'danger')
-            return render_template('scan_results.html', found=[])
-    return render_template('scan.html')
 
 @main.route('/resolve/<case_id>', methods=['GET', 'POST'])
 def resolve_case(case_id):
