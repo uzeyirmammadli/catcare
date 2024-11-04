@@ -87,9 +87,13 @@
             <p class="mt-2 text-blue-900 font-semibold text-lg">{{ case.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
         </div>
         <div>
+            <a href="{{ url_for('main.update', case_id=case.id) }}" 
+            class="inline-flex items-center px-3 py-1.5 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700 transition duration-300 shadow-sm hover:shadow-md">
+             <i class="fas fa-pencil-alt mr-2"></i> Update
+         </a>
         <a href="{{ url_for('main.delete', case_id=case.id) }}" 
         class="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition duration-300 shadow-sm hover:shadow-md">
-         <i class="fas fa-trash mr-1"></i> Delete
+         <i class="fas fa-trash mr-2"></i> Delete
      </a>
     </div>
     </div>
