@@ -34,19 +34,39 @@
         <!-- Navigation -->
         <nav class="bg-white shadow-lg rounded-xl px-4 sm:px-6 py-3 sm:py-4 mb-6 sm:mb-8">
             <div class="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
-                <a href="/" class="nav-link w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg">
-                    <i class="icon-home w-4 h-4 sm:w-5 sm:h-5 mr-2"></i>
-                    Home
-                </a>
+                <!-- Left side navigation -->
                 <div class="flex flex-col sm:flex-row w-full sm:w-auto gap-2 sm:gap-3">
+                    <a href="/" class="nav-link w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                        <i class="fas fa-home w-4 h-4 sm:w-5 sm:h-5 mr-2"></i>
+                        Home
+                    </a>
                     <a href="/report" class="nav-link w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-all duration-300 shadow-md hover:shadow-lg">
-                        <i class="icon-plus-circle w-4 h-4 sm:w-5 sm:h-5 mr-2"></i>
-                        Report a New Case
+                        <i class="fas fa-plus-circle w-4 h-4 sm:w-5 sm:h-5 mr-2"></i>
+                        Report New Case
                     </a>
                     <a href="/advanced-search" class="nav-link w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-all duration-300 shadow-md hover:shadow-lg">
                         <i class="icon-search w-4 h-4 sm:w-5 sm:h-5 mr-2"></i>
-                        Search for Cats
+                        Search
                     </a>
+                </div>
+
+                <!-- Right side authentication -->
+                <div class="flex flex-col sm:flex-row w-full sm:w-auto gap-2 sm:gap-3">
+                    {% if current_user.is_authenticated %}
+                        <a href="/logout" class="nav-link w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                            <i class="icon-log-out w-4 h-4 sm:w-5 sm:h-5 mr-2"></i>
+                            Logout
+                        </a>
+                    {% else %}
+                        <a href="/login" class="nav-link w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                            <i class="icon-log-in w-4 h-4 sm:w-5 sm:h-5 mr-2"></i>
+                            Login
+                        </a>
+                        <a href="/register" class="nav-link w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                            <i class="icon-user-plus w-4 h-4 sm:w-5 sm:h-5 mr-2"></i>
+                            Register
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </nav>
