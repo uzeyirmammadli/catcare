@@ -13,6 +13,9 @@
         }
         .nav-link { transition: transform 0.2s; }
         .nav-link:hover { transform: translateY(-1px); }
+        .mobile-menu { transition: transform 0.3s ease-in-out; }
+        .mobile-menu.hidden { transform: translateX(-100%); }
+        .mobile-menu.block { transform: translateX(0); }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
@@ -33,38 +36,99 @@
 
         <!-- Navigation -->
         <nav class="bg-white shadow-lg rounded-xl px-4 sm:px-6 py-3 sm:py-4 mb-6 sm:mb-8">
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+            <!-- Mobile Menu Button -->
+            <div class="sm:hidden flex justify-between items-center">
+                <button id="mobile-menu-button" class="text-gray-600 hover:text-gray-900 focus:outline-none">
+                    <i class="fas fa-bars w-6 h-6"></i>
+                </button>
+                <!-- {% if current_user.is_authenticated %}
+                    <a href="/logout" class="nav-link inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                        <i class="icon-log-out w-4 h-4"></i>
+                        <span class="ml-2">Logout</span>
+                    </a>
+                {% else %}
+                    <div class="flex gap-2">
+                        <a href="/login" class="nav-link inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                            <i class="icon-log-in w-4 h-4"></i>
+                        </a>
+                        <a href="/register" class="nav-link inline-flex items-center justify-center px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                            <i class="icon-user-plus w-4 h-4"></i>
+                        </a>
+                    </div>
+                {% endif %} -->
+            </div>
+
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="mobile-menu fixed inset-y-0 left-0 transform -translate-x-full sm:hidden bg-white w-64 z-50 shadow-xl transition-transform duration-300 ease-in-out">
+                <div class="p-6 space-y-4">
+                    <button id="close-menu-button" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-times w-6 h-6"></i>
+                    </button>
+                    <div class="space-y-3">
+                        <a href="/" class="nav-link w-full flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-home w-5 h-5"></i>
+                            <span class="ml-2">Home</span>
+                        </a>
+                        <a href="/report" class="nav-link w-full flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700">
+                            <i class="fas fa-plus-circle w-5 h-5"></i>
+                            <span class="ml-2">Report</span>
+                        </a>
+                        <a href="/advanced-search" class="nav-link w-full flex items-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700">
+                            <i class="icon-search w-5 h-5"></i>
+                            <span class="ml-2">Search</span>
+                        </a>
+                        {% if current_user.is_authenticated %}
+                        <a href="/logout" class="nav-link inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                            <i class="icon-log-out w-5 h-5"></i>
+                            <span class="ml-2">Logout</span>
+                        </a>
+                    {% else %}
+                        <a href="/login" class="nav-link inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                            <i class="icon-log-in w-5 h-5"></i>
+                            <span class="ml-2">Login</span>
+                        </a>
+                        <a href="/register" class="nav-link inline-flex items-center justify-center px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                            <i class="icon-user-plus w-5 h-5"></i>
+                            <span class="ml-2">Register</span>
+                        </a>
+                    {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Desktop Navigation -->
+            <div class="hidden sm:flex sm:flex-row items-center justify-between gap-4">
                 <!-- Left side navigation -->
-                <div class="flex flex-col sm:flex-row w-full sm:w-auto gap-2 sm:gap-3">
-                    <a href="/" class="nav-link w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg">
-                        <i class="fas fa-home w-4 h-4 sm:w-5 sm:h-5 mr-2"></i>
-                        Home
+                <div class="flex flex-row gap-3">
+                    <a href="/" class="nav-link inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                        <i class="fas fa-home w-5 h-5"></i>
+                        <span class="ml-2">Home</span>
                     </a>
-                    <a href="/report" class="nav-link w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-all duration-300 shadow-md hover:shadow-lg">
-                        <i class="fas fa-plus-circle w-4 h-4 sm:w-5 sm:h-5 mr-2"></i>
-                        Report New Case
+                    <a href="/report" class="nav-link inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                        <i class="fas fa-plus-circle w-5 h-5"></i>
+                        <span class="ml-2">Report</span>
                     </a>
-                    <a href="/advanced-search" class="nav-link w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-all duration-300 shadow-md hover:shadow-lg">
-                        <i class="icon-search w-4 h-4 sm:w-5 sm:h-5 mr-2"></i>
-                        Search
+                    <a href="/advanced-search" class="nav-link inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                        <i class="icon-search w-5 h-5"></i>
+                        <span class="ml-2">Search</span>
                     </a>
                 </div>
 
                 <!-- Right side authentication -->
-                <div class="flex flex-col sm:flex-row w-full sm:w-auto gap-2 sm:gap-3">
+                <div class="flex flex-row gap-3">
                     {% if current_user.is_authenticated %}
-                        <a href="/logout" class="nav-link w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-all duration-300 shadow-md hover:shadow-lg">
-                            <i class="icon-log-out w-4 h-4 sm:w-5 sm:h-5 mr-2"></i>
-                            Logout
+                        <a href="/logout" class="nav-link inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                            <i class="icon-log-out w-5 h-5"></i>
+                            <span class="ml-2">Logout</span>
                         </a>
                     {% else %}
-                        <a href="/login" class="nav-link w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg">
-                            <i class="icon-log-in w-4 h-4 sm:w-5 sm:h-5 mr-2"></i>
-                            Login
+                        <a href="/login" class="nav-link inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                            <i class="icon-log-in w-5 h-5"></i>
+                            <span class="ml-2">Login</span>
                         </a>
-                        <a href="/register" class="nav-link w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-all duration-300 shadow-md hover:shadow-lg">
-                            <i class="icon-user-plus w-4 h-4 sm:w-5 sm:h-5 mr-2"></i>
-                            Register
+                        <a href="/register" class="nav-link inline-flex items-center justify-center px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                            <i class="icon-user-plus w-5 h-5"></i>
+                            <span class="ml-2">Register</span>
                         </a>
                     {% endif %}
                 </div>
@@ -113,6 +177,30 @@
             </div>
         {% endif %}
     {% endwith %}
+
+    <!-- Mobile Menu Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const closeMenuButton = document.getElementById('close-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            mobileMenuButton.addEventListener('click', function() {
+                mobileMenu.classList.remove('-translate-x-full');
+            });
+
+            closeMenuButton.addEventListener('click', function() {
+                mobileMenu.classList.add('-translate-x-full');
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!mobileMenu.contains(event.target) && !mobileMenuButton.contains(event.target)) {
+                    mobileMenu.classList.add('-translate-x-full');
+                }
+            });
+        });
+    </script>
 
     {% block scripts %}{% endblock %}
 </body>

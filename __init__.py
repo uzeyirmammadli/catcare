@@ -33,7 +33,9 @@ def create_app():
             raise
 
         from .routes import main
+        from .api import api
         app.register_blueprint(main)
+        app.register_blueprint(api)
     register_commands(app)
 
     return app
