@@ -1,0 +1,424 @@
+openapi: 3.0.0
+info:
+  title: Case Management API
+  version: '1.0'
+  description: API for managing cases and user authentication
+  contact:
+    email: your-email@example.com
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: User's username
+        password:
+          type: string
+          description: User's password
+          format: password
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+
+    Case:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+          description: Unique identifier for the case
+        location:
+          type: string
+          description: Location of the case
+        status:
+          type: string
+          description: Current status of the case
+        need:
+          type: string
+          description: Description of the case need
+        photo:
+          type: string
+          description: URL of the case photo
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        user_id:
+          type: integer
+          readOnly: true
+          description: ID of the user who created the case
+
+    CasesList:
+      type: object
+      properties:
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/Case'
+
+    UpdateResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Success message
+        case:
+          $ref: '#/components/schemas/Case'
+
+    ResolveRequest:
+      type: object
+      required:
+        - resolution_notes
+      properties:
+        resolution_notes:
+          type: string
+          description: Notes about how the case was resolved
+
+    DeleteResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Success message
+
+paths:
+  /login:
+    post:
+      summary: Login user
+      description: Authenticate user and return JWT token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /cases:
+    get:
+      summary: Get all cases
+      description: Retrieve all cases for the authenticated user
+      tags:
+        - Cases
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of cases
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CasesList'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create new case
+      description: Create a new case for the authenticated user
+      tags:
+        - Cases
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - location
+                - status
+                - need
+              properties:
+                location:
+                  type: string
+                status:
+                  type: string
+                need:
+                  type: string
+                photo:
+                  type: string
+      responses:
+        '201':
+          description: Case created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /cases/{case_id}:
+    get:
+      summary: Get case by ID
+      description: Retrieve a specific case by ID
+      tags:
+        - Cases
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: case_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the case to retrieve
+      responses:
+        '200':
+          description: Case details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        '404':
+          description: Case not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update case
+      description: Update an existing case by ID
+      tags:
+        - Cases
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: case_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the case to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                location:
+                  type: string
+                status:
+                  type: string
+                need:
+                  type: string
+                photo:
+                  type: string
+      responses:
+        '200':
+          description: Case updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateResponse'
+        '404':
+          description: Case not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete case
+      description: Delete a specific case by ID
+      tags:
+        - Cases
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: case_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the case to delete
+      responses:
+        '200':
+          description: Case deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '404':
+          description: Case not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /cases/{case_id}/resolve:
+    put:
+      summary: Resolve case
+      description: Mark a specific case as resolved
+      tags:
+        - Cases
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: case_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the case to resolve
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveRequest'
+      responses:
+        '200':
+          description: Case resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateResponse'
+        '404':
+          description: Case not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /cases/search:
+    get:
+      summary: Search cases
+      description: Search cases with various filters
+      tags:
+        - Cases
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by case status
+        - name: location
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by location
+        - name: need
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by need type
+        - name: date_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Filter by created date (from)
+        - name: date_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Filter by created date (to)
+      responses:
+        '200':
+          description: List of matching cases
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CasesList'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Authentication
+    description: Authentication endpoints
+  - name: Cases
+    description: Case management endpoints
+
+security:
+  - BearerAuth: []

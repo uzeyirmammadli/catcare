@@ -31,6 +31,7 @@ class Case(db.Model):
     location = db.Column(db.String(100), nullable=False)
     need = db.Column(db.String(200))
     status = db.Column(db.String(20), default='OPEN')
+    resolution_notes = db.Column(db.Text())
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

@@ -5,7 +5,7 @@ import logging
 from flask import request, render_template, redirect, url_for, jsonify, flash, abort, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
-from flask import Blueprint, send_from_directory
+from flask import Blueprint, send_from_directory, send_file
 from .models import db, User, Comment, Case
 from .forms import RegistrationForm, LoginForm, CommentForm
 from . import db, login_manager
@@ -13,6 +13,10 @@ from . import db, login_manager
 
 main = Blueprint('main', __name__)
 logging.basicConfig(level=logging.DEBUG)
+
+@main.route('/test')
+def test_interface():
+    return send_file('templates/test.html')
 
 @main.route('/comment/<comment_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -71,6 +75,7 @@ def delete_comment(comment_id):
         flash('Error deleting comment. Please try again.', 'error')
     
     return redirect(url_for('main.view_case_details', case_id=comment.case_id))
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
