@@ -3,7 +3,6 @@
 # More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
 
 name: Build and deploy Python app to Azure Web App - catcareapp
-
 on:
   push:
     branches:
@@ -13,35 +12,59 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
+      
       - name: Set up Python version
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
+      
       - name: Create and start virtual environment
         run: |
           python -m venv .venv
           source .venv/bin/activate
       
       - name: Install dependencies
-        run: pip install -r requirements.txt
-        
-      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
-
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install gunicorn  # Ensure gunicorn is installed
+      
+      - name: Create runtime.txt
+        run: |
+          echo "python-3.12" > runtime.txt
+      
+      - name: Create startup command file
+        run: |
+          echo "gunicorn --bind=0.0.0.0 --timeout 600 application:app" > startup.txt
+      
+      - name: Clean up unnecessary files
+        run: |
+          rm -rf .git
+          rm -rf .github
+          rm -rf __pycache__
+          rm -rf *.pyc
+          find . -type d -name "__pycache__" -exec rm -r {} +
+          find . -type f -name "*.pyc" -delete
+      
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
-
+        run: |
+          zip -r release.zip ./* \
+          --exclude "*.git*" \
+          --exclude "*__pycache__*" \
+          --exclude "*.pytest_cache*" \
+          --exclude "*.venv*" \
+          --exclude "*.env*" \
+          --exclude "*.vscode*" \
+          --exclude "*.idea*"
+      
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
           name: python-app
-          path: |
-            release.zip
-            !venv/
+          path: release.zip
+          retention-days: 1
 
   deploy:
     runs-on: ubuntu-latest
@@ -55,10 +78,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: python-app
-
+      
       - name: Unzip artifact for deployment
         run: unzip release.zip
-
+      
+      - name: Wait for SCM to be ready
+        run: sleep 30
       
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
@@ -67,3 +92,5 @@ jobs:
           app-name: 'catcareapp'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_8B0BE435528147DDB2857E387BF6C371 }}
+          clean: true
+          package: .
