@@ -120,6 +120,7 @@ def register():
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
+    print("LOG")
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
     

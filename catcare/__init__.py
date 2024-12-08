@@ -1,48 +1,28 @@
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
 import logging
 from flask_swagger_ui import get_swaggerui_blueprint
-from .commands import register_commands
-from datetime import timedelta
-
+from config import Config
 # Initialize extensions
 db = SQLAlchemy()
+migrate = Migrate()
 login_manager = LoginManager()
 jwt = JWTManager()
 
 def create_app():
     app = Flask(__name__)
-    
-    # Configure base directory
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    
-    # Application configuration
-    app.config.update(
-        SQLALCHEMY_DATABASE_URI='postgresql://postgres:dominations@localhost:5432/cats',
-        SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        SECRET_KEY='GqOOhMcXCi0dH3a_sHdJgFBSu2ZnDbXHPoMlca4eGUI',
-        DATABASE_PATH=os.path.join(basedir, 'cats.db'),
-        UPLOAD_FOLDER='static/uploads',
-        # JWT Configuration
-        JWT_SECRET_KEY='94017f281a5aa2fc127dc9f2a7f54abe077a8268f2dcd6cbadc7be499ae6ddce',
-        JWT_ACCESS_TOKEN_EXPIRES=timedelta(hours=1),
-        JWT_REFRESH_TOKEN_EXPIRES=timedelta(days=30),
-        JWT_ERROR_MESSAGE_KEY='error',
-        JWT_TOKEN_LOCATION=['headers'],
-        JWT_HEADER_NAME='Authorization',
-        JWT_HEADER_TYPE='Bearer'
-    )
-    
-    # Initialize extensions
+    app.config.from_object(Config)
+    basedir = os.path.abspath(os.path.dirname(__file__))    
     db.init_app(app)
+    migrate.init_app(app, db)
     login_manager.init_app(app)
     jwt.init_app(app)
     login_manager.login_view = 'main.login'
     
-    # Configure Swagger UI
     SWAGGER_URL = '/api/docs'
     API_URL = '/static/swagger.yaml'
     
@@ -78,8 +58,6 @@ def create_app():
     app.register_blueprint(api)
     app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
     
-    # Register CLI commands
-    register_commands(app)
     
     # Ensure required directories exist
     os.makedirs(os.path.join(basedir, 'static/uploads'), exist_ok=True)
