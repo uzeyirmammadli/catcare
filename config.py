@@ -6,10 +6,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    SQLALCHEMY_DATABASE_URI=os.getenv('DATABASE_URL', 'postgresql://postgres:dominations@localhost:5432/cats')
+    SQLALCHEMY_DATABASE_URI=os.getenv('DATABASE_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS=False
     SECRET_KEY=os.getenv('SECRET_KEY')
-    UPLOAD_FOLDER='static/uploads'
+    UPLOAD_FOLDER = os.path.join('catcare', 'static', 'uploads')
     JWT_SECRET_KEY=os.getenv('JWT_SECRET_KEY')
     JWT_ACCESS_TOKEN_EXPIRES=timedelta(hours=1)
     JWT_REFRESH_TOKEN_EXPIRES=timedelta(days=30)

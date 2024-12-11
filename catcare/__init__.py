@@ -60,8 +60,10 @@ def create_app():
     
     
     # Ensure required directories exist
-    os.makedirs(os.path.join(basedir, 'static/uploads'), exist_ok=True)
-    os.makedirs(os.path.join(basedir, 'static'), exist_ok=True)
+    # os.makedirs(os.path.join(basedir, 'static/uploads'), exist_ok=True)
+    # os.makedirs(os.path.join(basedir, 'static'), exist_ok=True)
+    upload_dir = os.path.join(basedir, 'static', 'uploads')
+    os.makedirs(upload_dir, exist_ok=True)
     
     # Copy swagger.yaml to static directory if it doesn't exist
     swagger_source = os.path.join(basedir, 'swagger.yaml')

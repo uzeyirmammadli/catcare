@@ -171,17 +171,30 @@ def internal_error(error):
 def report():
     if request.method == 'POST':
         try:
-            # Get the photo file
             photo = request.files.get('photo')
             if photo:
-                # Save the file to a designated upload directory
-                filename = f"{str(uuid4())}_{photo.filename}"
-                filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-                photo.save(filepath)
+                # Create a secure filename
+                filename = f"{str(uuid4())}_{secure_filename(photo.filename)}"
+                
+                # Get the absolute path to the upload directory
+                basedir = os.path.abspath(os.path.dirname(__file__))
+                upload_dir = os.path.join(basedir, 'static', 'uploads')
+                
+                # Ensure upload directory exists
+                os.makedirs(upload_dir, exist_ok=True)
+                
+                # Save the file
+                filepath = os.path.join(upload_dir, filename)
+                try:
+                    photo.save(filepath)
+                    current_app.logger.info(f"File saved successfully at {filepath}")
+                except Exception as e:
+                    current_app.logger.error(f"Failed to save file: {e}")
+                    raise
             else:
                 filename = None
-            
-            # Create new Case instance using the SQLAlchemy model
+
+            # Create new Case instance
             new_case = Case(
                 id=str(uuid4()),
                 photo=filename,
@@ -192,11 +205,9 @@ def report():
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow()
             )
-            
-            # Add to database session
+
             db.session.add(new_case)
             
-            # Commit the transaction
             try:
                 db.session.commit()
                 flash('Case reported successfully!', 'success')
@@ -212,9 +223,12 @@ def report():
     
     return render_template('report.html')
 
+
 @main.route('/uploads/<filename>')
 def uploaded_file(filename):
-    return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    upload_dir = os.path.join(basedir, 'static', 'uploads')
+    return send_from_directory(upload_dir, filename)
 
 @main.route('/')
 def show_cases():
