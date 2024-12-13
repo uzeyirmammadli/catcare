@@ -10,6 +10,8 @@ from .models import db, User, Comment, Case
 from .forms import RegistrationForm, LoginForm, CommentForm
 from . import db, login_manager
 
+if os.getenv('GAE_ENV', '').startswith('standard'):
+    from google.cloud import storage
 
 main = Blueprint('main', __name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -166,6 +168,33 @@ def internal_error(error):
     return render_template('500.html'), 500
 
 
+def upload_file(file):
+    if not file:
+        return None
+        
+    filename = f"{str(uuid4())}_{secure_filename(file.filename)}"
+    
+    if os.getenv('GAE_ENV', '').startswith('standard'):
+        # Cloud environment: upload to Google Cloud Storage
+        client = storage.Client()
+        bucket = client.bucket('eco-layout-442118-t8-uploads')
+        blob = bucket.blob(filename)
+        
+        # Rewind the file pointer to the beginning
+        file.seek(0)
+        
+        # Upload the file
+        blob.upload_from_file(file, content_type=file.content_type)
+        
+        # Return ONLY the Cloud Storage URL (no /uploads/ prefix)
+        return f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/{filename}"
+    else:
+        # Local environment: save to local filesystem
+        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        return f"/uploads/{filename}"
+
+
 @main.route('/report', methods=['GET', 'POST'])
 @login_required
 def report():
@@ -173,31 +202,15 @@ def report():
         try:
             photo = request.files.get('photo')
             if photo:
-                # Create a secure filename
-                filename = f"{str(uuid4())}_{secure_filename(photo.filename)}"
-                
-                # Get the absolute path to the upload directory
-                basedir = os.path.abspath(os.path.dirname(__file__))
-                upload_dir = os.path.join(basedir, 'static', 'uploads')
-                
-                # Ensure upload directory exists
-                os.makedirs(upload_dir, exist_ok=True)
-                
-                # Save the file
-                filepath = os.path.join(upload_dir, filename)
-                try:
-                    photo.save(filepath)
-                    current_app.logger.info(f"File saved successfully at {filepath}")
-                except Exception as e:
-                    current_app.logger.error(f"Failed to save file: {e}")
-                    raise
+                photo_url = upload_file(photo)
+                current_app.logger.info(f"Uploaded photo URL: {photo_url}")  # Add logging
             else:
-                filename = None
-
-            # Create new Case instance
+                photo_url = None
+                current_app.logger.warning("No photo provided")  # Add logging
+            
             new_case = Case(
                 id=str(uuid4()),
-                photo=filename,
+                photo=photo_url,  # Store the complete URL
                 location=request.form['location'],
                 need=request.form['need'],
                 status='OPEN',
@@ -205,30 +218,27 @@ def report():
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow()
             )
-
-            db.session.add(new_case)
             
-            try:
-                db.session.commit()
-                flash('Case reported successfully!', 'success')
-                return redirect(url_for('main.show_cases'))
-            except Exception as e:
-                db.session.rollback()
-                current_app.logger.error(f"Database error creating case: {e}")
-                flash('Error creating case. Please try again.', 'error')
-                
+            db.session.add(new_case)
+            db.session.commit()
+            flash('Case reported successfully!', 'success')
+            return redirect(url_for('main.show_cases'))
+            
         except Exception as e:
             current_app.logger.error(f"Error creating case: {e}")
             flash('Error creating case. Please try again.', 'error')
-    
+            db.session.rollback()
+            
     return render_template('report.html')
 
-
-@main.route('/uploads/<filename>')
+# Update the uploaded_file route to handle both environments
+@main.route('/uploads/<path:filename>')
 def uploaded_file(filename):
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    upload_dir = os.path.join(basedir, 'static', 'uploads')
-    return send_from_directory(upload_dir, filename)
+    if filename.startswith('https://'):
+        return redirect(filename)
+    elif os.getenv('GAE_ENV', '').startswith('standard'):
+        return redirect(f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/{filename}")
+    return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
 
 @main.route('/')
 def show_cases():

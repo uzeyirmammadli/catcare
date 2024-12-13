@@ -1,6 +1,29 @@
 runtime: python312
 entrypoint: gunicorn -b :$PORT app:app
+service: default
+instance_class: F1
+
+env_variables:
+  # DATABASE_URL: postgresql+psycopg2:///cats?host=/cloudsql/eco-layout-442118:us-central1-c:cats-db
+  # STATIC_URL: "https://storage.googleapis.com/eco-layout-442118-t8-static/static/"
+  # DB_PASSWORD: "DB_PASSWORD"
+  # SECRET_KEY: "SECRET_KEY"
+  # JWT_SECRET_KEY: "JWT_SECRET_KEY"
+  GAE_ENV: "standard"
 
 handlers:
+  # Handle static files
+  - url: /static
+    static_dir: catcare/static
+    secure: always
+  
+  # All other URLs are handled by the app
   - url: /.*
     script: auto
+    secure: always
+
+beta_settings:
+  cloud_sql_instances: "eco-layout-442118-t8:us-central1:cats-db"
+
+includes:
+  - env_variables.yaml

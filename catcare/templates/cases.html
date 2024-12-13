@@ -13,9 +13,13 @@
                     {% for case in cases %}
                         <div class="p-4 space-y-4">
                             <div class="flex items-center gap-4">
-                                <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}"
-                                     alt="Case image"
-                                     class="w-20 h-20 object-cover rounded-lg shadow-md">
+                                {% if case.photo.startswith('https://') %}
+                                    <img src="{{ case.photo }}" alt="Case photo" class="w-20 h-20 object-cover rounded-lg shadow-md">
+                                {% elif case.photo.startswith('/uploads/') %}
+                                    <img src="{{ url_for('main.uploaded_file', filename=case.photo.replace('/uploads/', '')) }}" alt="Case photo" class="w-20 h-20 object-cover rounded-lg shadow-md">
+                                {% else %}
+                                    <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}" alt="Case photo" class="w-20 h-20 object-cover rounded-lg shadow-md">
+                                {% endif %}
                                 <div class="flex-1 min-w-0">
                                     <div class="font-semibold text-gray-800 mb-1">{{ case.location }}</div>
                                     <div class="flex items-center gap-2 text-sm text-gray-600">
@@ -82,9 +86,16 @@
                     {% for case in cases %}
                         <tr class="border-b border-gray-100 hover:bg-blue-50 transition duration-150">
                             <td class="py-4 px-6">
-                                <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}"
+                                {% if case.photo.startswith('https://') %}
+                                    <img src="{{ case.photo }}" alt="Case photo" class="w-24 h-24 object-cover rounded-lg shadow-md">
+                                {% elif case.photo.startswith('/uploads/') %}
+                                    <img src="{{ url_for('main.uploaded_file', filename=case.photo.replace('/uploads/', '')) }}" alt="Case photo" class="w-24 h-24 object-cover rounded-lg shadow-md">
+                                {% else %}
+                                    <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}" alt="Case photo" class="w-24 h-24 object-cover rounded-lg shadow-md">
+                                {% endif %}
+                                <!-- <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}"
                                      alt="Case image"
-                                     class="w-24 h-24 object-cover rounded-lg shadow-md">
+                                     class="w-24 h-24 object-cover rounded-lg shadow-md"> -->
                             </td>
                             <td class="py-4 px-6">
                                 <div class="font-semibold text-gray-800">{{ case.location }}</div>

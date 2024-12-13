@@ -22,6 +22,11 @@ def create_app():
     login_manager.init_app(app)
     jwt.init_app(app)
     login_manager.login_view = 'main.login'
+
+    if os.getenv('GAE_ENV', '').startswith('standard'):
+        tmp_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'uploads')
+        os.makedirs(tmp_dir, exist_ok=True)
+        app.config['UPLOAD_FOLDER'] = tmp_dir
     
     SWAGGER_URL = '/api/docs'
     API_URL = '/static/swagger.yaml'
@@ -62,8 +67,13 @@ def create_app():
     # Ensure required directories exist
     # os.makedirs(os.path.join(basedir, 'static/uploads'), exist_ok=True)
     # os.makedirs(os.path.join(basedir, 'static'), exist_ok=True)
-    upload_dir = os.path.join(basedir, 'static', 'uploads')
+    if os.getenv('GAE_ENV', '').startswith('standard'):
+        upload_dir = '/tmp/uploads'
+    else:
+        upload_dir = os.path.join(basedir, 'catcare/static/uploads')
+    
     os.makedirs(upload_dir, exist_ok=True)
+    app.config['UPLOAD_FOLDER'] = upload_dir
     
     # Copy swagger.yaml to static directory if it doesn't exist
     swagger_source = os.path.join(basedir, 'swagger.yaml')
