@@ -393,43 +393,51 @@ def resolve_case(case_id):
 @login_required
 def update(case_id):
     try:
-        # Get the case or return 404
         case = Case.query.get_or_404(case_id)
         
         if request.method == 'POST':
-            # Check if there is a file in the request
             file = request.files.get('photo')
             location = request.form.get('location')
             need = request.form.get('need')
             status = request.form.get('status')
             
-            # Validate required fields (excluding photo, as it might be optional)
             if not all([location, need, status]):
                 flash('Location, need, and status are required', 'error')
                 return render_template('update_case.html', case=case)
             
-            # Validate status
             if status not in ['OPEN', 'RESOLVED']:
                 flash('Invalid status value', 'error')
                 return render_template('update_case.html', case=case)
             
             try:
-                # Update fields
+                # Handle file upload
                 if file and file.filename:
-                    # Save the file securely
-                    filename = secure_filename(file.filename)
-                    file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-                    file.save(file_path)
-                    case.photo = filename  # Update the photo field with the new filename
+                    if os.getenv('GAE_ENV', '').startswith('standard'):
+                        # Cloud Storage upload
+                        filename = f"{str(uuid4())}_{secure_filename(file.filename)}"
+                        client = storage.Client()
+                        bucket = client.bucket('eco-layout-442118-t8-uploads')
+                        blob = bucket.blob(filename)
+                        
+                        # Rewind file pointer and upload
+                        file.seek(0)
+                        blob.upload_from_file(file, content_type=file.content_type)
+                        
+                        # Store the Cloud Storage URL
+                        case.photo = f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/{filename}"
+                    else:
+                        # Local file storage
+                        filename = secure_filename(file.filename)
+                        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+                        file.save(file_path)
+                        case.photo = f"/uploads/{filename}"
                 
                 case.location = location
                 case.need = need
                 case.status = status
                 case.updated_at = datetime.utcnow()
                 
-                # Commit changes
                 db.session.commit()
-                
                 flash('Case updated successfully!', 'success')
                 return redirect(url_for('main.show_cases'))
                 
@@ -439,7 +447,6 @@ def update(case_id):
                 flash('Error updating case. Please try again.', 'error')
                 return render_template('update_case.html', case=case)
         
-        # GET request - show form
         return render_template('update_case.html', case=case)
         
     except Exception as e:
