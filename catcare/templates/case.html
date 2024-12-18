@@ -4,26 +4,76 @@
 
 {% block content %}
 <div class="space-y-8">
+    <input type="hidden" id="return_page" value="{{ request.args.get('next') or request.referrer }}">
     <!-- Case Details Section -->
     <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
         <div class="flex flex-col lg:flex-row">
-            <!-- Image Section -->
+            <!-- Media Section -->
             <div class="w-full lg:w-1/2 h-[300px] lg:h-auto">
-                {% if case.photo %}
-                    {% if case.photo.startswith('https://') %}
-                        <img src="{{ case.photo }}" alt="Case photo" class="w-full h-full object-cover">
-                    {% elif case.photo.startswith('/uploads/') %}
-                        <img src="{{ url_for('main.uploaded_file', filename=case.photo.replace('/uploads/', '')) }}" alt="Case photo" class="w-full h-full object-cover">
-                    {% else %}
-                        <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}" alt="Case photo" class="w-full h-full object-cover">
-                    {% endif %}
-                    <!-- <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}" 
-                         alt="Case Photo" 
-                         class="w-full h-full object-cover"> -->
-                {% else %}
-                    <div class="w-full h-full bg-gray-100 flex items-center justify-center">
-                        <span class="text-gray-400 text-lg">No image available</span>
+                {% if case.get_photos() %}
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold mb-2">Photos</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        {% for photo in case.get_photos() %}
+                        <div class="relative">
+                            {% if photo.startswith('https://') %}
+                                <img src="{{ photo }}" alt="Case photo" class="w-full h-40 object-cover rounded-lg">
+                            {% elif photo.startswith('/uploads/') %}
+                                <img src="{{ url_for('main.uploaded_file', filename=photo.replace('/uploads/', '')) }}" 
+                                    alt="Case photo" class="w-full h-40 object-cover rounded-lg">
+                            {% else %}
+                                <img src="{{ url_for('main.uploaded_file', filename=photo) }}" 
+                                    alt="Case photo" class="w-full h-40 object-cover rounded-lg">
+                            {% endif %}
+                            <a href="{{ photo if photo.startswith('https://') else url_for('main.uploaded_file', filename=photo.replace('/uploads/', '') if photo.startswith('/uploads/') else photo) }}" 
+                            target="_blank" class="absolute bottom-2 right-2 bg-blue-600 text-white p-1 rounded-full hover:bg-blue-700">
+                                <i class="fas fa-expand w-4 h-4"></i>
+                            </a>
+                        </div>
+                        {% endfor %}
                     </div>
+                </div>
+                {% elif case.photo %}
+                <!-- Old format: single photo -->
+                <div class="mb-4">
+                    <div class="relative">
+                        {% if case.photo.startswith('https://') %}
+                            <img src="{{ case.photo }}" alt="Case photo" class="w-full h-40 object-cover rounded-lg">
+                        {% elif case.photo.startswith('/uploads/') %}
+                            <img src="{{ url_for('main.uploaded_file', filename=case.photo.replace('/uploads/', '')) }}" 
+                                alt="Case photo" class="w-full h-40 object-cover rounded-lg">
+                        {% else %}
+                            <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}" 
+                                alt="Case photo" class="w-full h-40 object-cover rounded-lg">
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="w-full h-full bg-gray-100 flex items-center justify-center">
+                    <span class="text-gray-400 text-lg">No images available</span>
+                </div>
+                {% endif %}
+                <!-- Videos Section -->
+                {% if case.videos %}
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold mb-2">Videos</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        {% for video in case.videos %}
+                        <div class="relative">
+                            <video controls class="w-full h-40 object-cover rounded-lg">
+                                {% if video.startswith('https://') %}
+                                    <source src="{{ video }}" type="video/mp4">
+                                {% elif video.startswith('/uploads/') %}
+                                    <source src="{{ url_for('main.uploaded_file', filename=video.replace('/uploads/', '')) }}" type="video/mp4">
+                                {% else %}
+                                    <source src="{{ url_for('main.uploaded_file', filename=video) }}" type="video/mp4">
+                                {% endif %}
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
                 {% endif %}
             </div>
             
@@ -53,8 +103,39 @@
                     </div>
                     
                     <div class="p-4 rounded-lg bg-white shadow-md border border-blue-200 sm:col-span-2">
-                        <h2 class="text-sm font-semibold text-blue-700 uppercase tracking-widest">Need</h2>
-                        <p class="mt-2 text-blue-900 font-semibold text-lg">{{ case.need }}</p>
+                        <h2 class="text-sm font-semibold text-blue-700 uppercase tracking-widest">Needs</h2>
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            {% if case.needs %}
+                                {% for need in case.needs %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                                    {% if need == 'medical' %}bg-red-100 text-red-800
+                                    {% elif need == 'food' %}bg-green-100 text-green-800
+                                    {% elif need == 'shelter' %}bg-yellow-100 text-yellow-800
+                                    {% elif need == 'rescue' %}bg-purple-100 text-purple-800
+                                    {% elif need == 'vaccination' %}bg-blue-100 text-blue-800
+                                    {% elif need == 'sterilization' %}bg-pink-100 text-pink-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ need|title }}
+                                </span>
+                                {% endfor %}
+                            {% else %}
+                                <!-- Show single need if old format -->
+                                {% if case.need %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                                        {% if case.need == 'medical' %}bg-red-100 text-red-800
+                                        {% elif case.need == 'food' %}bg-green-100 text-green-800
+                                        {% elif case.need == 'shelter' %}bg-yellow-100 text-yellow-800
+                                        {% elif case.need == 'rescue' %}bg-purple-100 text-purple-800
+                                        {% elif case.need == 'vaccination' %}bg-blue-100 text-blue-800
+                                        {% elif case.need == 'sterilization' %}bg-pink-100 text-pink-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ case.need|title }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-gray-500">No needs specified</span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
                     </div>
                     
                     <div class="p-4 rounded-lg bg-white shadow-md border border-blue-200 sm:col-span-2">
@@ -64,7 +145,7 @@
                 </div>
 
                 <div class="grid grid-cols-4 gap-2">
-                    <a href="{{ url_for('main.update', case_id=case.id) }}" 
+                    <a href="{{ url_for('main.update', case_id=case.id, next=request.path) }}" 
                        class="inline-flex items-center px-4 py-2 bg-yellow-600 text-white font-medium rounded-lg hover:bg-yellow-700 transition duration-300 shadow-sm hover:shadow-md">
                        <i class="fas fa-pencil-alt mr-1"></i>Edit
                     </a>
@@ -72,6 +153,11 @@
                        class="inline-flex items-center px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition duration-300 shadow-sm hover:shadow-md">
                         <i class="fas fa-trash w-4 h-4 mr-2"></i>Delete
                     </a>
+                    <a href="{{ request.args.get('next') or request.referrer or url_for('main.show_cases') }}" 
+                           class="inline-flex items-center px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-600 transition duration-300 shadow-sm hover:shadow-md">
+                            <i class="fas fa-arrow-left mr-2"></i>Back
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -80,6 +166,8 @@
     <!-- Comments Section -->
     {% if current_user.is_authenticated %}
     <div class="bg-white rounded-xl shadow-lg p-6 space-y-6">
+        {{ form.hidden_tag() }}
+        <input type="hidden" name="next" value="{{ request.args.get('next') or request.referrer }}">
         <h2 class="text-2xl font-bold text-gray-900">Add Comment</h2>
         <form method="POST" class="space-y-4">
             {{ form.hidden_tag() }}

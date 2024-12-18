@@ -13,13 +13,28 @@
                     {% for case in cases %}
                         <div class="p-4 space-y-4">
                             <div class="flex items-center gap-4">
-                                {% if case.photo.startswith('https://') %}
-                                    <img src="{{ case.photo }}" alt="Case photo" class="w-20 h-20 object-cover rounded-lg shadow-md">
-                                {% elif case.photo.startswith('/uploads/') %}
-                                    <img src="{{ url_for('main.uploaded_file', filename=case.photo.replace('/uploads/', '')) }}" alt="Case photo" class="w-20 h-20 object-cover rounded-lg shadow-md">
-                                {% else %}
-                                    <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}" alt="Case photo" class="w-20 h-20 object-cover rounded-lg shadow-md">
+                                {% if case.photos %}
+                                <div class="relative w-20 h-20">
+                                    {% if case.photos[0].startswith('https://') %}
+                                        <img src="{{ case.photos[0] }}" alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
+                                    {% elif case.photos[0].startswith('/uploads/') %}
+                                        <img src="{{ url_for('main.uploaded_file', filename=case.photos[0].replace('/uploads/', '')) }}" 
+                                            alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
+                                    {% else %}
+                                        <img src="{{ url_for('main.uploaded_file', filename=case.photos[0]) }}" 
+                                            alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
+                                    {% endif %}
+                                    {% if case.photos|length > 1 %}
+                                    <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">+{{ case.photos|length - 1 }}</span>
+                                    {% endif %}
+                                    {% if case.videos %}
+                                    <span class="absolute -bottom-2 -right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full">
+                                        <i class="fas fa-video w-3 h-3"></i>
+                                    </span>
+                                    {% endif %}
+                                </div>
                                 {% endif %}
+
                                 <div class="flex-1 min-w-0">
                                     <div class="font-semibold text-gray-800 mb-1">{{ case.location }}</div>
                                     <div class="flex items-center gap-2 text-sm text-gray-600">
@@ -43,7 +58,7 @@
                                     <i class="fas fa-eye w-4 h-4"></i>
                                     <span class="sr-only">View</span>
                                 </a>
-                                <a href="{{ url_for('main.update', case_id=case.id) }}" 
+                                <a href="{{ url_for('main.update', case_id=case.id, next=request.full_path) }}" 
                                    class="inline-flex items-center justify-center bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-300">
                                     <i class="fas fa-pencil w-4 h-4"></i>
                                     <span class="sr-only">Edit</span>
@@ -53,10 +68,10 @@
                                     <i class="fas fa-trash w-4 h-4"></i>
                                     <span class="sr-only">Delete</span>
                                 </a>
-                                <a href="{{ url_for('main.resolve_case', case_id=case.id) }}" 
-                                   class="inline-flex items-center justify-center bg-pink-600 hover:bg-pink-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-300">
-                                    <i class="fas fa-check-circle w-4 h-4"></i>
-                                    <span class="sr-only">Resolve</span>
+                                <a href="{{ url_for('main.resolve_case', case_id=case.id, next=request.path) }}" 
+                                    class="inline-flex items-center px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg text-sm transition duration-300">
+                                     <i class="fas fa-check-circle mr-2"></i>
+                                        <span>Resolve</span>
                                 </a>
                             </div>
                         </div>
@@ -86,16 +101,41 @@
                     {% for case in cases %}
                         <tr class="border-b border-gray-100 hover:bg-blue-50 transition duration-150">
                             <td class="py-4 px-6">
-                                {% if case.photo.startswith('https://') %}
-                                    <img src="{{ case.photo }}" alt="Case photo" class="w-24 h-24 object-cover rounded-lg shadow-md">
-                                {% elif case.photo.startswith('/uploads/') %}
-                                    <img src="{{ url_for('main.uploaded_file', filename=case.photo.replace('/uploads/', '')) }}" alt="Case photo" class="w-24 h-24 object-cover rounded-lg shadow-md">
-                                {% else %}
-                                    <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}" alt="Case photo" class="w-24 h-24 object-cover rounded-lg shadow-md">
+                                <div class="relative w-24 h-24">
+                                    {% if case.photos %}
+                                        <!-- New format: array of photos -->
+                                        {% if case.photos[0].startswith('https://') %}
+                                            <img src="{{ case.photos[0] }}" alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
+                                        {% elif case.photos[0].startswith('/uploads/') %}
+                                            <img src="{{ url_for('main.uploaded_file', filename=case.photos[0].replace('/uploads/', '')) }}" 
+                                                 alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
+                                        {% else %}
+                                            <img src="{{ url_for('main.uploaded_file', filename=case.photos[0]) }}" 
+                                                 alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
+                                        {% endif %}
+                                    {% elif case.photo %}
+                                        <!-- Old format: single photo -->
+                                        {% if case.photo.startswith('https://') %}
+                                            <img src="{{ case.photo }}" alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
+                                        {% elif case.photo.startswith('/uploads/') %}
+                                            <img src="{{ url_for('main.uploaded_file', filename=case.photo.replace('/uploads/', '')) }}" 
+                                                 alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
+                                        {% else %}
+                                            <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}" 
+                                                 alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
+                                        {% endif %}
+                                    
+
+                                    {% if case.photos|length > 1 %}
+                                    <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">+{{ case.photos|length - 1 }}</span>
+                                    {% endif %}
+                                    {% if case.videos %}
+                                    <span class="absolute -bottom-2 -right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full">
+                                        <i class="fas fa-video w-3 h-3"></i>
+                                    </span>
+                                    {% endif %}
+                                </div>
                                 {% endif %}
-                                <!-- <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}"
-                                     alt="Case image"
-                                     class="w-24 h-24 object-cover rounded-lg shadow-md"> -->
                             </td>
                             <td class="py-4 px-6">
                                 <div class="font-semibold text-gray-800">{{ case.location }}</div>
@@ -124,7 +164,7 @@
                                         <i class="fas fa-eye w-4 h-4 mr-2"></i>
                                         <span>View</span>
                                     </a>
-                                    <a href="{{ url_for('main.update', case_id=case.id) }}" 
+                                    <a href="{{ url_for('main.update', case_id=case.id, next=request.full_path) }}" 
                                        class="inline-flex items-center px-3 py-1.5 bg-yellow-600 hover:bg-yellow-700 text-white font-medium rounded-lg text-sm transition duration-300">
                                         <i class="fas fa-pencil w-4 h-4 mr-2"></i>
                                         <span>Edit</span>

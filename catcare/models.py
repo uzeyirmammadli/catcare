@@ -3,6 +3,7 @@ from datetime import datetime
 from uuid import uuid4
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.dialects.postgresql import ARRAY
 from . import db
 
 
@@ -27,17 +28,44 @@ class User(UserMixin, db.Model):
 
 class Case(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid4()))
-    photo = db.Column(db.String(200))
+    photos = db.Column(ARRAY(db.String), default=[])
+    videos = db.Column(ARRAY(db.String), default=[])
+    needs = db.Column(ARRAY(db.String), default=[])
+    photo = db.Column(db.String(200))  # Keep for migration
     location = db.Column(db.String(100), nullable=False)
-    need = db.Column(db.String(200))
+    need = db.Column(db.String(200))   # Keep for migration
     status = db.Column(db.String(20), default='OPEN')
     resolution_notes = db.Column(db.Text())
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
+    
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('cases', lazy=True))
     comments = db.relationship('Comment', back_populates='case', lazy='dynamic', cascade="all, delete-orphan")
+    
+    def get_photos(self):
+        """Get all photos, combining old and new formats"""
+        photos = list(self.photos) if self.photos else []
+        if self.photo and self.photo not in photos:
+            photos.append(self.photo)
+        return photos
+
+    def get_needs(self):
+        """Get all needs, combining old and new formats"""
+        needs = list(self.needs) if self.needs else []
+        if self.need and self.need not in needs:
+            needs.append(self.need)
+        return needs
+
+    def migrate_old_format(self):
+        """Migrate data from old format to new format"""
+        if self.photo and not self.photos:
+            self.photos = [self.photo]
+            self.photo = None
+            
+        if self.need and not self.needs:
+            self.needs = [self.need]
+            self.need = None
 
 
     @classmethod
@@ -54,17 +82,26 @@ class Case(db.Model):
             raise ValueError("Location cannot be empty")
         return cls.query.filter_by(location=location).all()
     
-    def update_case(self, case_id, photo=None, location=None, need=None, status=None):
+    def update_case(self, case_id, photos=None, videos=None, location=None, needs=None, status=None):
         """Update case details"""
         case = self.query.get(case_id)
         if not case:
             raise ValueError("Case not found")
-        case.photo = photo or case.photo
-        case.location = location or case.location
-        case.need = need or case.need
-        case.status = status or case.status
+            
+        if photos is not None:
+            case.photos = photos
+        if videos is not None:
+            case.videos = videos
+        if location is not None:
+            case.location = location
+        if needs is not None:
+            case.needs = needs
+        if status is not None:
+            case.status = status
+            
         case.updated_at = datetime.utcnow()
         db.session.commit()
+
 
     def resolve(self, case_id):
         """Mark case as resolved."""

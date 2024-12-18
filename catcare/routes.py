@@ -200,19 +200,56 @@ def upload_file(file):
 def report():
     if request.method == 'POST':
         try:
-            photo = request.files.get('photo')
-            if photo:
-                photo_url = upload_file(photo)
-                current_app.logger.info(f"Uploaded photo URL: {photo_url}")  # Add logging
-            else:
-                photo_url = None
-                current_app.logger.warning("No photo provided")  # Add logging
+            # Handle photos
+            photos = request.files.getlist('photos[]')
+            photo_urls = []
             
+            # Handle videos
+            videos = request.files.getlist('videos[]')
+            video_urls = []
+            
+            # Upload photos
+            for photo in photos:
+                if photo and photo.filename:
+                    if os.getenv('GAE_ENV', '').startswith('standard'):
+                        filename = f"{str(uuid4())}_{secure_filename(photo.filename)}"
+                        client = storage.Client()
+                        bucket = client.bucket('eco-layout-442118-t8-uploads')
+                        blob = bucket.blob(f"photos/{filename}")
+                        photo.seek(0)
+                        blob.upload_from_file(photo, content_type=photo.content_type)
+                        photo_urls.append(f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/photos/{filename}")
+                    else:
+                        filename = secure_filename(photo.filename)
+                        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], 'photos', filename)
+                        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                        photo.save(filepath)
+                        photo_urls.append(f"/uploads/photos/{filename}")
+
+            # Upload videos
+            for video in videos:
+                if video and video.filename:
+                    if os.getenv('GAE_ENV', '').startswith('standard'):
+                        filename = f"{str(uuid4())}_{secure_filename(video.filename)}"
+                        client = storage.Client()
+                        bucket = client.bucket('eco-layout-442118-t8-uploads')
+                        blob = bucket.blob(f"videos/{filename}")
+                        video.seek(0)
+                        blob.upload_from_file(video, content_type=video.content_type)
+                        video_urls.append(f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/videos/{filename}")
+                    else:
+                        filename = secure_filename(video.filename)
+                        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], 'videos', filename)
+                        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                        video.save(filepath)
+                        video_urls.append(f"/uploads/videos/{filename}")
+
             new_case = Case(
                 id=str(uuid4()),
-                photo=photo_url,  # Store the complete URL
+                photos=photo_urls,
+                videos=video_urls,
                 location=request.form['location'],
-                need=request.form['need'],
+                needs=request.form.getlist('needs[]'),
                 status='OPEN',
                 user_id=current_user.id,
                 created_at=datetime.utcnow(),
@@ -227,9 +264,39 @@ def report():
         except Exception as e:
             current_app.logger.error(f"Error creating case: {e}")
             flash('Error creating case. Please try again.', 'error')
-            db.session.rollback()
             
     return render_template('report.html')
+
+@main.route('/case/<case_id>/remove_media', methods=['POST'])
+@login_required
+def remove_media(case_id):
+    try:
+        case = Case.query.get_or_404(case_id)
+        data = request.get_json()
+        media_type = data.get('type')
+        url = data.get('url')
+        
+        if media_type == 'photo':
+            # Handle both old and new format
+            if case.photos is None:
+                case.photos = []
+            if url in case.photos:
+                case.photos.remove(url)
+            if case.photo == url:
+                case.photo = None
+        elif media_type == 'video':
+            if case.videos is None:
+                case.videos = []
+            if url in case.videos:
+                case.videos.remove(url)
+        
+        db.session.commit()
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        current_app.logger.error(f"Error removing media: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # Update the uploaded_file route to handle both environments
 @main.route('/uploads/<path:filename>')
@@ -359,134 +426,165 @@ def advanced_search():
                              sort_options=[])
 
 @main.route('/resolve/<case_id>', methods=['GET', 'POST'])
+@login_required
 def resolve_case(case_id):
-    """Resolve a case by updating its status."""
-    case = Case.query.get_or_404(case_id)
-    success = False
-    message = None
+    try:
+        case = Case.query.get_or_404(case_id)
+        next_page = request.args.get('next') or request.referrer
+        
+        if request.method == 'POST':
+            case.status = request.form.get('status')
+            case.resolution_notes = request.form.get('resolution_notes')
+            case.updated_at = datetime.utcnow()
+            db.session.commit()
+            flash('Case updated successfully!', 'success')
+            return redirect(next_page or url_for('main.show_cases'))
+            
+        return render_template('resolve_case.html', 
+                             case=case,
+                             case_id=case_id,
+                             message=None,
+                             success=True)
+        
+    except Exception as e:
+        current_app.logger.error(f"Error resolving case: {e}")
+        flash('Error updating case', 'error')
+        return redirect(next_page or url_for('main.show_cases'))
     
-    if request.method == 'POST':
-        try:
-            new_status = request.form.get('status')
-            if new_status in ['OPEN', 'RESOLVED']:
-                case.status = new_status
-                db.session.commit()
-                message = f'Case with ID {case_id} has been updated to {new_status}.'
-                success = True
-            else:
-                message = 'Invalid status provided.'
-                success = False
-        except Exception as e:
-            db.session.rollback()
-            message = f'Error updating case: {str(e)}'
-            success = False
-    
-    return render_template(
-        'resolve_case.html',
-        case=case,
-        case_id=case_id,
-        message=message,
-        success=success
-    )
-
 @main.route('/update/<case_id>', methods=['GET', 'POST'])
 @login_required
 def update(case_id):
+    
     try:
         case = Case.query.get_or_404(case_id)
+        next_page = request.args.get('next') or request.form.get('next')
         
         if request.method == 'POST':
-            file = request.files.get('photo')
+            # Migrate old format to new format
+            case.migrate_old_format()
+            
             location = request.form.get('location')
-            need = request.form.get('need')
+            needs = request.form.getlist('needs[]')
             status = request.form.get('status')
             
-            if not all([location, need, status]):
-                flash('Location, need, and status are required', 'error')
+            if not location or not status:
+                flash('Location and status are required', 'error')
                 return render_template('update_case.html', case=case)
             
-            if status not in ['OPEN', 'RESOLVED']:
-                flash('Invalid status value', 'error')
-                return render_template('update_case.html', case=case)
+            # Handle new photos
+            if request.files.getlist('photos[]'):
+                for photo in request.files.getlist('photos[]'):
+                    if photo and photo.filename:
+                        filename = f"{str(uuid4())}_{secure_filename(photo.filename)}"
+                        
+                        if os.getenv('GAE_ENV', '').startswith('standard'):
+                            client = storage.Client()
+                            bucket = client.bucket('eco-layout-442118-t8-uploads')
+                            blob = bucket.blob(f"photos/{filename}")
+                            photo.seek(0)
+                            blob.upload_from_file(photo, content_type=photo.content_type)
+                            photo_url = f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/photos/{filename}"
+                        else:
+                            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], 'photos', filename)
+                            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                            photo.save(filepath)
+                            photo_url = f"/uploads/photos/{filename}"
+                        
+                        if case.photos is None:
+                            case.photos = []
+                        case.photos.append(photo_url)
+            
+            # Handle new videos (similar to photos)
+            if request.files.getlist('videos[]'):
+                for video in request.files.getlist('videos[]'):
+                    if video and video.filename:
+                        filename = f"{str(uuid4())}_{secure_filename(video.filename)}"
+                        
+                        if os.getenv('GAE_ENV', '').startswith('standard'):
+                            client = storage.Client()
+                            bucket = client.bucket('eco-layout-442118-t8-uploads')
+                            blob = bucket.blob(f"videos/{filename}")
+                            video.seek(0)
+                            blob.upload_from_file(video, content_type=video.content_type)
+                            video_url = f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/videos/{filename}"
+                        else:
+                            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], 'videos', filename)
+                            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                            video.save(filepath)
+                            video_url = f"/uploads/videos/{filename}"
+                        
+                        if case.videos is None:
+                            case.videos = []
+                        case.videos.append(video_url)
+            
+            case.location = location
+            case.needs = needs
+            case.status = status
+            case.updated_at = datetime.utcnow()
             
             try:
-                # Handle file upload
-                if file and file.filename:
-                    if os.getenv('GAE_ENV', '').startswith('standard'):
-                        # Cloud Storage upload
-                        filename = f"{str(uuid4())}_{secure_filename(file.filename)}"
-                        client = storage.Client()
-                        bucket = client.bucket('eco-layout-442118-t8-uploads')
-                        blob = bucket.blob(filename)
-                        
-                        # Rewind file pointer and upload
-                        file.seek(0)
-                        blob.upload_from_file(file, content_type=file.content_type)
-                        
-                        # Store the Cloud Storage URL
-                        case.photo = f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/{filename}"
-                    else:
-                        # Local file storage
-                        filename = secure_filename(file.filename)
-                        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-                        file.save(file_path)
-                        case.photo = f"/uploads/{filename}"
-                
-                case.location = location
-                case.need = need
-                case.status = status
-                case.updated_at = datetime.utcnow()
-                
                 db.session.commit()
                 flash('Case updated successfully!', 'success')
-                return redirect(url_for('main.show_cases'))
+                return jsonify({'success': True})
                 
             except Exception as e:
                 db.session.rollback()
                 current_app.logger.error(f"Database error while updating case: {str(e)}")
-                flash('Error updating case. Please try again.', 'error')
-                return render_template('update_case.html', case=case)
-        
-        return render_template('update_case.html', case=case)
+                return jsonify({'success': False, 'error': str(e)}), 500
+                
+        return render_template('update_case.html', case=case, next=next_page)
         
     except Exception as e:
         current_app.logger.error(f"Error in update route: {str(e)}")
-        flash('An error occurred. Please try again.', 'error')
-        return redirect(url_for('main.show_cases'))
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @main.route('/delete_case/<case_id>', methods=['GET', 'POST'])
 @login_required
 def delete(case_id):
+    next_page = request.args.get('next') or request.form.get('next')
     if request.method == 'GET':
         return render_template('delete.html', case_id=case_id)
     
     if request.method == 'POST':
-        if Case.delete_case(case_id):
+        try:
+            case = Case.query.get_or_404(case_id)
+            db.session.delete(case)
+            db.session.commit()
             flash('Case deleted successfully!', 'success')
-        else:
-            flash('Case not found or could not be deleted.', 'danger')
-        return redirect(url_for('main.show_cases'))
+            return redirect(next_page or url_for('main.show_cases'))
+        except Exception as e:
+            current_app.logger.error(f"Error deleting case: {e}")
+            flash('Error deleting case', 'error')
+            return redirect(next_page or url_for('main.show_cases'))
+            
+    return render_template('delete.html', case_id=case_id)
 
 @main.route('/case/<case_id>/details', methods=['GET', 'POST'])
 @login_required
 def view_case_details(case_id):
-    """View a single case and its comments, with a form to add a new comment."""
+    next_page = request.args.get('next') or request.form.get('next')
     case = Case.query.get_or_404(case_id)
     form = CommentForm()
-    page = request.args.get('page', 1, type=int)
-    
-    comments = Comment.query.filter_by(case_id=case.id).order_by(Comment.created_at.desc()).paginate(page=page, per_page=5)
-
     
     if form.validate_on_submit():
-        # Add a new comment
-        comment = Comment(content=form.content.data, user_id=current_user.id, case_id=case.id)
+        comment = Comment(content=form.content.data,
+                        case_id=case.id,
+                        user_id=current_user.id)
         db.session.add(comment)
         db.session.commit()
         flash('Comment added successfully!', 'success')
-        return redirect(url_for('main.view_case_details', case_id=case.id))
-
-    return render_template('case.html', case=case, comments=comments, form=form)
+        # Redirect back to the same page with the next parameter preserved
+        return redirect(url_for('main.view_case_details', case_id=case_id, next=next_page))
+        
+    page = request.args.get('page', 1, type=int)
+    comments = case.comments.order_by(Comment.created_at.desc()).paginate(
+        page=page, per_page=5, error_out=False)
+        
+    return render_template('case.html', 
+                         case=case, 
+                         comments=comments, 
+                         form=form,
+                         next=next_page)
 
 @main.route('/cases/status/<status>')  # Changed route path
 def list_cases_by_status(status):  # Changed function name

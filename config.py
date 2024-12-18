@@ -10,7 +10,7 @@ class Config:
         db_pass = os.getenv('DB_PASSWORD')
         SQLALCHEMY_DATABASE_URI = f"postgresql+pg8000://postgres:{db_pass}@/cats?unix_sock=/cloudsql/eco-layout-442118-t8:us-central1:cats-db/.s.PGSQL.5432"
     else:
-        SQLALCHEMY_DATABASE_URI = 'DATABASE_URL'
+        SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
 
     # File storage configuration
     if os.getenv('GAE_ENV', '').startswith('standard'):

@@ -15,14 +15,84 @@
             {% endif %}
         {% endwith %} -->
 
-        <form id="updateForm" action="{{ url_for('main.update', case_id=case.id) }}" method="POST" enctype="multipart/form-data" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-            <div class="mb-4">
-                <label for="photo" class="block text-gray-700 text-sm font-bold mb-2">Upload New Photo</label>
-                <input type="file" 
-                       id="photo"
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                       name="photo"
-                       accept="image/*">
+        <form id="updateForm" action="{{ url_for('main.update', case_id=case.id) }}" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="next" value="{{ request.args.get('next') or request.referrer }}">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="mb-4">
+                    <label for="photos" class="block text-gray-700 text-sm font-bold mb-2">Upload New Photos</label>
+                    <input type="file" 
+                           id="photos"
+                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                           name="photos[]"
+                           accept="image/*"
+                           multiple>
+                    
+                    <!-- Display existing photos -->
+                    <div class="mt-4 grid grid-cols-3 gap-4">
+                        {% if case.get_photos() %}
+                            {% for photo in case.get_photos() %}
+                            <div class="relative">
+                                {% if photo.startswith('https://') %}
+                                    <img src="{{ photo }}" alt="Case photo" class="w-full h-32 object-cover rounded">
+                                {% elif photo.startswith('/uploads/') %}
+                                    <img src="{{ url_for('main.uploaded_file', filename=photo.replace('/uploads/', '')) }}" 
+                                         alt="Case photo" class="w-full h-32 object-cover rounded">
+                                {% else %}
+                                    <img src="{{ url_for('main.uploaded_file', filename=photo) }}" 
+                                         alt="Case photo" class="w-full h-32 object-cover rounded">
+                                {% endif %}
+                                <button type="button" onclick="removeMedia('photo', this)" data-url="{{ photo }}" 
+                                        class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
+                                    ×
+                                </button>
+                            </div>
+                            {% endfor %}
+                        {% elif case.photo %}
+                            <div class="relative">
+                                {% if case.photo.startswith('https://') %}
+                                    <img src="{{ case.photo }}" alt="Case photo" class="w-full h-32 object-cover rounded">
+                                {% elif case.photo.startswith('/uploads/') %}
+                                    <img src="{{ url_for('main.uploaded_file', filename=case.photo.replace('/uploads/', '')) }}" 
+                                         alt="Case photo" class="w-full h-32 object-cover rounded">
+                                {% else %}
+                                    <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}" 
+                                         alt="Case photo" class="w-full h-32 object-cover rounded">
+                                {% endif %}
+                                <button type="button" onclick="removeMedia('photo', this)" data-url="{{ case.photo }}" 
+                                        class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
+                                    ×
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+        
+                <!-- Videos Upload -->
+                <div class="mb-4">
+                    <label for="videos" class="block text-gray-700 text-sm font-bold mb-2">Upload New Videos</label>
+                    <input type="file" 
+                           id="videos"
+                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                           name="videos[]"
+                           accept="video/*"
+                           multiple>
+                    
+                    <!-- Display existing videos -->
+                    <div class="mt-4 grid grid-cols-3 gap-4">
+                        {% for video in case.videos %}
+                        <div class="relative">
+                            <video class="w-full h-32 object-cover rounded" controls>
+                                <source src="{{ video }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                            <button type="button" onclick="removeMedia('video', this)" data-url="{{ video }}" 
+                                    class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
+                                ×
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
 
             <div class="mb-4">
@@ -35,18 +105,92 @@
                        required>
             </div>
 
-            <div>
-                <label for="need" class="block text-sm font-medium text-gray-700 mb-1">Need:</label>
-                <select id="need" name="need" required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">Select a need</option>
-                    <option value="medical" {{ 'selected' if case.need == 'medical' else '' }}>Medical Care</option>
-                    <option value="food" {{ 'selected' if case.need == 'food' else '' }}>Food/Water</option>
-                    <option value="shelter" {{ 'selected' if case.need == 'shelter' else '' }}>Shelter</option>
-                    <option value="rescue" {{ 'selected' if case.need == 'rescue' else '' }}>Rescue/Relocation</option>
-                    <option value="other" {{ 'selected' if case.need == 'other' else '' }}>Other</option>
-                </select>
+<!-- Needs Section -->
+<div class="mb-4">
+    <label class="block text-gray-700 text-sm font-bold mb-2">Update Needs</label>
+    <div class="bg-white p-4 rounded shadow">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Medical Care Option -->
+            <div class="flex items-center">
+                <input type="checkbox" 
+                       name="needs[]" 
+                       value="medical" 
+                       class="form-checkbox h-5 w-5 text-blue-600 rounded"
+                       id="need-medical"
+                       {{ 'checked' if (case.needs and 'medical' in case.needs) or (case.need == 'medical') else '' }}>
+                <label for="need-medical" class="ml-2">Medical Care</label>
             </div>
+            
+            <!-- Food/Water Option -->
+            <div class="flex items-center">
+                <input type="checkbox" 
+                       name="needs[]" 
+                       value="food" 
+                       class="form-checkbox h-5 w-5 text-blue-600 rounded"
+                       id="need-food"
+                       {{ 'checked' if (case.needs and 'food' in case.needs) or (case.need == 'food') else '' }}>
+                <label for="need-food" class="ml-2">Food/Water</label>
+            </div>
+            
+            <!-- Shelter Option -->
+            <div class="flex items-center">
+                <input type="checkbox" 
+                       name="needs[]" 
+                       value="shelter" 
+                       class="form-checkbox h-5 w-5 text-blue-600 rounded"
+                       id="need-shelter"
+                       {{ 'checked' if (case.needs and 'shelter' in case.needs) or (case.need == 'shelter') else '' }}>
+                <label for="need-shelter" class="ml-2">Shelter</label>
+            </div>
+            
+            <!-- Rescue/Relocation Option -->
+            <div class="flex items-center">
+                <input type="checkbox" 
+                       name="needs[]" 
+                       value="rescue" 
+                       class="form-checkbox h-5 w-5 text-blue-600 rounded"
+                       id="need-rescue"
+                       {{ 'checked' if (case.needs and 'rescue' in case.needs) or (case.need == 'rescue') else '' }}>
+                <label for="need-rescue" class="ml-2">Rescue/Relocation</label>
+            </div>
+            
+            <!-- Vaccination Option -->
+            <div class="flex items-center">
+                <input type="checkbox" 
+                       name="needs[]" 
+                       value="vaccination" 
+                       class="form-checkbox h-5 w-5 text-blue-600 rounded"
+                       id="need-vaccination"
+                       {{ 'checked' if (case.needs and 'vaccination' in case.needs) or (case.need == 'vaccination') else '' }}>
+                <label for="need-vaccination" class="ml-2">Vaccination</label>
+            </div>
+            
+            <!-- Sterilization Option -->
+            <div class="flex items-center">
+                <input type="checkbox" 
+                       name="needs[]" 
+                       value="sterilization" 
+                       class="form-checkbox h-5 w-5 text-blue-600 rounded"
+                       id="need-sterilization"
+                       {{ 'checked' if (case.needs and 'sterilization' in case.needs) or (case.need == 'sterilization') else '' }}>
+                <label for="need-sterilization" class="ml-2">Sterilization</label>
+            </div>
+            
+            <!-- Other Option -->
+            <div class="flex items-center">
+                <input type="checkbox" 
+                       name="needs[]" 
+                       value="other" 
+                       class="form-checkbox h-5 w-5 text-blue-600 rounded"
+                       id="need-other"
+                       {{ 'checked' if (case.needs and 'other' in case.needs) or (case.need == 'other') else '' }}>
+                <label for="need-other" class="ml-2">Other</label>
+            </div>
+        </div>
+        
+        <p class="text-sm text-gray-500 mt-2">Select all applicable needs</p>
+    </div>
+</div>
             
 
             <div class="mb-6">
@@ -65,9 +209,9 @@
                         class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                     Update Case
                 </button>
-                <a href="{{ url_for('main.show_cases') }}" 
-                   class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                    Cancel
+                <a href="{{ request.referrer or url_for('main.show_cases') }}" 
+                     class="bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                 Cancel
                 </a>
             </div>
         </form>
@@ -75,27 +219,60 @@
 
     <script>
         document.getElementById('updateForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Get form data
-            const formData = new FormData(this);
-            
-            // Submit form
-            fetch(this.action, {
+        e.preventDefault();
+        
+        // Get form data
+        const formData = new FormData(this);
+        
+        // Get the next URL from the hidden input
+        const nextUrl = document.querySelector('input[name="next"]').value;
+        
+        // Submit form
+        fetch(this.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = nextUrl || "{{ url_for('main.show_cases') }}";
+            } else {
+                throw new Error('Failed to update case');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to update case. Please try again.');
+        });
+    });
+
+    // Optional: Log the next URL to debug
+    console.log('Next URL:', document.querySelector('input[name="next"]').value);
+
+        function removeMedia(type, button) {
+            if (!confirm('Are you sure you want to remove this ' + type + '?')) {
+                return;
+            }
+
+            const url = button.dataset.url;
+            fetch(`{{ url_for('main.remove_media', case_id=case.id) }}`, {
                 method: 'POST',
-                body: formData
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ type: type, url: url })
             })
-            .then(response => {
-                if (response.ok) {
-                    window.location.href = "{{ url_for('main.show_cases') }}";
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    button.closest('.relative').remove();
                 } else {
-                    throw new Error('Failed to update case');
+                    alert('Failed to remove ' + type);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Failed to update case. Please try again.');
+                alert('Failed to remove ' + type);
             });
-        });
+        }
     </script>
   {% endblock %}
