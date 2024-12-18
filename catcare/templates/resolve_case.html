@@ -12,7 +12,8 @@
 
     <form action="{{ url_for('main.resolve_case', case_id=case.id) }}" method="POST" class="space-y-4">
         <!-- Add hidden input for return URL -->
-        <input type="hidden" name="next" value="{{ request.args.get('next') or request.referrer }}">
+        <input type="hidden" name="return_to" value="{{ request.args.get('return_to') or request.referrer }}">
+        <!-- rest of your form -->
 
         <!-- Case Details -->
         <div class="mb-4">
@@ -55,9 +56,9 @@
                     class="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
                 Resolve Case
             </button>
-            <a href="{{ request.args.get('next') or request.referrer or url_for('main.show_cases') }}"
+            <a href="{{ request.args.get('return_to') or request.referrer or url_for('main.show_cases') }}"
                class="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
-                <i class="fas fa-arrow-left mr-2"></i>Back
+                <i class="fas fa-arrow-left mr-2"></i>Cancel
             </a>
         </div>
     </form>

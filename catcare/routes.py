@@ -430,7 +430,7 @@ def advanced_search():
 def resolve_case(case_id):
     try:
         case = Case.query.get_or_404(case_id)
-        next_page = request.args.get('next') or request.referrer
+        return_to = request.args.get('return_to') or request.form.get('return_to')
         
         if request.method == 'POST':
             case.status = request.form.get('status')
@@ -438,18 +438,19 @@ def resolve_case(case_id):
             case.updated_at = datetime.utcnow()
             db.session.commit()
             flash('Case updated successfully!', 'success')
-            return redirect(next_page or url_for('main.show_cases'))
+            return redirect(return_to or url_for('main.show_cases'))
             
         return render_template('resolve_case.html', 
                              case=case,
                              case_id=case_id,
                              message=None,
-                             success=True)
+                             success=True,
+                             return_to=return_to)
         
     except Exception as e:
         current_app.logger.error(f"Error resolving case: {e}")
         flash('Error updating case', 'error')
-        return redirect(next_page or url_for('main.show_cases'))
+        return redirect(return_to or url_for('main.show_cases'))
     
 @main.route('/update/<case_id>', methods=['GET', 'POST'])
 @login_required
@@ -562,7 +563,7 @@ def delete(case_id):
 @main.route('/case/<case_id>/details', methods=['GET', 'POST'])
 @login_required
 def view_case_details(case_id):
-    next_page = request.args.get('next') or request.form.get('next')
+    return_to = request.args.get('return_to') or request.form.get('return_to')
     case = Case.query.get_or_404(case_id)
     form = CommentForm()
     
@@ -573,18 +574,18 @@ def view_case_details(case_id):
         db.session.add(comment)
         db.session.commit()
         flash('Comment added successfully!', 'success')
-        # Redirect back to the same page with the next parameter preserved
-        return redirect(url_for('main.view_case_details', case_id=case_id, next=next_page))
-        
+        # Redirect back to the same page but preserve the return URL
+        return redirect(url_for('main.view_case_details', case_id=case_id, return_to=return_to))
+    
     page = request.args.get('page', 1, type=int)
     comments = case.comments.order_by(Comment.created_at.desc()).paginate(
         page=page, per_page=5, error_out=False)
-        
+    
     return render_template('case.html', 
                          case=case, 
                          comments=comments, 
                          form=form,
-                         next=next_page)
+                         return_to=return_to)
 
 @main.route('/cases/status/<status>')  # Changed route path
 def list_cases_by_status(status):  # Changed function name

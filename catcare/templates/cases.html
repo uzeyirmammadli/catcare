@@ -53,7 +53,7 @@
                                 </span>
                             </div>
                             <div class="grid grid-cols-4 gap-2">
-                                <a href="{{ url_for('main.view_case_details', case_id=case.id) }}" 
+                                <a href="{{ url_for('main.view_case_details', case_id=case.id, return_to=request.path) }}" 
                                    class="inline-flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-300 ease-in-out">
                                     <i class="fas fa-eye w-4 h-4"></i>
                                     <span class="sr-only">View</span>
@@ -68,7 +68,7 @@
                                     <i class="fas fa-trash w-4 h-4"></i>
                                     <span class="sr-only">Delete</span>
                                 </a>
-                                <a href="{{ url_for('main.resolve_case', case_id=case.id, next=request.path) }}" 
+                                <a href="{{ url_for('main.resolve_case', case_id=case.id, return_to=request.path) }}" 
                                     class="inline-flex items-center px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg text-sm transition duration-300">
                                      <i class="fas fa-check-circle mr-2"></i>
                                         <span>Resolve</span>

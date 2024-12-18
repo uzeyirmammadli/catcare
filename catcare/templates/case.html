@@ -153,10 +153,16 @@
                        class="inline-flex items-center px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition duration-300 shadow-sm hover:shadow-md">
                         <i class="fas fa-trash w-4 h-4 mr-2"></i>Delete
                     </a>
-                    <a href="{{ request.args.get('next') or request.referrer or url_for('main.show_cases') }}" 
+                    <a href="{{ request.args.get('return_to') or request.referrer or url_for('main.show_cases') }}" 
                            class="inline-flex items-center px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-600 transition duration-300 shadow-sm hover:shadow-md">
                             <i class="fas fa-arrow-left mr-2"></i>Back
                         </a>
+                    <!-- Home Link -->
+                     <a href="{{ url_for('main.show_cases') }}"
+                        class="inline-flex items-center px-4 py-2 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-600 transition duration-300 shadow-sm hover:shadow-md">
+                        <i class="fas fa-home mr-2"></i>
+                            Back to Home
+                     </a>
                     </div>
                 </div>
             </div>
@@ -166,11 +172,10 @@
     <!-- Comments Section -->
     {% if current_user.is_authenticated %}
     <div class="bg-white rounded-xl shadow-lg p-6 space-y-6">
-        {{ form.hidden_tag() }}
-        <input type="hidden" name="next" value="{{ request.args.get('next') or request.referrer }}">
         <h2 class="text-2xl font-bold text-gray-900">Add Comment</h2>
         <form method="POST" class="space-y-4">
             {{ form.hidden_tag() }}
+            <input type="hidden" name="return_to" value="{{ request.args.get('return_to') or request.referrer }}">
             <div>
                 {{ form.content.label(class="block text-sm font-semibold text-gray-700 mb-2") }}
                 {{ form.content(class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition duration-150") }}
