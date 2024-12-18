@@ -25,23 +25,29 @@
                                             alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
                                     {% endif %}
                                     {% if case.photos|length > 1 %}
-                                    <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">+{{ case.photos|length - 1 }}</span>
+                                        <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">+{{ case.photos|length - 1 }}</span>
                                     {% endif %}
                                     {% if case.videos %}
-                                    <span class="absolute -bottom-2 -right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full">
-                                        <i class="fas fa-video w-3 h-3"></i>
-                                    </span>
+                                        <span class="absolute -bottom-2 -right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full">
+                                            <i class="fas fa-video w-3 h-3"></i>
+                                        </span>
                                     {% endif %}
                                 </div>
                                 {% endif %}
-
                                 <div class="flex-1 min-w-0">
                                     <div class="font-semibold text-gray-800 mb-1">{{ case.location }}</div>
                                     <div class="flex items-center gap-2 text-sm text-gray-600">
                                         <i class="icon-clock w-4 h-4"></i>
                                         {{ case.updated_at.strftime('%B %d, %Y %H:%M') if case.updated_at else 'N/A' }}
                                     </div>
+                                    {% if case.latitude and case.longitude %}
+                                        <div class="mt-2">
+                                            <div id="map-{{ case.id }}-mobile" class="h-48 rounded-lg shadow-md"></div>
+                                        </div>
+                                    {% endif %}
                                 </div>
+                            </div>
+                            <div class="flex justify-between items-center">
                                 <span class="px-3 py-1 rounded-full text-sm font-semibold inline-flex items-center gap-1
                                     {% if case.status == 'OPEN' %}
                                         bg-amber-100 text-amber-800
@@ -54,7 +60,7 @@
                             </div>
                             <div class="grid grid-cols-4 gap-2">
                                 <a href="{{ url_for('main.view_case_details', case_id=case.id, return_to=request.path) }}" 
-                                   class="inline-flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-300 ease-in-out">
+                                   class="inline-flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-300">
                                     <i class="fas fa-eye w-4 h-4"></i>
                                     <span class="sr-only">View</span>
                                 </a>
@@ -69,9 +75,9 @@
                                     <span class="sr-only">Delete</span>
                                 </a>
                                 <a href="{{ url_for('main.resolve_case', case_id=case.id, return_to=request.path) }}" 
-                                    class="inline-flex items-center px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg text-sm transition duration-300">
-                                     <i class="fas fa-check-circle mr-2"></i>
-                                        <span>Resolve</span>
+                                   class="inline-flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition duration-300">
+                                    <i class="fas fa-check-circle w-4 h-4"></i>
+                                    <span class="sr-only">Resolve</span>
                                 </a>
                             </div>
                         </div>
@@ -101,44 +107,33 @@
                     {% for case in cases %}
                         <tr class="border-b border-gray-100 hover:bg-blue-50 transition duration-150">
                             <td class="py-4 px-6">
+                                {% if case.photos %}
                                 <div class="relative w-24 h-24">
-                                    {% if case.photos %}
-                                        <!-- New format: array of photos -->
-                                        {% if case.photos[0].startswith('https://') %}
-                                            <img src="{{ case.photos[0] }}" alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
-                                        {% elif case.photos[0].startswith('/uploads/') %}
-                                            <img src="{{ url_for('main.uploaded_file', filename=case.photos[0].replace('/uploads/', '')) }}" 
-                                                 alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
-                                        {% else %}
-                                            <img src="{{ url_for('main.uploaded_file', filename=case.photos[0]) }}" 
-                                                 alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
-                                        {% endif %}
-                                    {% elif case.photo %}
-                                        <!-- Old format: single photo -->
-                                        {% if case.photo.startswith('https://') %}
-                                            <img src="{{ case.photo }}" alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
-                                        {% elif case.photo.startswith('/uploads/') %}
-                                            <img src="{{ url_for('main.uploaded_file', filename=case.photo.replace('/uploads/', '')) }}" 
-                                                 alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
-                                        {% else %}
-                                            <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}" 
-                                                 alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
-                                        {% endif %}
-                                    
-
+                                    {% if case.photos[0].startswith('https://') %}
+                                        <img src="{{ case.photos[0] }}" alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
+                                    {% elif case.photos[0].startswith('/uploads/') %}
+                                        <img src="{{ url_for('main.uploaded_file', filename=case.photos[0].replace('/uploads/', '')) }}" 
+                                             alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
+                                    {% else %}
+                                        <img src="{{ url_for('main.uploaded_file', filename=case.photos[0]) }}" 
+                                             alt="Case photo" class="w-full h-full object-cover rounded-lg shadow-md">
+                                    {% endif %}
                                     {% if case.photos|length > 1 %}
-                                    <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">+{{ case.photos|length - 1 }}</span>
+                                        <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">+{{ case.photos|length - 1 }}</span>
                                     {% endif %}
                                     {% if case.videos %}
-                                    <span class="absolute -bottom-2 -right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full">
-                                        <i class="fas fa-video w-3 h-3"></i>
-                                    </span>
+                                        <span class="absolute -bottom-2 -right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full">
+                                            <i class="fas fa-video w-3 h-3"></i>
+                                        </span>
                                     {% endif %}
                                 </div>
                                 {% endif %}
                             </td>
                             <td class="py-4 px-6">
                                 <div class="font-semibold text-gray-800">{{ case.location }}</div>
+                                {% if case.latitude and case.longitude %}
+                                    <div id="map-{{ case.id }}-desktop" class="h-48 w-64 mt-2 rounded-lg shadow-md"></div>
+                                {% endif %}
                             </td>
                             <td class="py-4 px-6">
                                 <span class="px-3 py-1 rounded-full text-sm font-semibold inline-flex items-center gap-1
@@ -160,7 +155,7 @@
                             <td class="py-4 px-6">
                                 <div class="flex gap-2">
                                     <a href="{{ url_for('main.view_case_details', case_id=case.id) }}" 
-                                       class="inline-flex items-center px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg text-sm transition duration-300 ease-in-out">
+                                       class="inline-flex items-center px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg text-sm transition duration-300">
                                         <i class="fas fa-eye w-4 h-4 mr-2"></i>
                                         <span>View</span>
                                     </a>
@@ -171,11 +166,11 @@
                                     </a>
                                     <a href="{{ url_for('main.delete', case_id=case.id) }}" 
                                        class="inline-flex items-center px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg text-sm transition duration-300">
-                                        <i class="icon-trash w-4 h-4 mr-2"></i>
+                                        <i class="fas fa-trash w-4 h-4 mr-2"></i>
                                         <span>Delete</span>
                                     </a>
                                     <a href="{{ url_for('main.resolve_case', case_id=case.id) }}" 
-                                       class="inline-flex items-center px-3 py-1.5 bg-pink-600 hover:bg-pink-700 text-white font-medium rounded-lg text-sm transition duration-300">
+                                       class="inline-flex items-center px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg text-sm transition duration-300">
                                         <i class="fas fa-check-circle w-4 h-4 mr-2"></i>
                                         <span>Resolve</span>
                                     </a>
@@ -197,7 +192,7 @@
         </table>
     </div>
 
-    <!-- Pagination remains unchanged -->
+    <!-- Pagination -->
     {% if pagination and pagination.pages > 1 %}
     <div class="flex justify-center mt-8">
         <nav class="inline-flex flex-wrap justify-center gap-2 rounded-lg shadow-lg bg-white p-2" aria-label="Pagination">
@@ -237,4 +232,20 @@
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% if cases %}
+    <script src="{{ url_for('static', filename='js/maps.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            {% for case in cases %}
+                {% if case.latitude and case.longitude %}
+                    initializeMap('map-{{ case.id }}-desktop', {{ case.latitude }}, {{ case.longitude }}, true);
+                    initializeMap('map-{{ case.id }}-mobile', {{ case.latitude }}, {{ case.longitude }}, false);
+                {% endif %}
+            {% endfor %}
+        });
+    </script>
+{% endif %}
 {% endblock %}

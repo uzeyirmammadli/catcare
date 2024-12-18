@@ -97,12 +97,28 @@
 
             <div class="mb-4">
                 <label for="location" class="block text-gray-700 text-sm font-bold mb-2">Location</label>
-                <input type="text" 
-                       id="location"
-                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                       name="location" 
-                       value="{{ case.location }}"
-                       required>
+                <div class="flex items-center gap-2">
+                    <input type="text" 
+                           id="location"
+                           class="flex-1 shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                           name="location" 
+                           value="{{ case.location }}"
+                           required>
+                    <button type="button" 
+                            id="getLocation" 
+                            class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <i class="fas fa-location-dot mr-2"></i>Get Location
+                    </button>
+                </div>
+                <!-- Hidden inputs for coordinates -->
+                <input type="hidden" id="latitude" name="latitude" value="{{ case.latitude if case.latitude else '' }}">
+                <input type="hidden" id="longitude" name="longitude" value="{{ case.longitude if case.longitude else '' }}">
+                <p id="locationStatus" class="mt-1 text-sm text-gray-500"></p>
+            
+                <!-- Map div to show current location -->
+                {% if case.latitude and case.longitude %}
+                <div id="currentLocationMap" class="mt-4 h-64 rounded-lg shadow-md"></div>
+                {% endif %}
             </div>
 
 <!-- Needs Section -->
@@ -274,5 +290,75 @@
                 alert('Failed to remove ' + type);
             });
         }
+
+        document.getElementById('getLocation').addEventListener('click', function() {
+            const locationStatus = document.getElementById('locationStatus');
+            locationStatus.textContent = 'Getting location...';
+        
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    
+                    // Save coordinates to hidden inputs
+                    document.getElementById('latitude').value = lat;
+                    document.getElementById('longitude').value = lon;
+                    
+                    // Get address from coordinates using reverse geocoding
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const address = data.display_name;
+                            document.getElementById('location').value = address;
+                            locationStatus.textContent = 'Location detected successfully!';
+                            locationStatus.className = 'mt-1 text-sm text-green-600';
+        
+                            // Update map if it exists
+                            if (typeof updateLocationMap === 'function') {
+                                updateLocationMap(lat, lon);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error getting address:', error);
+                            document.getElementById('location').value = `${lat}, ${lon}`;
+                            locationStatus.textContent = 'Retrieved coordinates, but could not get address.';
+                            locationStatus.className = 'mt-1 text-sm text-yellow-600';
+                        });
+                }, function(error) {
+                    console.error('Error getting location:', error);
+                    locationStatus.textContent = 'Could not get location. Please enter manually.';
+                    locationStatus.className = 'mt-1 text-sm text-red-600';
+                });
+            } else {
+                locationStatus.textContent = 'Location services not available in your browser.';
+                locationStatus.className = 'mt-1 text-sm text-red-600';
+            }
+        });
+        
+        // Initialize map if coordinates exist
+        {% if case.latitude and case.longitude %}
+        let locationMap;
+        document.addEventListener('DOMContentLoaded', function() {
+            locationMap = L.map('currentLocationMap').setView([{{ case.latitude }}, {{ case.longitude }}], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(locationMap);
+            L.marker([{{ case.latitude }}, {{ case.longitude }}]).addTo(locationMap);
+        });
+        
+        function updateLocationMap(lat, lon) {
+            if (locationMap) {
+                locationMap.setView([lat, lon], 15);
+                // Clear existing markers
+                locationMap.eachLayer((layer) => {
+                    if (layer instanceof L.Marker) {
+                        locationMap.removeLayer(layer);
+                    }
+                });
+                // Add new marker
+                L.marker([lat, lon]).addTo(locationMap);
+            }
+        }
+        {% endif %}
     </script>
   {% endblock %}

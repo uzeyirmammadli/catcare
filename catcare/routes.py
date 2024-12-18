@@ -208,6 +208,10 @@ def report():
             videos = request.files.getlist('videos[]')
             video_urls = []
             
+            #Handle location
+            latitude = request.form.get('latitude')
+            longitude = request.form.get('longitude')
+            
             # Upload photos
             for photo in photos:
                 if photo and photo.filename:
@@ -249,6 +253,8 @@ def report():
                 photos=photo_urls,
                 videos=video_urls,
                 location=request.form['location'],
+                latitude=float(latitude) if latitude else None,
+                longitude=float(longitude) if longitude else None,
                 needs=request.form.getlist('needs[]'),
                 status='OPEN',
                 user_id=current_user.id,
@@ -465,6 +471,8 @@ def update(case_id):
             case.migrate_old_format()
             
             location = request.form.get('location')
+            lat = request.form.get('latitude')
+            lon = request.form.get('longitude')
             needs = request.form.getlist('needs[]')
             status = request.form.get('status')
             
@@ -519,6 +527,8 @@ def update(case_id):
                         case.videos.append(video_url)
             
             case.location = location
+            case.latitude = float(lat) if lat else None
+            case.longitude = float(lon) if lon else None
             case.needs = needs
             case.status = status
             case.updated_at = datetime.utcnow()

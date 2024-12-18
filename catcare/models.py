@@ -33,6 +33,8 @@ class Case(db.Model):
     needs = db.Column(ARRAY(db.String), default=[])
     photo = db.Column(db.String(200))  # Keep for migration
     location = db.Column(db.String(100), nullable=False)
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
     need = db.Column(db.String(200))   # Keep for migration
     status = db.Column(db.String(20), default='OPEN')
     resolution_notes = db.Column(db.Text())
