@@ -6,6 +6,8 @@ from flask import request, render_template, redirect, url_for, jsonify, flash, a
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 from flask import Blueprint, send_from_directory, send_file
+from math import radians, cos, sin, asin, sqrt
+from sqlalchemy import func
 from .models import db, User, Comment, Case
 from .forms import RegistrationForm, LoginForm, CommentForm
 from . import db, login_manager
@@ -337,14 +339,34 @@ def show_cases():
                              current_page=1,
                              total_pages=1)
  
+def haversine_distance(lat1, lon1, lat2, lon2):
+    """
+    Calculate the great circle distance between two points 
+    on the earth (specified in decimal degrees)
+    """
+    # Convert decimal degrees to radians
+    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+
+    # Haversine formula
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * asin(sqrt(a))
+    # Radius of earth in kilometers
+    r = 6371
+    return c * r
+
 @main.route('/advanced-search', methods=['GET'])
 def advanced_search():
     """Advanced search endpoint with multiple filter criteria."""
     # Get all filter parameters
     filters = {
         'location': request.args.get('location'),
+        'latitude': request.args.get('latitude', type=float),
+        'longitude': request.args.get('longitude', type=float),
+        'radius': request.args.get('radius', type=float, default=5.0),  # Default 5km radius
         'status': request.args.get('status'),
-        'need': request.args.get('need'),
+        'needs': request.args.getlist('needs[]'),
         'date_from': request.args.get('date_from'),
         'date_to': request.args.get('date_to'),
         'sort_by': request.args.get('sort_by', 'created_at'),
@@ -362,42 +384,106 @@ def advanced_search():
         if filters['location']:
             query = query.filter(Case.location.ilike(f"%{filters['location']}%"))
         
-        if filters['status']:
-            query = query.filter(Case.status == filters['status'].upper())
+        # Location-based search with Haversine distance
+        if filters['latitude'] and filters['longitude']:
+            # First, get all cases
+            cases = query.all()
             
-        if filters['need']:
-            query = query.filter(Case.need.ilike(f"%{filters['need']}%"))
-        
-        # Date range filtering
-        if filters['date_from']:
-            date_from = datetime.strptime(filters['date_from'], '%Y-%m-%d')
-            query = query.filter(Case.created_at >= date_from)
+            # Calculate distances and filter within radius
+            filtered_cases = []
+            for case in cases:
+                if case.latitude and case.longitude:  # Ensure case has coordinates
+                    distance = haversine_distance(
+                        filters['latitude'], 
+                        filters['longitude'],
+                        case.latitude, 
+                        case.longitude
+                    )
+                    if distance <= filters['radius']:
+                        # Create a dictionary of case attributes including the distance
+                        case_dict = case.__dict__.copy()
+                        case_dict['distance'] = round(distance, 2)
+                        filtered_cases.append(case_dict)
             
-        if filters['date_to']:
-            date_to = datetime.strptime(filters['date_to'], '%Y-%m-%d')
-            # Add one day to include the entire end date
-            date_to = date_to + timedelta(days=1)
-            query = query.filter(Case.created_at < date_to)
-        
-        # Apply sorting
-        sort_column = getattr(Case, filters['sort_by'])
-        if filters['sort_order'] == 'desc':
-            query = query.order_by(sort_column.desc())
+            # Sort by distance if requested
+            if filters['sort_by'] == 'distance':
+                filtered_cases.sort(
+                    key=lambda x: x.distance,
+                    reverse=(filters['sort_order'] == 'desc')
+                )
+            else:
+                # Apply other sorting
+                filtered_cases.sort(
+                    key=lambda x: getattr(x, filters['sort_by']),
+                    reverse=(filters['sort_order'] == 'desc')
+                )
+            
+            # Manual pagination
+            start_idx = (page - 1) * per_page
+            end_idx = start_idx + per_page
+            paginated_cases = filtered_cases[start_idx:end_idx]
+            
+            # Create a simple pagination object
+            class SimplePagination:
+                def __init__(self, items, total, page, per_page):
+                    self.items = items
+                    self.total = total
+                    self.page = page
+                    self.per_page = per_page
+                    self.pages = (total + per_page - 1) // per_page
+            
+            pagination = SimplePagination(
+                paginated_cases,
+                len(filtered_cases),
+                page,
+                per_page
+            )
+            
         else:
-            query = query.order_by(sort_column.asc())
-        
-        # Execute query with pagination
-        pagination = query.paginate(
-            page=page,
-            per_page=per_page,
-            error_out=False
-        )
+            # Apply regular filters without location search
+            if filters['status']:
+                query = query.filter(Case.status == filters['status'].upper())
+            
+            if filters['needs']:
+                query = query.filter(Case.needs.overlap(filters['needs']))
+            
+            if filters['date_from']:
+                date_from = datetime.strptime(filters['date_from'], '%Y-%m-%d')
+                query = query.filter(Case.created_at >= date_from)
+            
+            if filters['date_to']:
+                date_to = datetime.strptime(filters['date_to'], '%Y-%m-%d')
+                date_to = date_to + timedelta(days=1)
+                query = query.filter(Case.created_at < date_to)
+            
+            # Apply sorting
+            sort_column = getattr(Case, filters['sort_by'])
+            if filters['sort_order'] == 'desc':
+                query = query.order_by(sort_column.desc())
+            else:
+                query = query.order_by(sort_column.asc())
+            
+            # Regular pagination
+            pagination = query.paginate(
+                page=page,
+                per_page=per_page,
+                error_out=False
+            )
         
         # Get distinct values for dropdowns
         locations = db.session.query(Case.location).distinct().all()
-        needs = db.session.query(Case.need).distinct().all()
         
-        # Prepare data for template
+        # Update sort options to include distance
+        sort_options = [
+            ('created_at', 'Creation Date'),
+            ('updated_at', 'Last Updated'),
+            ('location', 'Location'),
+            ('status', 'Status')
+        ]
+        if filters['latitude'] and filters['longitude']:
+            sort_options.append(('distance', 'Distance'))
+        
+        # Prepare template data
         template_data = {
             'cases': pagination.items,
             'pagination': pagination,
@@ -405,31 +491,24 @@ def advanced_search():
             'total_pages': pagination.pages,
             'filters': filters,
             'locations': [loc[0] for loc in locations],
-            'needs': [need[0] for need in needs],
             'statuses': ['OPEN', 'RESOLVED'],
-            'sort_options': [
-                ('created_at', 'Creation Date'),
-                ('updated_at', 'Last Updated'),
-                ('location', 'Location'),
-                ('status', 'Status')
-            ]
+            'sort_options': sort_options
         }
         
         return render_template('advanced_search.html', **template_data)
-        
+    
     except Exception as e:
         current_app.logger.error(f"Search error: {str(e)}")
         flash('An error occurred while searching. Please try again.', 'error')
-        return render_template('advanced_search.html', 
-                             cases=[],
-                             pagination=None,
-                             current_page=1,
-                             total_pages=1,
-                             filters=filters,
-                             locations=[],
-                             needs=[],
-                             statuses=['OPEN', 'RESOLVED'],
-                             sort_options=[])
+        return render_template('advanced_search.html',
+                           cases=[],
+                           pagination=None,
+                           current_page=1,
+                           total_pages=1,
+                           filters=filters,
+                           locations=[],
+                           statuses=['OPEN', 'RESOLVED'],
+                           sort_options=[])
 
 @main.route('/resolve/<case_id>', methods=['GET', 'POST'])
 @login_required

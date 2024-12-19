@@ -1,59 +1,117 @@
 {% extends "base.html" %}
 
 {% block content %}
-        <!-- Search Form -->
-        <body class="bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
-        <form method="GET" action="{{ url_for('main.advanced_search') }}" class="bg-white shadow-lg rounded-lg px-8 pt-6 pb-8 mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Location Filter -->
-                <div>
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="location">
-                        Location
-                    </label>
-                    <select name="location" id="location" class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
-                        <option value="">All Locations</option>
-                        {% for location in locations %}
-                        <option value="{{ location }}" {% if filters.location == location %}selected{% endif %}>
-                            {{ location }}
-                        </option>
-                        {% endfor %}
-                    </select>
+<body class="bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
+    <form method="GET" action="{{ url_for('main.advanced_search') }}" class="bg-white shadow-lg rounded-lg px-8 pt-6 pb-8 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Location Filter with Map -->
+            <div class="lg:col-span-2">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="location">
+                    Location
+                </label>
+                <div class="flex flex-col space-y-2">
+                    <div class="flex gap-2">
+                        <select name="location" id="location" 
+                                class="flex-1 px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
+                            <option value="">All Locations</option>
+                            {% for location in locations %}
+                                <option value="{{ location }}" {% if filters.location == location %}selected{% endif %}>
+                                    {{ location }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" 
+                                id="getLocation" 
+                                class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                            <i class="fas fa-location-dot mr-2"></i>Get Location
+                        </button>
+                    </div>
+                    <!-- Hidden inputs for coordinates -->
+                    <input type="hidden" id="latitude" name="latitude" value="{{ filters.latitude }}">
+                    <input type="hidden" id="longitude" name="longitude" value="{{ filters.longitude }}">
+                    <p id="locationStatus" class="text-sm text-gray-500"></p>
+                    <!-- Map container -->
+                    <div id="searchMap" class="h-48 rounded-lg shadow-md mt-2 hidden"></div>
+                    <div class="mt-2">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="radius">
+                            Search Radius (km)
+                        </label>
+                        <input type="number" 
+                               id="radius" 
+                               name="radius" 
+                               value="{{ filters.radius|default(5) }}" 
+                               min="0.1" 
+                               max="100" 
+                               step="0.1"
+                               class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
                 </div>
-                
-                <!-- Status Filter -->
-                <div>
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="status">
-                        Status
+            </div>
+            
+            <!-- Status Filter -->
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="status">
+                    Status
+                </label>
+                <select name="status" id="status" class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
+                    <option value="">All Statuses</option>
+                    {% for status in statuses %}
+                    <option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>
+                        {{ status }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Multiple Needs Filter -->
+            <div class="lg:col-span-2">
+                <label class="block text-gray-700 text-sm font-bold mb-2">
+                    Needs
+                </label>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <label class="inline-flex items-center space-x-2">
+                        <input type="checkbox" id="select-all-needs" 
+                               class="form-checkbox text-blue-500">
+                        <span class="font-medium">All Needs</span>
                     </label>
-                    <select name="status" id="status" class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
-                        <option value="">All Statuses</option>
-                        {% for status in statuses %}
-                        <option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>
-                            {{ status }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <!-- Need Filter -->
-                <div>
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="need">
-                        Need
+                    <label class="inline-flex items-center space-x-2">
+                        <input type="checkbox" name="needs[]" value="medical" 
+                               {% if 'medical' in filters.needs %}checked{% endif %}
+                               class="form-checkbox text-blue-500">
+                        <span>Medical Care</span>
                     </label>
-                    <select name="need" id="need" class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
-                        <option value="">All Needs</option>
-                        <option value="medical">Medical Care</option>
-                        <option value="food">Food/Water</option>
-                        <option value="shelter">Shelter</option>
-                        <option value="rescue">Rescue/Relocation</option>
-                        <option value="other">Other</option>
-                        <!-- {% for need in needs %}
-                        <option value="{{ need }}" {% if filters.need == need %}selected{% endif %}>
-                            {{ need }}
-                        </option>
-                        {% endfor %} -->
-                    </select>
+                    <label class="inline-flex items-center space-x-2">
+                        <input type="checkbox" name="needs[]" value="food"
+                               {% if 'food' in filters.needs %}checked{% endif %}
+                               class="form-checkbox text-blue-500">
+                        <span>Food/Water</span>
+                    </label>
+                    <label class="inline-flex items-center space-x-2">
+                        <input type="checkbox" name="needs[]" value="shelter"
+                               {% if 'shelter' in filters.needs %}checked{% endif %}
+                               class="form-checkbox text-blue-500">
+                        <span>Shelter</span>
+                    </label>
+                    <label class="inline-flex items-center space-x-2">
+                        <input type="checkbox" name="needs[]" value="rescue"
+                               {% if 'rescue' in filters.needs %}checked{% endif %}
+                               class="form-checkbox text-blue-500">
+                        <span>Rescue</span>
+                    </label>
+                    <label class="inline-flex items-center space-x-2">
+                        <input type="checkbox" name="needs[]" value="vaccination"
+                               {% if 'vaccination' in filters.needs %}checked{% endif %}
+                               class="form-checkbox text-blue-500">
+                        <span>Vaccination</span>
+                    </label>
+                    <label class="inline-flex items-center space-x-2">
+                        <input type="checkbox" name="needs[]" value="sterilization"
+                               {% if 'sterilization' in filters.needs %}checked{% endif %}
+                               class="form-checkbox text-blue-500">
+                        <span>Sterilization</span>
+                    </label>
                 </div>
+            </div>
                 
                 <!-- Date Range -->
                 <div>
@@ -106,32 +164,52 @@
             </div>
         </form>
         
-        <!-- Results Section -->
         {% if cases %}
-        <div class="bg-white shadow-lg rounded-lg px-8 pt-6 pb-8">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800">Search Results</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {% for case in cases %}
-                <div class="border rounded-lg p-4 hover:shadow-md transition duration-300 ease-in-out">
-                    <h3 class="font-bold text-lg mb-2 text-blue-600">Case #{{ case.id[:8] }}</h3>
-                    <p class="mb-1"><span class="font-semibold">Location:</span> {{ case.location }}</p>
-                    <p class="mb-1"><span class="font-semibold">Need:</span> {{ case.need }}</p>
-                    <p class="mb-1"><span class="font-semibold">Status:</span> 
-                        <span class="px-2 py-1 rounded-full text-xs font-semibold
+    <div class="bg-white shadow-lg rounded-lg px-8 pt-6 pb-8">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">Search Results</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for case in cases %}
+            <div class="border rounded-lg p-4 hover:shadow-md transition duration-300">
+                <h3 class="font-bold text-lg mb-2 text-blue-600">Case #{{ case.id[:8] }}</h3>
+                <p class="mb-1"><span class="font-semibold">Location:</span> {{ case.location }}</p>
+                {% if case.distance is defined %}
+                <p class="mb-1">
+                    <span class="font-semibold">Distance:</span> 
+                    <span class="text-blue-600">{{ case.distance }} km</span>
+                </p>
+                {% endif %}
+                <!-- Display multiple needs -->
+                <div class="mb-2">
+                    <span class="font-semibold">Needs:</span>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        {% for need in case.needs %}
+                        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                            {{ need }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                <!-- Show map if coordinates exist -->
+                {% if case.latitude and case.longitude %}
+                <div id="map-{{ case.id }}" class="h-32 rounded-lg shadow-md mb-2"></div>
+                {% endif %}
+                <p class="mb-1">
+                    <span class="font-semibold">Status:</span> 
+                    <span class="px-2 py-1 rounded-full text-xs font-semibold
                         {% if case.status == 'OPEN' %}bg-green-200 text-green-800
                         {% else %}bg-gray-200 text-gray-800{% endif %}">
-                            {{ case.status }}
-                        </span>
-                    </p>
-                    <p class="mb-3"><span class="font-semibold">Created:</span> {{ case.created_at.strftime('%Y-%m-%d') }}</p>
-                    <a href="{{ url_for('main.view_case_details', case_id=case.id) }}" 
-                       class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition duration-300 ease-in-out transform hover:scale-105">
-                        View Details
-                    </a>
-                </div>
-                {% endfor %}
+                        {{ case.status }}
+                    </span>
+                </p>
+                <p class="mb-3"><span class="font-semibold">Created:</span> {{ case.created_at.strftime('%Y-%m-%d') }}</p>
+                <a href="{{ url_for('main.view_case_details', case_id=case.id) }}" 
+                   class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition duration-300">
+                    View Details
+                </a>
             </div>
+            {% endfor %}
+        </div>
             
             <!-- Pagination -->
             {% if pagination.pages > 1 %}
@@ -154,4 +232,149 @@
         {% endif %}
     </div>
 </body>
+{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize search map
+    const searchMap = L.map('searchMap').setView([40.4093, 49.8671], 12); // Default to Baku coordinates
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(searchMap);
+    
+    let searchMarker;
+    let searchCircle;
+
+    // Function to update the search radius circle
+    function updateSearchRadius() {
+        const radius = document.getElementById('radius').value * 1000; // Convert to meters
+        
+        if (searchMarker) {
+            const latLng = searchMarker.getLatLng();
+            
+            if (searchCircle) {
+                searchMap.removeLayer(searchCircle);
+            }
+            
+            searchCircle = L.circle(latLng, {
+                radius: radius,
+                fillColor: '#3b82f6',
+                fillOpacity: 0.1,
+                color: '#3b82f6',
+                weight: 1
+            }).addTo(searchMap);
+            
+            // Fit bounds to show the entire circle
+            searchMap.fitBounds(searchCircle.getBounds());
+        }
+    }
+
+    // Get location button handler
+    document.getElementById('getLocation').addEventListener('click', function() {
+        const locationStatus = document.getElementById('locationStatus');
+        locationStatus.textContent = 'Getting location...';
+        
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                
+                document.getElementById('latitude').value = lat;
+                document.getElementById('longitude').value = lon;
+                
+                // Show and update map
+                document.getElementById('searchMap').classList.remove('hidden');
+                searchMap.setView([lat, lon], 15);
+                
+                if (searchMarker) {
+                    searchMap.removeLayer(searchMarker);
+                }
+                searchMarker = L.marker([lat, lon]).addTo(searchMap);
+                
+                // Update radius circle
+                updateSearchRadius();
+                
+                // Get address
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('location').value = data.display_name;
+                        locationStatus.textContent = 'Location detected!';
+                        locationStatus.className = 'text-sm text-green-600';
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        locationStatus.textContent = 'Could not get address. Using coordinates.';
+                        locationStatus.className = 'text-sm text-yellow-600';
+                    });
+            }, function(error) {
+                console.error('Error:', error);
+                locationStatus.textContent = 'Could not get location.';
+                locationStatus.className = 'text-sm text-red-600';
+            });
+        } else {
+            locationStatus.textContent = 'Location services not available.';
+            locationStatus.className = 'text-sm text-red-600';
+        }
+    });
+
+    // Initialize result maps
+    {% for case in cases %}
+        {% if case.latitude and case.longitude %}
+            const resultMap{{ case.id }} = L.map('map-{{ case.id }}').setView([{{ case.latitude }}, {{ case.longitude }}], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(resultMap{{ case.id }});
+            L.marker([{{ case.latitude }}, {{ case.longitude }}]).addTo(resultMap{{ case.id }});
+        {% endif %}
+    {% endfor %}
+
+    // Select All Needs functionality
+    const selectAllNeeds = document.getElementById('select-all-needs');
+    const needCheckboxes = document.querySelectorAll('input[name="needs[]"]');
+    
+    selectAllNeeds.addEventListener('change', function() {
+        needCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+    
+    // Update "Select All" state based on individual checkboxes
+    needCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const allChecked = Array.from(needCheckboxes).every(cb => cb.checked);
+            selectAllNeeds.checked = allChecked;
+        });
+    });
+
+    // Location dropdown change handler
+    document.getElementById('location').addEventListener('change', function() {
+        if (this.value === '') {
+            // Clear coordinates when "All Locations" is selected
+            document.getElementById('latitude').value = '';
+            document.getElementById('longitude').value = '';
+            document.getElementById('searchMap').classList.add('hidden');
+            if (searchMarker) {
+                searchMap.removeLayer(searchMarker);
+            }
+            if (searchCircle) {
+                searchMap.removeLayer(searchCircle);
+            }
+        }
+    });
+
+    // Radius input change handler
+    document.getElementById('radius').addEventListener('input', updateSearchRadius);
+    
+    // Initialize radius if coordinates are preset
+    const initialLat = document.getElementById('latitude').value;
+    const initialLon = document.getElementById('longitude').value;
+    if (initialLat && initialLon) {
+        document.getElementById('searchMap').classList.remove('hidden');
+        const latLng = [parseFloat(initialLat), parseFloat(initialLon)];
+        searchMap.setView(latLng, 15);
+        searchMarker = L.marker(latLng).addTo(searchMap);
+        updateSearchRadius();
+    }
+</script>
 {% endblock %}
