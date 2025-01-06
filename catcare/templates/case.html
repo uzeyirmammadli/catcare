@@ -10,25 +10,18 @@
         <div class="flex flex-col lg:flex-row">
             <!-- Media Section -->
             <div class="w-full lg:w-1/2 h-[300px] lg:h-auto">
-                {% if case.get_photos() %}
+                {% if case.photos %}
                 <div class="mb-4">
                     <h3 class="text-lg font-semibold mb-2">Photos</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        {% for photo in case.get_photos() %}
+                    <div class="mt-4 grid grid-cols-3 gap-4">
+                        {% for photo in case.photos %}
                         <div class="relative">
-                            {% if photo.startswith('https://') %}
-                                <img src="{{ photo }}" alt="Case photo" class="w-full h-40 object-cover rounded-lg">
-                            {% elif photo.startswith('/uploads/') %}
-                                <img src="{{ url_for('main.uploaded_file', filename=photo.replace('/uploads/', '')) }}" 
-                                    alt="Case photo" class="w-full h-40 object-cover rounded-lg">
-                            {% else %}
-                                <img src="{{ url_for('main.uploaded_file', filename=photo) }}" 
-                                    alt="Case photo" class="w-full h-40 object-cover rounded-lg">
-                            {% endif %}
-                            <a href="{{ photo if photo.startswith('https://') else url_for('main.uploaded_file', filename=photo.replace('/uploads/', '') if photo.startswith('/uploads/') else photo) }}" 
-                            target="_blank" class="absolute bottom-2 right-2 bg-blue-600 text-white p-1 rounded-full hover:bg-blue-700">
-                                <i class="fas fa-expand w-4 h-4"></i>
-                            </a>
+                            <img src="{{ url_for('main.uploaded_file', filename=photo.replace('/uploads/', '')) }}" 
+                                 alt="Case photo" class="w-full h-32 object-cover rounded">
+                            <!-- <button type="button" onclick="removeMedia('photo', this)" data-url="{{ photo }}" 
+                                    class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
+                                ×
+                            </button> -->
                         </div>
                         {% endfor %}
                     </div>
@@ -55,24 +48,20 @@
                 {% endif %}
                 <!-- Videos Section -->
                 {% if case.videos %}
-                <div class="mb-4">
-                    <h3 class="text-lg font-semibold mb-2">Videos</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        {% for video in case.videos %}
-                        <div class="relative">
-                            <video controls class="w-full h-40 object-cover rounded-lg">
-                                {% if video.startswith('https://') %}
-                                    <source src="{{ video }}" type="video/mp4">
-                                {% elif video.startswith('/uploads/') %}
-                                    <source src="{{ url_for('main.uploaded_file', filename=video.replace('/uploads/', '')) }}" type="video/mp4">
-                                {% else %}
-                                    <source src="{{ url_for('main.uploaded_file', filename=video) }}" type="video/mp4">
-                                {% endif %}
-                                Your browser does not support the video tag.
-                            </video>
-                        </div>
-                        {% endfor %}
+                <h3 class="text-lg font-semibold mb-2">Videos</h3>
+                <div class="mt-4 grid grid-cols-3 gap-4">
+                    {% for video in case.videos %}
+                    <div class="relative">
+                        <video class="w-full h-32 object-cover rounded" controls>
+                            <source src="{{ url_for('main.uploaded_file', filename=video.replace('/uploads/', '')) }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <!-- <button type="button" onclick="removeMedia('video', this)" data-url="{{ video }}" 
+                                class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
+                            ×
+                        </button> -->
                     </div>
+                    {% endfor %}
                 </div>
                 {% endif %}
             </div>

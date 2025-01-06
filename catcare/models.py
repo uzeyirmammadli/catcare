@@ -45,30 +45,6 @@ class Case(db.Model):
     user = db.relationship('User', backref=db.backref('cases', lazy=True))
     comments = db.relationship('Comment', back_populates='case', lazy='dynamic', cascade="all, delete-orphan")
     
-    def get_photos(self):
-        """Get all photos, combining old and new formats"""
-        photos = list(self.photos) if self.photos else []
-        if self.photo and self.photo not in photos:
-            photos.append(self.photo)
-        return photos
-
-    def get_needs(self):
-        """Get all needs, combining old and new formats"""
-        needs = list(self.needs) if self.needs else []
-        if self.need and self.need not in needs:
-            needs.append(self.need)
-        return needs
-
-    def migrate_old_format(self):
-        """Migrate data from old format to new format"""
-        if self.photo and not self.photos:
-            self.photos = [self.photo]
-            self.photo = None
-            
-        if self.need and not self.needs:
-            self.needs = [self.need]
-            self.need = None
-
 
     @classmethod
     def get_by_status(cls, status):

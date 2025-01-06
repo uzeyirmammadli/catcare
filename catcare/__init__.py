@@ -6,12 +6,14 @@ from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
 import logging
 from flask_swagger_ui import get_swaggerui_blueprint
+from flask_wtf.csrf import CSRFProtect
 from config import Config
 # Initialize extensions
 db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
 jwt = JWTManager()
+csrf = CSRFProtect()
 
 def create_app():
     app = Flask(__name__)
@@ -21,6 +23,7 @@ def create_app():
     migrate.init_app(app, db)
     login_manager.init_app(app)
     jwt.init_app(app)
+    csrf.init_app(app)
     login_manager.login_view = 'main.login'
 
     if os.getenv('GAE_ENV', '').startswith('standard'):

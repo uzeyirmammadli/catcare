@@ -8,6 +8,8 @@ from werkzeug.utils import secure_filename
 from flask import Blueprint, send_from_directory, send_file
 from math import radians, cos, sin, asin, sqrt
 from sqlalchemy import func
+from flask_wtf.csrf import generate_csrf
+from functools import wraps
 from .models import db, User, Comment, Case
 from .forms import RegistrationForm, LoginForm, CommentForm
 from . import db, login_manager
@@ -18,6 +20,15 @@ if os.getenv('GAE_ENV', '').startswith('standard'):
 main = Blueprint('main', __name__)
 logging.basicConfig(level=logging.DEBUG)
 
+def csrf_protected(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if request.method == "POST":
+            csrf_token = request.headers.get('X-CSRFToken')
+            if not csrf_token:
+                return jsonify({'success': False, 'error': 'CSRF token missing'}), 400
+        return f(*args, **kwargs)
+    return decorated_function
 @main.route('/test')
 def test_interface():
     return send_file('templates/test.html')
@@ -275,44 +286,17 @@ def report():
             
     return render_template('report.html')
 
-@main.route('/case/<case_id>/remove_media', methods=['POST'])
-@login_required
-def remove_media(case_id):
-    try:
-        case = Case.query.get_or_404(case_id)
-        data = request.get_json()
-        media_type = data.get('type')
-        url = data.get('url')
-        
-        if media_type == 'photo':
-            # Handle both old and new format
-            if case.photos is None:
-                case.photos = []
-            if url in case.photos:
-                case.photos.remove(url)
-            if case.photo == url:
-                case.photo = None
-        elif media_type == 'video':
-            if case.videos is None:
-                case.videos = []
-            if url in case.videos:
-                case.videos.remove(url)
-        
-        db.session.commit()
-        return jsonify({'success': True})
-        
-    except Exception as e:
-        current_app.logger.error(f"Error removing media: {e}")
-        db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
 
 # Update the uploaded_file route to handle both environments
+# @main.route('/uploads/<path:filename>')
+# def uploaded_file(filename):
+#     if filename.startswith('https://'):
+#         return redirect(filename)
+#     elif os.getenv('GAE_ENV', '').startswith('standard'):
+#         return redirect(f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/{filename}")
+#     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
 @main.route('/uploads/<path:filename>')
 def uploaded_file(filename):
-    if filename.startswith('https://'):
-        return redirect(filename)
-    elif os.getenv('GAE_ENV', '').startswith('standard'):
-        return redirect(f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/{filename}")
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
 
 @main.route('/')
@@ -539,94 +523,191 @@ def resolve_case(case_id):
     
 @main.route('/update/<case_id>', methods=['GET', 'POST'])
 @login_required
+@csrf_protected
 def update(case_id):
-    
-    try:
-        case = Case.query.get_or_404(case_id)
-        next_page = request.args.get('next') or request.form.get('next')
-        
-        if request.method == 'POST':
-            # Migrate old format to new format
-            case.migrate_old_format()
+    if request.method == 'POST':
+        try:
+            case = Case.query.get_or_404(case_id)
             
-            location = request.form.get('location')
-            lat = request.form.get('latitude')
-            lon = request.form.get('longitude')
-            needs = request.form.getlist('needs[]')
-            status = request.form.get('status')
+            # Handle basic info
+            case.location = request.form.get('location')
+            case.latitude = float(request.form.get('latitude')) if request.form.get('latitude') else None
+            case.longitude = float(request.form.get('longitude')) if request.form.get('longitude') else None
+            case.needs = request.form.getlist('needs[]')
+            case.status = request.form.get('status')
+            case.updated_at = datetime.utcnow()
             
-            if not location or not status:
-                flash('Location and status are required', 'error')
-                return render_template('update_case.html', case=case)
+            # Filter out non-existent photos first
+            if case.photos:
+                current_photos = []
+                for photo_url in case.photos:
+                    file_path = os.path.join(
+                        current_app.config['UPLOAD_FOLDER'],
+                        photo_url.replace('/uploads/', '')
+                    )
+                    if os.path.exists(file_path):
+                        current_photos.append(photo_url)
+                case.photos = current_photos
+            
+            # Filter out non-existent videos
+            if case.videos:
+                current_videos = []
+                for video_url in case.videos:
+                    file_path = os.path.join(
+                        current_app.config['UPLOAD_FOLDER'],
+                        video_url.replace('/uploads/', '')
+                    )
+                    if os.path.exists(file_path):
+                        current_videos.append(video_url)
+                case.videos = current_videos
             
             # Handle new photos
             if request.files.getlist('photos[]'):
+                if case.photos is None:
+                    case.photos = []
+                    
                 for photo in request.files.getlist('photos[]'):
                     if photo and photo.filename:
-                        filename = f"{str(uuid4())}_{secure_filename(photo.filename)}"
-                        
-                        if os.getenv('GAE_ENV', '').startswith('standard'):
-                            client = storage.Client()
-                            bucket = client.bucket('eco-layout-442118-t8-uploads')
-                            blob = bucket.blob(f"photos/{filename}")
-                            photo.seek(0)
-                            blob.upload_from_file(photo, content_type=photo.content_type)
-                            photo_url = f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/photos/{filename}"
-                        else:
-                            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], 'photos', filename)
-                            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                        try:
+                            filename = f"{str(uuid4())}_{secure_filename(photo.filename)}"
+                            photos_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'photos')
+                            os.makedirs(photos_folder, exist_ok=True)
+                            filepath = os.path.join(photos_folder, filename)
                             photo.save(filepath)
                             photo_url = f"/uploads/photos/{filename}"
-                        
-                        if case.photos is None:
-                            case.photos = []
-                        case.photos.append(photo_url)
+                            case.photos.append(photo_url)
+                            current_app.logger.info(f"Added photo: {photo_url}")
+                        except Exception as e:
+                            current_app.logger.error(f"Error saving photo: {str(e)}")
             
-            # Handle new videos (similar to photos)
+            # Handle new videos
             if request.files.getlist('videos[]'):
+                if case.videos is None:
+                    case.videos = []
+                    
                 for video in request.files.getlist('videos[]'):
                     if video and video.filename:
-                        filename = f"{str(uuid4())}_{secure_filename(video.filename)}"
-                        
-                        if os.getenv('GAE_ENV', '').startswith('standard'):
-                            client = storage.Client()
-                            bucket = client.bucket('eco-layout-442118-t8-uploads')
-                            blob = bucket.blob(f"videos/{filename}")
-                            video.seek(0)
-                            blob.upload_from_file(video, content_type=video.content_type)
-                            video_url = f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/videos/{filename}"
-                        else:
-                            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], 'videos', filename)
-                            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                        try:
+                            filename = f"{str(uuid4())}_{secure_filename(video.filename)}"
+                            videos_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'videos')
+                            os.makedirs(videos_folder, exist_ok=True)
+                            filepath = os.path.join(videos_folder, filename)
                             video.save(filepath)
                             video_url = f"/uploads/videos/{filename}"
-                        
-                        if case.videos is None:
-                            case.videos = []
-                        case.videos.append(video_url)
-            
-            case.location = location
-            case.latitude = float(lat) if lat else None
-            case.longitude = float(lon) if lon else None
-            case.needs = needs
-            case.status = status
-            case.updated_at = datetime.utcnow()
+                            case.videos.append(video_url)
+                            current_app.logger.info(f"Added video: {video_url}")
+                        except Exception as e:
+                            current_app.logger.error(f"Error saving video: {str(e)}")
             
             try:
+                current_app.logger.info(f"Final photos list: {case.photos}")
+                current_app.logger.info(f"Final videos list: {case.videos}")
                 db.session.commit()
-                flash('Case updated successfully!', 'success')
-                return jsonify({'success': True})
-                
+                return jsonify({
+                    'success': True,
+                    'message': 'Case updated successfully'
+                })
             except Exception as e:
                 db.session.rollback()
-                current_app.logger.error(f"Database error while updating case: {str(e)}")
-                return jsonify({'success': False, 'error': str(e)}), 500
+                current_app.logger.error(f"Database error: {str(e)}")
+                return jsonify({
+                    'success': False,
+                    'error': str(e)
+                }), 500
                 
-        return render_template('update_case.html', case=case, next=next_page)
+        except Exception as e:
+            current_app.logger.error(f"Error in update route: {str(e)}")
+            return jsonify({
+                'success': False,
+                'error': str(e)
+            }), 500
+    
+    # GET request
+    case = Case.query.get_or_404(case_id)
+    
+    # Filter out non-existent media before rendering template
+    if case.photos:
+        case.photos = [photo for photo in case.photos if os.path.exists(
+            os.path.join(current_app.config['UPLOAD_FOLDER'], photo.replace('/uploads/', ''))
+        )]
+    if case.videos:
+        case.videos = [video for video in case.videos if os.path.exists(
+            os.path.join(current_app.config['UPLOAD_FOLDER'], video.replace('/uploads/', ''))
+        )]
+    
+    return render_template('update_case.html', case=case)
+
+@main.route('/remove_media/<case_id>', methods=['POST'])
+@login_required
+def remove_media(case_id):
+    try:
+        case = Case.query.get_or_404(case_id)
+        data = request.get_json()
         
+        if not data or 'type' not in data or 'url' not in data:
+            current_app.logger.error("Invalid request data")
+            return jsonify({
+                'success': False,
+                'error': 'Invalid request data'
+            }), 400
+            
+        media_type = data['type']
+        url = data['url']
+        current_app.logger.info(f"Removing {media_type}: {url}")
+        
+        try:
+            # Remove file from filesystem
+            file_path = os.path.join(
+                current_app.config['UPLOAD_FOLDER'],
+                url.replace('/uploads/', '')
+            )
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                current_app.logger.info(f"Deleted file: {file_path}")
+            
+            # Update database
+            if media_type == 'photo':
+                if case.photos and url in case.photos:
+                    case.photos.remove(url)
+                    current_app.logger.info("Removed photo URL from database")
+            elif media_type == 'video':
+                if case.videos and url in case.videos:
+                    case.videos.remove(url)
+                    current_app.logger.info("Removed video URL from database")
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'Invalid media type'
+                }), 400
+            
+            db.session.commit()
+            current_app.logger.info("Changes committed to database")
+            
+            return jsonify({
+                'success': True,
+                'message': f'{media_type.capitalize()} removed successfully'
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error removing {media_type}: {str(e)}")
+            return jsonify({
+                'success': False,
+                'error': f'Failed to remove {media_type}'
+            }), 500
+            
     except Exception as e:
-        current_app.logger.error(f"Error in update route: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        current_app.logger.error(f"Error in remove_media route: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# Add this context processor to make csrf_token available in all templates
+@main.context_processor
+def inject_csrf_token():
+    return dict(csrf_token=generate_csrf)
+
 
 @main.route('/delete_case/<case_id>', methods=['GET', 'POST'])
 @login_required

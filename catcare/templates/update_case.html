@@ -1,6 +1,15 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <script>
+            {% for category, message in messages %}
+                console.log("{{ category }}: {{ message }}");
+            {% endfor %}
+        </script>
+    {% endif %}
+{% endwith %}
 <body class="bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
          <div class="w-full max-w">
           <h1 class="text-2xl font-bold text-center mb-6">Update Case</h1>
@@ -15,7 +24,8 @@
             {% endif %}
         {% endwith %} -->
 
-        <form id="updateForm" action="{{ url_for('main.update', case_id=case.id) }}" method="POST" enctype="multipart/form-data">
+        <form id="updateForm" action="{{ url_for('main.update', case_id=case.id) }}" method="POST" enctype="multipart/form-data" data-case-id="{{ case.id }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="next" value="{{ request.args.get('next') or request.referrer }}">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="mb-4">
@@ -29,8 +39,8 @@
                     
                     <!-- Display existing photos -->
                     <div class="mt-4 grid grid-cols-3 gap-4">
-                        {% if case.get_photos() %}
-                            {% for photo in case.get_photos() %}
+                        {% if case.photos %}
+                            {% for photo in case.photos%}
                             <div class="relative">
                                 {% if photo.startswith('https://') %}
                                     <img src="{{ photo }}" alt="Case photo" class="w-full h-32 object-cover rounded">
@@ -117,9 +127,12 @@
             
                 <!-- Map div to show current location -->
                 {% if case.latitude and case.longitude %}
-                <div id="currentLocationMap" class="mt-4 h-64 rounded-lg shadow-md"></div>
+                <div id="currentLocationMap" 
+                     class="mt-4 h-64 rounded-lg shadow-md"
+                     data-latitude="{{ case.latitude }}"
+                     data-longitude="{{ case.longitude }}">
+                </div>
                 {% endif %}
-            </div>
 
 <!-- Needs Section -->
 <div class="mb-4">
@@ -234,131 +247,225 @@
     </div>
 
     <script>
-        document.getElementById('updateForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Get form data
-        const formData = new FormData(this);
-        
-        // Get the next URL from the hidden input
-        const nextUrl = document.querySelector('input[name="next"]').value;
-        
-        // Submit form
-        fetch(this.action, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (response.ok) {
-                window.location.href = nextUrl || "{{ url_for('main.show_cases') }}";
-            } else {
-                throw new Error('Failed to update case');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Failed to update case. Please try again.');
-        });
+       // Get CSRF token from the hidden input
+function getCsrfToken() {
+    return document.querySelector('input[name="csrf_token"]').value;
+}
+
+function logFormData(formData) {
+    console.log('Form data contents:');
+    for (let pair of formData.entries()) {
+        if (pair[1] instanceof File) {
+            console.log(pair[0], ':', pair[1].name, '(', pair[1].size, 'bytes )');
+        } else {
+            console.log(pair[0], ':', pair[1]);
+        }
+    }
+}
+
+document.getElementById('updateForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const submitButton = this.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    submitButton.innerText = 'Updating...';
+    
+    // Get form data
+    const formData = new FormData(this);
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    
+    // Debug logging
+    console.log('Files selected:', {
+        videos: Array.from(document.getElementById('videos').files).map(f => ({
+            name: f.name,
+            size: f.size,
+            type: f.type
+        }))
     });
-
-    // Optional: Log the next URL to debug
-    console.log('Next URL:', document.querySelector('input[name="next"]').value);
-
-        function removeMedia(type, button) {
-            if (!confirm('Are you sure you want to remove this ' + type + '?')) {
-                return;
-            }
-
-            const url = button.dataset.url;
-            fetch(`{{ url_for('main.remove_media', case_id=case.id) }}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ type: type, url: url })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    button.closest('.relative').remove();
-                } else {
-                    alert('Failed to remove ' + type);
+    
+    logFormData(formData);
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': csrfToken
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        return response.text().then(text => {
+            console.log('Raw server response:', text);
+            try {
+                const data = JSON.parse(text);
+                if (!response.ok) {
+                    throw new Error(data.error || `Server error: ${response.status}`);
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to remove ' + type);
-            });
+                return data;
+            } catch (e) {
+                console.error('Parse error:', e);
+                throw new Error(data.error || 'Server returned invalid response');
+            }
+        });
+    })
+    .then(data => {
+        if (data.success) {
+            console.log('Update successful:', data);
+            alert('Case updated successfully!');
+            window.location.href = document.querySelector('input[name="next"]')?.value || '/cases';
+        } else {
+            throw new Error(data.error || 'Update failed');
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        submitButton.disabled = false;
+        submitButton.innerText = 'Update Case';
+        alert(error.message);
+    });
+});
 
-        document.getElementById('getLocation').addEventListener('click', function() {
-            const locationStatus = document.getElementById('locationStatus');
-            locationStatus.textContent = 'Getting location...';
-        
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
+
+// Location handler
+document.getElementById('getLocation').addEventListener('click', function() {
+    const locationStatus = document.getElementById('locationStatus');
+    locationStatus.textContent = 'Getting location...';
+    
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            // Update hidden inputs
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lon;
+            
+            // Update location display
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('location').value = data.display_name;
+                    locationStatus.textContent = 'Location updated successfully!';
+                    locationStatus.className = 'text-green-600';
                     
-                    // Save coordinates to hidden inputs
-                    document.getElementById('latitude').value = lat;
-                    document.getElementById('longitude').value = lon;
-                    
-                    // Get address from coordinates using reverse geocoding
-                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            const address = data.display_name;
-                            document.getElementById('location').value = address;
-                            locationStatus.textContent = 'Location detected successfully!';
-                            locationStatus.className = 'mt-1 text-sm text-green-600';
-        
-                            // Update map if it exists
-                            if (typeof updateLocationMap === 'function') {
-                                updateLocationMap(lat, lon);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error getting address:', error);
-                            document.getElementById('location').value = `${lat}, ${lon}`;
-                            locationStatus.textContent = 'Retrieved coordinates, but could not get address.';
-                            locationStatus.className = 'mt-1 text-sm text-yellow-600';
-                        });
-                }, function(error) {
-                    console.error('Error getting location:', error);
-                    locationStatus.textContent = 'Could not get location. Please enter manually.';
-                    locationStatus.className = 'mt-1 text-sm text-red-600';
-                });
-            } else {
-                locationStatus.textContent = 'Location services not available in your browser.';
-                locationStatus.className = 'mt-1 text-sm text-red-600';
-            }
-        });
-        
-        // Initialize map if coordinates exist
-        {% if case.latitude and case.longitude %}
-        let locationMap;
-        document.addEventListener('DOMContentLoaded', function() {
-            locationMap = L.map('currentLocationMap').setView([{{ case.latitude }}, {{ case.longitude }}], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(locationMap);
-            L.marker([{{ case.latitude }}, {{ case.longitude }}]).addTo(locationMap);
-        });
-        
-        function updateLocationMap(lat, lon) {
-            if (locationMap) {
-                locationMap.setView([lat, lon], 15);
-                // Clear existing markers
-                locationMap.eachLayer((layer) => {
-                    if (layer instanceof L.Marker) {
-                        locationMap.removeLayer(layer);
+                    // Update map if it exists
+                    if (typeof updateLocationMap === 'function') {
+                        updateLocationMap(lat, lon);
                     }
+                })
+                .catch(error => {
+                    console.error('Error getting address:', error);
+                    document.getElementById('location').value = `${lat}, ${lon}`;
+                    locationStatus.textContent = 'Got coordinates, but could not get address';
+                    locationStatus.className = 'text-yellow-600';
                 });
-                // Add new marker
-                L.marker([lat, lon]).addTo(locationMap);
-            }
+        }, function(error) {
+            console.error('Error:', error);
+            locationStatus.textContent = 'Could not get location. Please enter manually.';
+            locationStatus.className = 'text-red-600';
+        });
+    } else {
+        locationStatus.textContent = 'Location services not available in your browser.';
+        locationStatus.className = 'text-red-600';
+    }
+});
+
+// Media removal handler
+function removeMedia(type, button) {
+    if (!confirm(`Are you sure you want to remove this ${type}?`)) {
+        return;
+    }
+    
+    const url = button.dataset.url;
+    const mediaElement = button.closest('.relative');
+    const caseId = document.querySelector('#updateForm').dataset.caseId;
+    
+    fetch(`/remove_media/${caseId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+        },
+        body: JSON.stringify({ type, url }),
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove the media element from the DOM
+            mediaElement.remove();
+            // Show success message
+            const flashMessage = document.createElement('div');
+            flashMessage.className = 'mb-4 p-4 rounded bg-green-100 text-green-700';
+            flashMessage.textContent = data.message;
+            document.querySelector('#updateForm').insertBefore(flashMessage, document.querySelector('#updateForm').firstChild);
+            
+            // Remove message after 3 seconds
+            setTimeout(() => {
+                flashMessage.remove();
+            }, 3000);
+        } else {
+            throw new Error(data.error || `Failed to remove ${type}`);
         }
-        {% endif %}
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Show error message
+        const flashMessage = document.createElement('div');
+        flashMessage.className = 'mb-4 p-4 rounded bg-red-100 text-red-700';
+        flashMessage.textContent = error.message || `Failed to remove ${type}`;
+        document.querySelector('#updateForm').insertBefore(flashMessage, document.querySelector('#updateForm').firstChild);
+        
+        // Remove message after 3 seconds
+        setTimeout(() => {
+            flashMessage.remove();
+        }, 3000);
+    });
+}
+
+  // Modified map initialization code
+  let locationMap = null;
+
+function initMap() {
+    const mapDiv = document.getElementById('currentLocationMap');
+    if (!mapDiv) return;
+
+    const lat = mapDiv.dataset.latitude;
+    const lon = mapDiv.dataset.longitude;
+    
+    if (!lat || !lon) return;
+
+    if (!locationMap) {
+        locationMap = L.map('currentLocationMap').setView([lat, lon], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(locationMap);
+        L.marker([lat, lon]).addTo(locationMap);
+    }
+}
+
+function updateLocationMap(lat, lon) {
+    if (!locationMap) {
+        locationMap = L.map('currentLocationMap').setView([lat, lon], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(locationMap);
+    } else {
+        locationMap.setView([lat, lon], 15);
+        // Clear existing markers
+        locationMap.eachLayer((layer) => {
+            if (layer instanceof L.Marker) {
+                locationMap.removeLayer(layer);
+            }
+        });
+    }
+    // Add new marker
+    L.marker([lat, lon]).addTo(locationMap);
+}
+
+// Initialize map when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initMap();
+});
     </script>
   {% endblock %}
