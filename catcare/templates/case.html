@@ -8,7 +8,7 @@
     <!-- Case Details Section -->
     <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
         <div class="flex flex-col lg:flex-row">
-            <!-- Media Section -->
+          <!-- Media Section -->
             <div class="w-full lg:w-1/2 h-[300px] lg:h-auto">
                 {% if case.photos %}
                 <div class="mb-4">
@@ -16,12 +16,7 @@
                     <div class="mt-4 grid grid-cols-3 gap-4">
                         {% for photo in case.photos %}
                         <div class="relative">
-                            <img src="{{ url_for('main.uploaded_file', filename=photo.replace('/uploads/', '')) }}" 
-                                 alt="Case photo" class="w-full h-32 object-cover rounded">
-                            <!-- <button type="button" onclick="removeMedia('photo', this)" data-url="{{ photo }}" 
-                                    class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
-                                ×
-                            </button> -->
+                            <img src="{{ photo }}" alt="Case photo" class="w-full h-32 object-cover rounded">
                         </div>
                         {% endfor %}
                     </div>
@@ -30,15 +25,7 @@
                 <!-- Old format: single photo -->
                 <div class="mb-4">
                     <div class="relative">
-                        {% if case.photo.startswith('https://') %}
-                            <img src="{{ case.photo }}" alt="Case photo" class="w-full h-40 object-cover rounded-lg">
-                        {% elif case.photo.startswith('/uploads/') %}
-                            <img src="{{ url_for('main.uploaded_file', filename=case.photo.replace('/uploads/', '')) }}" 
-                                alt="Case photo" class="w-full h-40 object-cover rounded-lg">
-                        {% else %}
-                            <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}" 
-                                alt="Case photo" class="w-full h-40 object-cover rounded-lg">
-                        {% endif %}
+                        <img src="{{ case.photo }}" alt="Case photo" class="w-full h-40 object-cover rounded-lg">
                     </div>
                 </div>
                 {% else %}
@@ -46,6 +33,7 @@
                     <span class="text-gray-400 text-lg">No images available</span>
                 </div>
                 {% endif %}
+
                 <!-- Videos Section -->
                 {% if case.videos %}
                 <h3 class="text-lg font-semibold mb-2">Videos</h3>
@@ -53,13 +41,9 @@
                     {% for video in case.videos %}
                     <div class="relative">
                         <video class="w-full h-32 object-cover rounded" controls>
-                            <source src="{{ url_for('main.uploaded_file', filename=video.replace('/uploads/', '')) }}" type="video/mp4">
+                            <source src="{{ video }}" type="video/mp4">
                             Your browser does not support the video tag.
                         </video>
-                        <!-- <button type="button" onclick="removeMedia('video', this)" data-url="{{ video }}" 
-                                class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
-                            ×
-                        </button> -->
                     </div>
                     {% endfor %}
                 </div>

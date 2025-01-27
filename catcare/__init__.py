@@ -23,7 +23,7 @@ def create_app():
     migrate.init_app(app, db)
     login_manager.init_app(app)
     jwt.init_app(app)
-    csrf.init_app(app)
+    # csrf.init_app(app)
     login_manager.login_view = 'main.login'
 
     if os.getenv('GAE_ENV', '').startswith('standard'):

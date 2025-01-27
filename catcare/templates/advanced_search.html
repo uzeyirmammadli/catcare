@@ -183,11 +183,17 @@
                 <div class="mb-2">
                     <span class="font-semibold">Needs:</span>
                     <div class="flex flex-wrap gap-1 mt-1">
-                        {% for need in case.needs %}
-                        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                            {{ need }}
-                        </span>
-                        {% endfor %}
+                        {% if case.needs %}
+                            {% for need in case.needs %}
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                                    {{ need }}
+                                </span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+                                No needs specified
+                            </span>
+                        {% endif %}
                     </div>
                 </div>
                 <!-- Show map if coordinates exist -->

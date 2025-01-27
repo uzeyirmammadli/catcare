@@ -2,3 +2,5 @@
 __pycache__/
 .env
 env_variables.yaml
+catcare/static/uploads/*
+!/catcare/static/uploads/.keep

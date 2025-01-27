@@ -133,42 +133,79 @@
     </div>
     <script>
         document.getElementById('getLocation').addEventListener('click', function() {
-            const locationStatus = document.getElementById('locationStatus');
-            locationStatus.textContent = 'Getting location...';
-        
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
+    const locationStatus = document.getElementById('locationStatus');
+    locationStatus.textContent = 'Getting location...';
+    
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            // Update hidden inputs
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lon;
+            
+            // Use Nominatim with more precise parameters
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Location data:', data); // For debugging
                     
-                    // Save coordinates to hidden inputs
-                    document.getElementById('latitude').value = lat;
-                    document.getElementById('longitude').value = lon;
+                    // Construct a more precise address
+                    let address = '';
+                    if (data.address) {
+                        const addr = data.address;
+                        const parts = [];
+                        
+                        // Add building number and street
+                        if (addr.house_number) parts.push(addr.house_number);
+                        if (addr.road) parts.push(addr.road);
+                        
+                        // Add neighborhood/suburb
+                        if (addr.suburb) parts.push(addr.suburb);
+                        if (addr.neighbourhood) parts.push(addr.neighbourhood);
+                        
+                        // Add city district and city
+                        if (addr.city_district) parts.push(addr.city_district);
+                        if (addr.city) parts.push(addr.city);
+                        
+                        // Add postcode and country
+                        if (addr.postcode) parts.push(addr.postcode);
+                        if (addr.country) parts.push(addr.country);
+                        
+                        address = parts.join(', ');
+                    } else {
+                        address = data.display_name;
+                    }
                     
-                    // Get address from coordinates using reverse geocoding
-                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            const address = data.display_name;
-                            document.getElementById('location').value = address;
-                            locationStatus.textContent = 'Location detected successfully!';
-                            locationStatus.className = 'mt-1 text-sm text-green-600';
-                        })
-                        .catch(error => {
-                            console.error('Error getting address:', error);
-                            document.getElementById('location').value = `${lat}, ${lon}`;
-                            locationStatus.textContent = 'Retrieved coordinates, but could not get address.';
-                            locationStatus.className = 'mt-1 text-sm text-yellow-600';
-                        });
-                }, function(error) {
-                    console.error('Error getting location:', error);
-                    locationStatus.textContent = 'Could not get location. Please enter manually.';
-                    locationStatus.className = 'mt-1 text-sm text-red-600';
+                    document.getElementById('location').value = address;
+                    locationStatus.textContent = 'Location updated successfully!';
+                    locationStatus.className = 'text-green-600';
+                    
+                    // Update map if it exists
+                    if (typeof updateLocationMap === 'function') {
+                        updateLocationMap(lat, lon);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error getting address:', error);
+                    document.getElementById('location').value = `${lat}, ${lon}`;
+                    locationStatus.textContent = 'Got coordinates, but could not get precise address';
+                    locationStatus.className = 'text-yellow-600';
                 });
-            } else {
-                locationStatus.textContent = 'Location services not available in your browser.';
-                locationStatus.className = 'mt-1 text-sm text-red-600';
-            }
+        }, function(error) {
+            console.error('Error:', error);
+            locationStatus.textContent = 'Could not get location. Please enter manually.';
+            locationStatus.className = 'text-red-600';
+        }, {
+            enableHighAccuracy: true,  // Request high accuracy
+            timeout: 10000,            // 10 second timeout
+            maximumAge: 0              // Don't use cached position
         });
+    } else {
+        locationStatus.textContent = 'Location services not available in your browser.';
+        locationStatus.className = 'text-red-600';
+    }
+});
         </script>
     {% endblock %}

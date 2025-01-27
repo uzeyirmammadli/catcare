@@ -7,26 +7,13 @@
 #   $ gcloud topic gcloudignore
 #
 .gcloudignore
+# If you would like to upload your .git directory, .gitignore file or files
+# from your .gitignore file, remove the corresponding line
+# below:
 .git
 .gitignore
+
+# Python pycache:
 __pycache__/
-*.pyc
-.env
-venv/
-.venv/
-*.pyo
-*.pyd
-.Python
-env/
-pip-log.txt
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-.pytest_cache/
-catcare/static/
-env_variables.yaml
+# Ignored by the build system
+/setup.cfg

@@ -1,5 +1,6 @@
 import os
-from uuid import  uuid4
+import uuid
+from uuid import uuid4
 from datetime import datetime, timedelta
 import logging
 from flask import request, render_template, redirect, url_for, jsonify, flash, abort, current_app
@@ -8,11 +9,13 @@ from werkzeug.utils import secure_filename
 from flask import Blueprint, send_from_directory, send_file
 from math import radians, cos, sin, asin, sqrt
 from sqlalchemy import func
+from sqlalchemy.exc import SQLAlchemyError
 from flask_wtf.csrf import generate_csrf
 from functools import wraps
 from .models import db, User, Comment, Case
 from .forms import RegistrationForm, LoginForm, CommentForm
 from . import db, login_manager
+from google.cloud import storage
 
 if os.getenv('GAE_ENV', '').startswith('standard'):
     from google.cloud import storage
@@ -20,15 +23,6 @@ if os.getenv('GAE_ENV', '').startswith('standard'):
 main = Blueprint('main', __name__)
 logging.basicConfig(level=logging.DEBUG)
 
-def csrf_protected(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if request.method == "POST":
-            csrf_token = request.headers.get('X-CSRFToken')
-            if not csrf_token:
-                return jsonify({'success': False, 'error': 'CSRF token missing'}), 400
-        return f(*args, **kwargs)
-    return decorated_function
 @main.route('/test')
 def test_interface():
     return send_file('templates/test.html')
@@ -93,7 +87,13 @@ def delete_comment(comment_id):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    try:
+        user = User.query.get(int(user_id))
+        db.session.commit()
+        return user
+    except SQLAlchemyError:
+        db.session.rollback()
+        return None
 
 # Authentication routes
 @main.route('/register', methods=['GET', 'POST'])
@@ -137,7 +137,7 @@ def register():
 def login():
     print("LOG")
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
+        return redirect(next_page if next_page else url_for('main.show_cases'))
     
     form = LoginForm()
     if request.method == 'POST':
@@ -286,17 +286,13 @@ def report():
             
     return render_template('report.html')
 
-
-# Update the uploaded_file route to handle both environments
-# @main.route('/uploads/<path:filename>')
-# def uploaded_file(filename):
-#     if filename.startswith('https://'):
-#         return redirect(filename)
-#     elif os.getenv('GAE_ENV', '').startswith('standard'):
-#         return redirect(f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/{filename}")
-#     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
 @main.route('/uploads/<path:filename>')
 def uploaded_file(filename):
+    # For direct GCS URLs, redirect to the actual URL
+    if filename.startswith('https://storage.googleapis.com/'):
+        return redirect(filename)
+    
+    # For local uploads, serve from your uploads directory
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
 
 @main.route('/')
@@ -304,24 +300,26 @@ def show_cases():
     """Show all cases with pagination."""
     page = request.args.get('page', 1, type=int)
     per_page = 10
-    
+
     try:
-        # Get paginated cases
-        pagination = Case.query.order_by(Case.created_at.desc()).paginate(
-            page=page, per_page=per_page, error_out=False)
-        
+        # Get paginated cases with explicit transaction handling
+        query = Case.query.order_by(Case.created_at.desc())
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        db.session.commit()  # Commit the transaction
+
         return render_template('cases.html',
-                             cases=pagination.items,
-                             pagination=pagination,
-                             current_page=page,
-                             total_pages=pagination.pages)
-    except Exception as e:
-        flash(f'Error loading cases: {str(e)}', 'danger')
-        return render_template('cases.html', 
-                             cases=[],
-                             pagination=None,
-                             current_page=1,
-                             total_pages=1)
+                          cases=pagination.items,
+                          pagination=pagination,
+                          current_page=page,
+                          total_pages=pagination.pages)
+    except SQLAlchemyError as e:
+        db.session.rollback()  # Rollback on error
+        flash('Database error occurred. Please try again.', 'danger')
+        return render_template('cases.html',
+                          cases=[],
+                          pagination=None,
+                          current_page=1,
+                          total_pages=1)
  
 def haversine_distance(lat1, lon1, lat2, lon2):
     """
@@ -343,24 +341,24 @@ def haversine_distance(lat1, lon1, lat2, lon2):
 @main.route('/advanced-search', methods=['GET'])
 def advanced_search():
     """Advanced search endpoint with multiple filter criteria."""
-    # Get all filter parameters
-    filters = {
-        'location': request.args.get('location'),
-        'latitude': request.args.get('latitude', type=float),
-        'longitude': request.args.get('longitude', type=float),
-        'radius': request.args.get('radius', type=float, default=5.0),  # Default 5km radius
-        'status': request.args.get('status'),
-        'needs': request.args.getlist('needs[]'),
-        'date_from': request.args.get('date_from'),
-        'date_to': request.args.get('date_to'),
-        'sort_by': request.args.get('sort_by', 'created_at'),
-        'sort_order': request.args.get('sort_order', 'desc')
-    }
-    
-    page = request.args.get('page', 1, type=int)
-    per_page = current_app.config.get('CASES_PER_PAGE', 10)
-    
     try:
+        # Get all filter parameters
+        filters = {
+            'location': request.args.get('location'),
+            'latitude': request.args.get('latitude', type=float),
+            'longitude': request.args.get('longitude', type=float),
+            'radius': request.args.get('radius', type=float, default=5.0),
+            'status': request.args.get('status'),
+            'needs': request.args.getlist('needs[]') or [],  # Default to empty list if no needs are selected
+            'date_from': request.args.get('date_from'),
+            'date_to': request.args.get('date_to'),
+            'sort_by': request.args.get('sort_by', 'created_at'),
+            'sort_order': request.args.get('sort_order', 'desc')
+        }
+        
+        page = request.args.get('page', 1, type=int)
+        per_page = current_app.config.get('CASES_PER_PAGE', 10)
+        
         # Start with base query
         query = Case.query
         
@@ -368,127 +366,77 @@ def advanced_search():
         if filters['location']:
             query = query.filter(Case.location.ilike(f"%{filters['location']}%"))
         
-        # Location-based search with Haversine distance
+        if filters['status']:
+            query = query.filter(Case.status == filters['status'].upper())
+        
+        if filters['needs']:
+            from sqlalchemy import or_
+            # Use ANY operator which is more widely supported
+            need_conditions = [Case.needs.any(need) for need in filters['needs']]
+            query = query.filter(or_(*need_conditions))
+        
+        if filters['date_from']:
+            date_from = datetime.strptime(filters['date_from'], '%Y-%m-%d')
+            query = query.filter(Case.created_at >= date_from)
+        
+        if filters['date_to']:
+            date_to = datetime.strptime(filters['date_to'], '%Y-%m-%d')
+            date_to = date_to + timedelta(days=1)
+            query = query.filter(Case.created_at < date_to)
+        
+        # Location-based filtering
         if filters['latitude'] and filters['longitude']:
-            # First, get all cases
-            cases = query.all()
-            
-            # Calculate distances and filter within radius
-            filtered_cases = []
-            for case in cases:
-                if case.latitude and case.longitude:  # Ensure case has coordinates
-                    distance = haversine_distance(
-                        filters['latitude'], 
-                        filters['longitude'],
-                        case.latitude, 
-                        case.longitude
-                    )
-                    if distance <= filters['radius']:
-                        # Create a dictionary of case attributes including the distance
-                        case_dict = case.__dict__.copy()
-                        case_dict['distance'] = round(distance, 2)
-                        filtered_cases.append(case_dict)
-            
-            # Sort by distance if requested
-            if filters['sort_by'] == 'distance':
-                filtered_cases.sort(
-                    key=lambda x: x.distance,
-                    reverse=(filters['sort_order'] == 'desc')
-                )
-            else:
-                # Apply other sorting
-                filtered_cases.sort(
-                    key=lambda x: getattr(x, filters['sort_by']),
-                    reverse=(filters['sort_order'] == 'desc')
-                )
-            
-            # Manual pagination
-            start_idx = (page - 1) * per_page
-            end_idx = start_idx + per_page
-            paginated_cases = filtered_cases[start_idx:end_idx]
-            
-            # Create a simple pagination object
-            class SimplePagination:
-                def __init__(self, items, total, page, per_page):
-                    self.items = items
-                    self.total = total
-                    self.page = page
-                    self.per_page = per_page
-                    self.pages = (total + per_page - 1) // per_page
-            
-            pagination = SimplePagination(
-                paginated_cases,
-                len(filtered_cases),
-                page,
-                per_page
-            )
-            
+            query = query.filter(Case.latitude.isnot(None), Case.longitude.isnot(None))
+        
+        # Apply sorting
+        sort_column = getattr(Case, filters['sort_by'])
+        if filters['sort_order'] == 'desc':
+            query = query.order_by(sort_column.desc())
         else:
-            # Apply regular filters without location search
-            if filters['status']:
-                query = query.filter(Case.status == filters['status'].upper())
-            
-            if filters['needs']:
-                query = query.filter(Case.needs.overlap(filters['needs']))
-            
-            if filters['date_from']:
-                date_from = datetime.strptime(filters['date_from'], '%Y-%m-%d')
-                query = query.filter(Case.created_at >= date_from)
-            
-            if filters['date_to']:
-                date_to = datetime.strptime(filters['date_to'], '%Y-%m-%d')
-                date_to = date_to + timedelta(days=1)
-                query = query.filter(Case.created_at < date_to)
-            
-            # Apply sorting
-            sort_column = getattr(Case, filters['sort_by'])
-            if filters['sort_order'] == 'desc':
-                query = query.order_by(sort_column.desc())
-            else:
-                query = query.order_by(sort_column.asc())
-            
-            # Regular pagination
-            pagination = query.paginate(
-                page=page,
-                per_page=per_page,
-                error_out=False
-            )
+            query = query.order_by(sort_column.asc())
         
-        # Get distinct values for dropdowns
-        locations = db.session.query(Case.location).distinct().all()
+        # Get pagination
+        pagination = query.paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
         
-        # Update sort options to include distance
+        # Log cases with null needs
+        for case in pagination.items:
+            if case.needs is None:
+                current_app.logger.warning(f"Case {case.id} has null needs field.")
+        
+        # Get distinct locations
+        locations = [loc[0] for loc in db.session.query(Case.location).distinct().all() if loc[0]]
+        
+        # Sort options
         sort_options = [
             ('created_at', 'Creation Date'),
             ('updated_at', 'Last Updated'),
             ('location', 'Location'),
             ('status', 'Status')
         ]
+        
         if filters['latitude'] and filters['longitude']:
             sort_options.append(('distance', 'Distance'))
         
-        # Prepare template data
-        template_data = {
-            'cases': pagination.items,
-            'pagination': pagination,
-            'current_page': page,
-            'total_pages': pagination.pages,
-            'filters': filters,
-            'locations': [loc[0] for loc in locations],
-            'statuses': ['OPEN', 'RESOLVED'],
-            'sort_options': sort_options
-        }
-        
-        return render_template('advanced_search.html', **template_data)
-    
+        return render_template('advanced_search.html',
+                           cases=pagination.items if pagination else [],
+                           pagination=pagination,
+                           current_page=page,
+                           filters=filters,
+                           locations=locations,
+                           statuses=['OPEN', 'RESOLVED'],
+                           sort_options=sort_options)
+                           
     except Exception as e:
-        current_app.logger.error(f"Search error: {str(e)}")
+        current_app.logger.error(f"Search error: {str(e)}", exc_info=True)
         flash('An error occurred while searching. Please try again.', 'error')
         return render_template('advanced_search.html',
                            cases=[],
                            pagination=None,
                            current_page=1,
-                           total_pages=1,
                            filters=filters,
                            locations=[],
                            statuses=['OPEN', 'RESOLVED'],
@@ -520,121 +468,87 @@ def resolve_case(case_id):
         current_app.logger.error(f"Error resolving case: {e}")
         flash('Error updating case', 'error')
         return redirect(return_to or url_for('main.show_cases'))
-    
+
 @main.route('/update/<case_id>', methods=['GET', 'POST'])
 @login_required
-@csrf_protected
 def update(case_id):
+    case = Case.query.get_or_404(case_id)
+    
     if request.method == 'POST':
         try:
-            case = Case.query.get_or_404(case_id)
+            storage_client = storage.Client()
+            bucket = storage_client.bucket('eco-layout-442118-t8-uploads')
             
-            # Handle basic info
+            # Update basic details
             case.location = request.form.get('location')
-            case.latitude = float(request.form.get('latitude')) if request.form.get('latitude') else None
-            case.longitude = float(request.form.get('longitude')) if request.form.get('longitude') else None
+            case.latitude = request.form.get('latitude', type=float)
+            case.longitude = request.form.get('longitude', type=float)
             case.needs = request.form.getlist('needs[]')
             case.status = request.form.get('status')
-            case.updated_at = datetime.utcnow()
             
-            # Filter out non-existent photos first
-            if case.photos:
-                current_photos = []
-                for photo_url in case.photos:
-                    file_path = os.path.join(
-                        current_app.config['UPLOAD_FOLDER'],
-                        photo_url.replace('/uploads/', '')
-                    )
-                    if os.path.exists(file_path):
-                        current_photos.append(photo_url)
-                case.photos = current_photos
-            
-            # Filter out non-existent videos
-            if case.videos:
-                current_videos = []
-                for video_url in case.videos:
-                    file_path = os.path.join(
-                        current_app.config['UPLOAD_FOLDER'],
-                        video_url.replace('/uploads/', '')
-                    )
-                    if os.path.exists(file_path):
-                        current_videos.append(video_url)
-                case.videos = current_videos
-            
-            # Handle new photos
-            if request.files.getlist('photos[]'):
-                if case.photos is None:
-                    case.photos = []
-                    
-                for photo in request.files.getlist('photos[]'):
-                    if photo and photo.filename:
-                        try:
-                            filename = f"{str(uuid4())}_{secure_filename(photo.filename)}"
-                            photos_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'photos')
-                            os.makedirs(photos_folder, exist_ok=True)
-                            filepath = os.path.join(photos_folder, filename)
-                            photo.save(filepath)
-                            photo_url = f"/uploads/photos/{filename}"
-                            case.photos.append(photo_url)
-                            current_app.logger.info(f"Added photo: {photo_url}")
-                        except Exception as e:
-                            current_app.logger.error(f"Error saving photo: {str(e)}")
-            
-            # Handle new videos
-            if request.files.getlist('videos[]'):
-                if case.videos is None:
-                    case.videos = []
-                    
-                for video in request.files.getlist('videos[]'):
-                    if video and video.filename:
-                        try:
-                            filename = f"{str(uuid4())}_{secure_filename(video.filename)}"
-                            videos_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'videos')
-                            os.makedirs(videos_folder, exist_ok=True)
-                            filepath = os.path.join(videos_folder, filename)
-                            video.save(filepath)
-                            video_url = f"/uploads/videos/{filename}"
-                            case.videos.append(video_url)
-                            current_app.logger.info(f"Added video: {video_url}")
-                        except Exception as e:
-                            current_app.logger.error(f"Error saving video: {str(e)}")
-            
-            try:
-                current_app.logger.info(f"Final photos list: {case.photos}")
-                current_app.logger.info(f"Final videos list: {case.videos}")
-                db.session.commit()
-                return jsonify({
-                    'success': True,
-                    'message': 'Case updated successfully'
-                })
-            except Exception as e:
-                db.session.rollback()
-                current_app.logger.error(f"Database error: {str(e)}")
-                return jsonify({
-                    'success': False,
-                    'error': str(e)
-                }), 500
+            # Ensure photos and videos arrays exist
+            if case.photos is None:
+                case.photos = []
+            if case.videos is None:
+                case.videos = []
                 
+            # Handle photos
+            photos = request.files.getlist('photos[]')
+            for photo in photos:
+                if photo and photo.filename:
+                    try:
+                        filename = f"photos/{uuid.uuid4()}_{secure_filename(photo.filename)}"
+                        blob = bucket.blob(filename)
+                        blob.upload_from_string(
+                            photo.read(),
+                            content_type=photo.content_type
+                        )
+                        photo_url = f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/{filename}"
+                        # Append to existing photos
+                        case.photos = case.photos + [photo_url]
+                        current_app.logger.info(f"Added photo: {photo_url}")
+                    except Exception as e:
+                        current_app.logger.error(f"Error uploading photo: {str(e)}")
+            
+            # Handle videos
+            videos = request.files.getlist('videos[]')
+            for video in videos:
+                if video and video.filename:
+                    try:
+                        filename = f"videos/{uuid.uuid4()}_{secure_filename(video.filename)}"
+                        blob = bucket.blob(filename)
+                        blob.upload_from_string(
+                            video.read(),
+                            content_type=video.content_type
+                        )
+                        video_url = f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/{filename}"
+                        # Append to existing videos
+                        case.videos = case.videos + [video_url]
+                        current_app.logger.info(f"Added video: {video_url}")
+                    except Exception as e:
+                        current_app.logger.error(f"Error uploading video: {str(e)}")
+
+            # Log final state
+            current_app.logger.info(f"Final photos: {case.photos}")
+            current_app.logger.info(f"Final videos: {case.videos}")
+
+            db.session.add(case)
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Case updated successfully'
+            })
+            
         except Exception as e:
-            current_app.logger.error(f"Error in update route: {str(e)}")
+            db.session.rollback()
+            current_app.logger.error(f"Error updating case: {str(e)}")
             return jsonify({
                 'success': False,
                 'error': str(e)
             }), 500
-    
-    # GET request
-    case = Case.query.get_or_404(case_id)
-    
-    # Filter out non-existent media before rendering template
-    if case.photos:
-        case.photos = [photo for photo in case.photos if os.path.exists(
-            os.path.join(current_app.config['UPLOAD_FOLDER'], photo.replace('/uploads/', ''))
-        )]
-    if case.videos:
-        case.videos = [video for video in case.videos if os.path.exists(
-            os.path.join(current_app.config['UPLOAD_FOLDER'], video.replace('/uploads/', ''))
-        )]
-    
+
+    # GET request - render the update form
     return render_template('update_case.html', case=case)
 
 @main.route('/remove_media/<case_id>', methods=['POST'])
@@ -644,70 +558,35 @@ def remove_media(case_id):
         case = Case.query.get_or_404(case_id)
         data = request.get_json()
         
-        if not data or 'type' not in data or 'url' not in data:
-            current_app.logger.error("Invalid request data")
-            return jsonify({
-                'success': False,
-                'error': 'Invalid request data'
-            }), 400
-            
-        media_type = data['type']
-        url = data['url']
-        current_app.logger.info(f"Removing {media_type}: {url}")
+        media_type = data.get('type')
+        url = data.get('url')
         
-        try:
-            # Remove file from filesystem
-            file_path = os.path.join(
-                current_app.config['UPLOAD_FOLDER'],
-                url.replace('/uploads/', '')
-            )
-            if os.path.exists(file_path):
-                os.remove(file_path)
-                current_app.logger.info(f"Deleted file: {file_path}")
-            
-            # Update database
-            if media_type == 'photo':
-                if case.photos and url in case.photos:
-                    case.photos.remove(url)
-                    current_app.logger.info("Removed photo URL from database")
-            elif media_type == 'video':
-                if case.videos and url in case.videos:
-                    case.videos.remove(url)
-                    current_app.logger.info("Removed video URL from database")
-            else:
-                return jsonify({
-                    'success': False,
-                    'error': 'Invalid media type'
-                }), 400
-            
-            db.session.commit()
-            current_app.logger.info("Changes committed to database")
-            
-            return jsonify({
-                'success': True,
-                'message': f'{media_type.capitalize()} removed successfully'
-            })
-            
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"Error removing {media_type}: {str(e)}")
-            return jsonify({
-                'success': False,
-                'error': f'Failed to remove {media_type}'
-            }), 500
-            
+        current_app.logger.info(f"Before removal - Photos: {case.photos}, Videos: {case.videos}")
+        
+        if media_type == 'photo':
+            if case.photos:
+                case.photos = [p for p in case.photos if p != url]
+        elif media_type == 'video':
+            if case.videos:
+                case.videos = [v for v in case.videos if v != url]
+        
+        current_app.logger.info(f"After removal - Photos: {case.photos}, Videos: {case.videos}")
+        
+        db.session.add(case)  # Explicitly mark as modified
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'{media_type} removed successfully'
+        })
+        
     except Exception as e:
-        current_app.logger.error(f"Error in remove_media route: {str(e)}")
+        db.session.rollback()
+        current_app.logger.error(f"Error removing media: {str(e)}")
         return jsonify({
             'success': False,
             'error': str(e)
         }), 500
-
-# Add this context processor to make csrf_token available in all templates
-@main.context_processor
-def inject_csrf_token():
-    return dict(csrf_token=generate_csrf)
-
 
 @main.route('/delete_case/<case_id>', methods=['GET', 'POST'])
 @login_required
@@ -737,6 +616,8 @@ def view_case_details(case_id):
     case = Case.query.get_or_404(case_id)
     form = CommentForm()
     
+    # app.logger.debug(f"Photos for case {case_id}: {case.photos}")
+
     if form.validate_on_submit():
         comment = Comment(content=form.content.data,
                         case_id=case.id,

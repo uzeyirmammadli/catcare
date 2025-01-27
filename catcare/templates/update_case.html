@@ -25,7 +25,6 @@
         {% endwith %} -->
 
         <form id="updateForm" action="{{ url_for('main.update', case_id=case.id) }}" method="POST" enctype="multipart/form-data" data-case-id="{{ case.id }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="next" value="{{ request.args.get('next') or request.referrer }}">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="mb-4">
@@ -40,17 +39,11 @@
                     <!-- Display existing photos -->
                     <div class="mt-4 grid grid-cols-3 gap-4">
                         {% if case.photos %}
-                            {% for photo in case.photos%}
+                            {% for photo in case.photos %}
                             <div class="relative">
-                                {% if photo.startswith('https://') %}
-                                    <img src="{{ photo }}" alt="Case photo" class="w-full h-32 object-cover rounded">
-                                {% elif photo.startswith('/uploads/') %}
-                                    <img src="{{ url_for('main.uploaded_file', filename=photo.replace('/uploads/', '')) }}" 
-                                         alt="Case photo" class="w-full h-32 object-cover rounded">
-                                {% else %}
-                                    <img src="{{ url_for('main.uploaded_file', filename=photo) }}" 
-                                         alt="Case photo" class="w-full h-32 object-cover rounded">
-                                {% endif %}
+                                <img src="{{ photo }}" 
+                                     alt="Case photo" 
+                                     class="w-full h-32 object-cover rounded">
                                 <button type="button" onclick="removeMedia('photo', this)" data-url="{{ photo }}" 
                                         class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
                                     ×
@@ -59,15 +52,9 @@
                             {% endfor %}
                         {% elif case.photo %}
                             <div class="relative">
-                                {% if case.photo.startswith('https://') %}
-                                    <img src="{{ case.photo }}" alt="Case photo" class="w-full h-32 object-cover rounded">
-                                {% elif case.photo.startswith('/uploads/') %}
-                                    <img src="{{ url_for('main.uploaded_file', filename=case.photo.replace('/uploads/', '')) }}" 
-                                         alt="Case photo" class="w-full h-32 object-cover rounded">
-                                {% else %}
-                                    <img src="{{ url_for('main.uploaded_file', filename=case.photo) }}" 
-                                         alt="Case photo" class="w-full h-32 object-cover rounded">
-                                {% endif %}
+                                <img src="{{ case.photo }}" 
+                                     alt="Case photo" 
+                                     class="w-full h-32 object-cover rounded">
                                 <button type="button" onclick="removeMedia('photo', this)" data-url="{{ case.photo }}" 
                                         class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
                                     ×
@@ -75,7 +62,6 @@
                             </div>
                         {% endif %}
                     </div>
-                </div>
         
                 <!-- Videos Upload -->
                 <div class="mb-4">
@@ -89,18 +75,20 @@
                     
                     <!-- Display existing videos -->
                     <div class="mt-4 grid grid-cols-3 gap-4">
-                        {% for video in case.videos %}
-                        <div class="relative">
-                            <video class="w-full h-32 object-cover rounded" controls>
-                                <source src="{{ video }}" type="video/mp4">
-                                Your browser does not support the video tag.
-                            </video>
-                            <button type="button" onclick="removeMedia('video', this)" data-url="{{ video }}" 
-                                    class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
-                                ×
-                            </button>
-                        </div>
-                        {% endfor %}
+                        {% if case.videos %}
+                            {% for video in case.videos %}
+                            <div class="relative">
+                                <video class="w-full h-32 object-cover rounded" controls>
+                                    <source src="{{ video }}" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                                <button type="button" onclick="removeMedia('video', this)" data-url="{{ video }}" 
+                                        class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
+                                    ×
+                                </button>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -247,21 +235,6 @@
     </div>
 
     <script>
-       // Get CSRF token from the hidden input
-function getCsrfToken() {
-    return document.querySelector('input[name="csrf_token"]').value;
-}
-
-function logFormData(formData) {
-    console.log('Form data contents:');
-    for (let pair of formData.entries()) {
-        if (pair[1] instanceof File) {
-            console.log(pair[0], ':', pair[1].name, '(', pair[1].size, 'bytes )');
-        } else {
-            console.log(pair[0], ':', pair[1]);
-        }
-    }
-}
 
 document.getElementById('updateForm').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -270,58 +243,39 @@ document.getElementById('updateForm').addEventListener('submit', function(e) {
     submitButton.disabled = true;
     submitButton.innerText = 'Updating...';
     
-    // Get form data
     const formData = new FormData(this);
-    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
     
-    // Debug logging
-    console.log('Files selected:', {
-        videos: Array.from(document.getElementById('videos').files).map(f => ({
-            name: f.name,
-            size: f.size,
-            type: f.type
-        }))
-    });
-    
-    logFormData(formData);
+    // Log form data for debugging
+    for (let pair of formData.entries()) {
+        console.log(pair[0], pair[1] instanceof File ? pair[1].name : pair[1]);
+    }
     
     fetch(this.action, {
         method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRFToken': csrfToken
-        },
-        credentials: 'same-origin'
+        body: formData
     })
     .then(response => {
-        return response.text().then(text => {
-            console.log('Raw server response:', text);
-            try {
-                const data = JSON.parse(text);
-                if (!response.ok) {
-                    throw new Error(data.error || `Server error: ${response.status}`);
-                }
-                return data;
-            } catch (e) {
-                console.error('Parse error:', e);
-                throw new Error(data.error || 'Server returned invalid response');
-            }
-        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
     })
     .then(data => {
+        console.log('Server response:', data);
         if (data.success) {
-            console.log('Update successful:', data);
             alert('Case updated successfully!');
-            window.location.href = document.querySelector('input[name="next"]')?.value || '/cases';
+            window.location.href = document.querySelector('input[name="next"]')?.value || '/';
         } else {
             throw new Error(data.error || 'Update failed');
         }
     })
     .catch(error => {
         console.error('Error:', error);
+        alert(error.message || 'An error occurred during update');
+    })
+    .finally(() => {
         submitButton.disabled = false;
         submitButton.innerText = 'Update Case';
-        alert(error.message);
     });
 });
 
@@ -380,46 +334,32 @@ function removeMedia(type, button) {
     const mediaElement = button.closest('.relative');
     const caseId = document.querySelector('#updateForm').dataset.caseId;
     
+    console.log('Removing media:', { type, url, caseId });
+    
     fetch(`/remove_media/${caseId}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ type, url }),
-        credentials: 'same-origin'
+        body: JSON.stringify({ type, url })
     })
     .then(response => response.json())
     .then(data => {
+        console.log('Remove media response:', data);
         if (data.success) {
-            // Remove the media element from the DOM
             mediaElement.remove();
-            // Show success message
             const flashMessage = document.createElement('div');
             flashMessage.className = 'mb-4 p-4 rounded bg-green-100 text-green-700';
             flashMessage.textContent = data.message;
             document.querySelector('#updateForm').insertBefore(flashMessage, document.querySelector('#updateForm').firstChild);
-            
-            // Remove message after 3 seconds
-            setTimeout(() => {
-                flashMessage.remove();
-            }, 3000);
+            setTimeout(() => flashMessage.remove(), 3000);
         } else {
             throw new Error(data.error || `Failed to remove ${type}`);
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        // Show error message
-        const flashMessage = document.createElement('div');
-        flashMessage.className = 'mb-4 p-4 rounded bg-red-100 text-red-700';
-        flashMessage.textContent = error.message || `Failed to remove ${type}`;
-        document.querySelector('#updateForm').insertBefore(flashMessage, document.querySelector('#updateForm').firstChild);
-        
-        // Remove message after 3 seconds
-        setTimeout(() => {
-            flashMessage.remove();
-        }, 3000);
+        alert(error.message || `Failed to remove ${type}`);
     });
 }
 
