@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">Resolved Cases</h1>
+
+    {% if cases %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for case in cases %}
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-2">Case #{{ case.id[:8] }}</h2>
+            
+            <!-- Case Details -->
+            <div class="space-y-4">
+                <p><span class="font-medium">Location:</span> {{ case.location }}</p>
+                
+                {% if case.resolved_at %}
+                    <p><span class="font-medium">Resolved:</span> {{ case.resolved_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                {% endif %}
+                
+                {% if case.resolution_notes %}
+                <div>
+                    <p class="font-medium">Resolution Notes:</p>
+                    <p class="text-gray-600">{{ case.resolution_notes }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Display needs -->
+                {% if case.needs %}
+                <div>
+                    <p class="font-medium">Needs:</p>
+                    <div class="flex flex-wrap gap-2 mt-1">
+                        {% for need in case.needs %}
+                        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">{{ need }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Inside case details section -->
+
+                <!-- Initial Case Photos -->
+                {% if case.photos %}
+                <div class="mt-4">
+                    <p class="font-medium mb-2">Initial Case Photos:</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        {% for photo in case.photos %}
+                        <a href="{{ photo }}" target="_blank">
+                            <img src="{{ photo }}" alt="Case photo" class="w-full h-32 object-cover rounded hover:opacity-75 transition-opacity">
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Resolution Photos -->
+                {% if case.resolution_photos %}
+                <div class="mt-4">
+                    <p class="font-medium mb-2">Resolution Photos:</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        {% for photo in case.resolution_photos %}
+                        <a href="{{ photo }}" target="_blank">
+                            <img src="{{ photo }}" alt="Resolution photo" class="w-full h-32 object-cover rounded hover:opacity-75 transition-opacity">
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Initial Case Videos -->
+                {% if case.videos %}
+                <div class="mt-4">
+                    <p class="font-medium mb-2">Initial Case Videos:</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        {% for video in case.videos %}
+                        <video controls class="w-full h-32 object-cover rounded">
+                            <source src="{{ video }}" type="video/mp4">
+                            Your browser does not support video playback.
+                        </video>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Resolution Videos -->
+                {% if case.resolution_videos %}
+                <div class="mt-4">
+                    <p class="font-medium mb-2">Resolution Videos:</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        {% for video in case.resolution_videos %}
+                        <video controls class="w-full h-32 object-cover rounded">
+                            <source src="{{ video }}" type="video/mp4">
+                            Your browser does not support video playback.
+                        </video>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Resolution PDFs -->
+                {% if case.pdfs %}
+                <div class="mt-4">
+                    <p class="font-medium mb-2">Resolution Documents:</p>
+                    <div class="space-y-2">
+                        {% for pdf in case.pdfs %}
+                        <div class="flex items-center space-x-2 bg-gray-50 p-2 rounded">
+                            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                            <a href="{{ pdf }}" 
+                            target="_blank"
+                            class="text-blue-600 hover:text-blue-800 hover:underline">
+                                View Resolution Document
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="mt-4 flex space-x-2">
+                    <a href="{{ url_for('main.view_case_details', case_id=case.id) }}" 
+                       class="inline-block bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300">
+                        View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination.pages > 1 %}
+    <div class="mt-8 flex justify-center">
+        <nav class="inline-flex rounded-md shadow-sm" aria-label="Pagination">
+            {% for page in pagination.iter_pages() %}
+                {% if page %}
+                    <a href="{{ url_for('main.show_resolved_cases', page=page) }}"
+                       class="px-4 py-2 {% if page == pagination.page %}bg-blue-500 text-white{% else %}bg-white text-blue-500{% endif %} border hover:bg-blue-50 {% if loop.first %}rounded-l-md{% endif %} {% if loop.last %}rounded-r-md{% endif %}">
+                        {{ page }}
+                    </a>
+                {% else %}
+                    <span class="px-4 py-2 border">...</span>
+                {% endif %}
+            {% endfor %}
+        </nav>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div class="text-center py-8">
+        <p class="text-gray-600">No resolved cases found.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

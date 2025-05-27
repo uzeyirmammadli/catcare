@@ -17,8 +17,13 @@ def init_db():
 class User(UserMixin, db.Model):
     """Represents a user in the system."""
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(255), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256))
+    first_name = db.Column(db.String(50))
+    last_name = db.Column(db.String(50))
+    bio = db.Column(db.Text)
+    join_date = db.Column(db.DateTime, default=datetime.utcnow)
 
     def set_password(self, password):
         """Hash and set the user's password."""
@@ -29,7 +34,17 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     comments = db.relationship('Comment', back_populates='user', lazy='dynamic', cascade="all, delete-orphan")
-    cases = db.relationship('Case', backref='user', lazy=True, cascade="all, delete-orphan")
+    # Cases created by the user
+    cases = db.relationship('Case', 
+                          backref='user',
+                          foreign_keys='Case.user_id',
+                          lazy=True)
+    
+    # Cases resolved by the user
+    resolved_cases = db.relationship('Case',
+                                   backref='resolved_by',
+                                   foreign_keys='Case.resolved_by_id',
+                                   lazy=True)
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -48,6 +63,11 @@ class Case(db.Model):
     need = db.Column(db.String(200))   # Keep for migration
     status = db.Column(db.String(20), default='OPEN', index=True)
     resolution_notes = db.Column(db.Text())
+    resolution_photos = db.Column(db.ARRAY(db.String))  # Photos added during resolution
+    resolution_videos = db.Column(db.ARRAY(db.String))
+    pdfs = db.Column(db.ARRAY(db.String))
+    resolved_at = db.Column(db.DateTime, nullable=True)
+    resolved_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=func.now())
     updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now())
 

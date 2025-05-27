@@ -13,7 +13,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from flask_wtf.csrf import generate_csrf
 from functools import wraps
 from .models import db, User, Comment, Case
-from .forms import RegistrationForm, LoginForm, CommentForm
+from .forms import RegistrationForm, LoginForm, CommentForm, UpdateProfileForm, ChangePasswordForm
 from . import db, login_manager
 from google.cloud import storage
 
@@ -21,7 +21,9 @@ if os.getenv('GAE_ENV', '').startswith('standard'):
     from google.cloud import storage
 
 main = Blueprint('main', __name__)
-logging.basicConfig(level=logging.DEBUG)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @main.route('/test')
 def test_interface():
@@ -98,63 +100,58 @@ def load_user(user_id):
 # Authentication routes
 @main.route('/register', methods=['GET', 'POST'])
 def register():
-    print(f"Method: {request.method}")
-    print(f"User authenticated: {current_user.is_authenticated}")
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.show_cases'))
     
     form = RegistrationForm()
-    if request.method == 'POST':
-        print(f"Form valid: {form.validate_on_submit()}")
-        print(f"Form errors: {form.errors}")
-        if form.validate_on_submit():
-            try:
-                # Check if user exists
-                existing_user = User.query.filter_by(username=form.username.data).first()
-                if existing_user:
-                    flash('Username already exists. Please choose a different one.', 'error')
-                    return render_template('register.html', form=form)
-                
-                # Create new user
-                user = User(username=form.username.data)
-                user.set_password(form.password.data)
-                db.session.add(user)
-                db.session.commit()
-                flash('Registration successful!', 'success')
-                return redirect(url_for('main.login'))
-            except Exception as e:
-                db.session.rollback()
-                flash(f'Registration failed: {str(e)}', 'error')
+    if form.validate_on_submit():
+        try:
+            # Check if username or email exists
+            if User.query.filter_by(username=form.username.data).first():
+                flash('Username already exists. Please choose a different one.', 'error')
                 return render_template('register.html', form=form)
-        else:
-            # If form validation fails, render the template with errors
-            return render_template('register.html', form=form)
+            
+            if User.query.filter_by(email=form.email.data).first():
+                flash('Email already registered. Please use a different email.', 'error')
+                return render_template('register.html', form=form)
+            
+            # Create new user
+            user = User(
+                username=form.username.data,
+                email=form.email.data,
+                join_date=datetime.utcnow()
+            )
+            user.set_password(form.password.data)
+            db.session.add(user)
+            db.session.commit()
+            flash('Registration successful! Please log in.', 'success')
+            return redirect(url_for('main.login'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Registration failed: {str(e)}', 'error')
     
-    # GET request
     return render_template('register.html', form=form)
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
-    print("LOG")
     if current_user.is_authenticated:
-        return redirect(next_page if next_page else url_for('main.show_cases'))
+        return redirect(url_for('main.show_cases'))
     
     form = LoginForm()
-    if request.method == 'POST':
-        if form.validate_on_submit():
-            user = User.query.filter_by(username=form.username.data).first()
-            if user and user.check_password(form.password.data):
-                login_user(user)
-                next_page = request.args.get('next')
-                return redirect(next_page if next_page else url_for('main.show_cases'))
-            else:
-                flash('Invalid username or password', 'error')
-                return render_template('login.html', form=form)
+    if form.validate_on_submit():
+        # Try to find user by username or email
+        user = User.query.filter(
+            (User.username == form.login.data) | 
+            (User.email == form.login.data)
+        ).first()
+        
+        if user and user.check_password(form.password.data):
+            login_user(user, remember=form.remember.data)
+            next_page = request.args.get('next')
+            return redirect(next_page if next_page else url_for('main.show_cases'))
         else:
-            # If form validation fails, render the template with errors
-            return render_template('login.html', form=form)
+            flash('Invalid username/email or password', 'error')
     
-    # GET request
     return render_template('login.html', form=form)
 
 @main.route('/check_users')
@@ -169,6 +166,45 @@ def logout():
     logout_user()
     print(f"User authenticated: {current_user.is_authenticated}")
     return redirect(url_for('main.show_cases'))
+
+
+@main.route('/profile')
+@login_required
+def profile():
+    return render_template('profile.html', user=current_user)
+
+@main.route('/profile/edit', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    form = UpdateProfileForm()
+    if form.validate_on_submit():
+        current_user.username = form.username.data
+        current_user.first_name = form.first_name.data
+        current_user.last_name = form.last_name.data
+        current_user.bio = form.bio.data
+        db.session.commit()
+        flash('Your profile has been updated!', 'success')
+        return redirect(url_for('main.profile'))
+    elif request.method == 'GET':
+        form.username.data = current_user.username
+        form.first_name.data = current_user.first_name
+        form.last_name.data = current_user.last_name
+        form.bio.data = current_user.bio
+    return render_template('edit_profile.html', form=form)
+
+@main.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if current_user.check_password(form.current_password.data):
+            current_user.set_password(form.new_password.data)
+            db.session.commit()
+            flash('Your password has been updated!', 'success')
+            return redirect(url_for('main.profile'))
+        else:
+            flash('Invalid current password.', 'danger')
+    return render_template('change_password.html', form=form)
 
 # Error handlers
 @main.errorhandler(404)
@@ -297,29 +333,31 @@ def uploaded_file(filename):
 
 @main.route('/')
 def show_cases():
-    """Show all cases with pagination."""
+    """Show all open cases with pagination."""
     page = request.args.get('page', 1, type=int)
     per_page = 10
-
+    
     try:
-        # Get paginated cases with explicit transaction handling
-        query = Case.query.order_by(Case.created_at.desc())
+        # Get only OPEN cases
+        query = Case.query.filter_by(status='OPEN')\
+                         .order_by(Case.created_at.desc())
+        
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-        db.session.commit()  # Commit the transaction
+        db.session.commit()
 
         return render_template('cases.html',
-                          cases=pagination.items,
-                          pagination=pagination,
-                          current_page=page,
-                          total_pages=pagination.pages)
+                           cases=pagination.items,
+                           pagination=pagination,
+                           current_page=page,
+                           total_pages=pagination.pages)
     except SQLAlchemyError as e:
-        db.session.rollback()  # Rollback on error
+        db.session.rollback()
         flash('Database error occurred. Please try again.', 'danger')
         return render_template('cases.html',
-                          cases=[],
-                          pagination=None,
-                          current_page=1,
-                          total_pages=1)
+                           cases=[],
+                           pagination=None,
+                           current_page=1,
+                           total_pages=1)
  
 def haversine_distance(lat1, lon1, lat2, lon2):
     """
@@ -442,6 +480,7 @@ def advanced_search():
                            statuses=['OPEN', 'RESOLVED'],
                            sort_options=[])
 
+
 @main.route('/resolve/<case_id>', methods=['GET', 'POST'])
 @login_required
 def resolve_case(case_id):
@@ -450,24 +489,136 @@ def resolve_case(case_id):
         return_to = request.args.get('return_to') or request.form.get('return_to')
         
         if request.method == 'POST':
-            case.status = request.form.get('status')
+            storage_client = storage.Client()
+            bucket = storage_client.bucket('eco-layout-442118-t8-uploads')
+
+
+            # Handle resolution photos
+            if 'photos[]' in request.files:
+                photos = request.files.getlist('photos[]')
+                print("Photos found:", len(photos))
+                for photo in photos:
+                    print("Processing photo:", photo.filename)
+
+            if photos and any(photo.filename for photo in photos):
+                if not case.resolution_photos:
+                    case.resolution_photos = []
+                
+                for photo in photos:
+                    if photo.filename:
+                        try:
+                            filename = f"resolution_photos/{uuid.uuid4()}_{secure_filename(photo.filename)}"
+                            current_app.logger.info(f"Uploading photo: {filename}")
+                            blob = bucket.blob(filename)
+                            blob.upload_from_string(
+                                photo.read(),
+                                content_type=photo.content_type
+                            )
+                            photo_url = f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/{filename}"
+                            case.resolution_photos.append(photo_url)
+                            current_app.logger.info(f"Added photo URL: {photo_url}")
+                        except Exception as e:
+                            current_app.logger.error(f"Error uploading photo: {str(e)}")
+
+            # Handle resolution videos
+            videos = request.files.getlist('videos[]')
+            current_app.logger.info(f"Processing {len(videos)} videos")
+            if videos and any(video.filename for video in videos):
+                if not case.resolution_videos:
+                    case.resolution_videos = []
+                
+                for video in videos:
+                    if video.filename:
+                        try:
+                            filename = f"resolution_videos/{uuid.uuid4()}_{secure_filename(video.filename)}"
+                            current_app.logger.info(f"Uploading video: {filename}")
+                            blob = bucket.blob(filename)
+                            blob.upload_from_string(
+                                video.read(),
+                                content_type=video.content_type
+                            )
+                            video_url = f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/{filename}"
+                            case.resolution_videos.append(video_url)
+                            current_app.logger.info(f"Added video URL: {video_url}")
+                        except Exception as e:
+                            current_app.logger.error(f"Error uploading video: {str(e)}")
+
+            # Handle PDFs
+            pdfs = request.files.getlist('pdfs[]')
+            current_app.logger.info(f"Processing {len(pdfs)} PDFs")
+            if pdfs and any(pdf.filename for pdf in pdfs):
+                if not case.pdfs:
+                    case.pdfs = []
+                
+                for pdf in pdfs:
+                    if pdf.filename and pdf.filename.lower().endswith('.pdf'):
+                        try:
+                            filename = f"resolution_docs/{uuid.uuid4()}_{secure_filename(pdf.filename)}"
+                            current_app.logger.info(f"Uploading PDF: {filename}")
+                            blob = bucket.blob(filename)
+                            blob.upload_from_string(
+                                pdf.read(),
+                                content_type='application/pdf'
+                            )
+                            pdf_url = f"https://storage.googleapis.com/eco-layout-442118-t8-uploads/{filename}"
+                            case.pdfs.append(pdf_url)
+                            current_app.logger.info(f"Added PDF URL: {pdf_url}")
+                        except Exception as e:
+                            current_app.logger.error(f"Error uploading PDF: {str(e)}")
+
+            # Update case status and notes
+            case.status = 'RESOLVED'
             case.resolution_notes = request.form.get('resolution_notes')
             case.updated_at = datetime.utcnow()
-            db.session.commit()
-            flash('Case updated successfully!', 'success')
-            return redirect(return_to or url_for('main.show_cases'))
+            case.resolved_at = datetime.utcnow()  # Set resolved timestamp
+            case.resolved_by_id = current_user.id
             
-        return render_template('resolve_case.html', 
-                             case=case,
-                             case_id=case_id,
-                             message=None,
-                             success=True,
-                             return_to=return_to)
+            db.session.commit()
+            flash('Case resolved successfully!', 'success')
+            return redirect(return_to or url_for('main.show_cases'))
         
+        return render_template('resolve_case.html',
+                           case=case,
+                           case_id=case_id,
+                           message=None,
+                           success=True,
+                           return_to=return_to)
+    
     except Exception as e:
-        current_app.logger.error(f"Error resolving case: {e}")
+        logger.error(f"Error in resolve_case: {str(e)}", exc_info=True)
+        db.session.rollback()
         flash('Error updating case', 'error')
         return redirect(return_to or url_for('main.show_cases'))
+    
+
+@main.route('/resolved-cases')
+@login_required
+def show_resolved_cases():
+    """Show resolved cases with pagination."""
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    
+    try:
+        query = Case.query.filter_by(status='RESOLVED')\
+                         .order_by(Case.resolved_at.desc())
+        
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        db.session.commit()
+
+        return render_template('resolved_cases.html',
+                           cases=pagination.items,
+                           pagination=pagination,
+                           current_page=page,
+                           total_pages=pagination.pages)
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        flash('Database error occurred. Please try again.', 'danger')
+        return render_template('resolved_cases.html',
+                           cases=[],
+                           pagination=None,
+                           current_page=1,
+                           total_pages=1)
+
 
 @main.route('/update/<case_id>', methods=['GET', 'POST'])
 @login_required

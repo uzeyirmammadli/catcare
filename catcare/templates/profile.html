@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <!-- Profile Header -->
+        <div class="p-6 sm:p-8 bg-gradient-to-r from-blue-50 to-blue-100">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ user.username }}</h1>
+                    <p class="text-gray-600">{{ user.email }}</p>
+                    {% if user.first_name or user.last_name %}
+                        <p class="text-gray-600">{{ user.first_name }} {{ user.last_name }}</p>
+                    {% endif %}
+                    {% if user.join_date %}
+                        <p class="text-sm text-gray-500 mt-1">Member since {{ user.join_date.strftime('%B %Y') }}</p>
+                    {% endif %}
+                </div>
+                <div class="space-x-2">
+                    <a href="{{ url_for('main.edit_profile') }}" 
+                       class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300">
+                        <i class="fas fa-edit mr-2"></i> Edit Profile
+                    </a>
+                    <a href="{{ url_for('main.change_password') }}"
+                       class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition duration-300">
+                        <i class="fas fa-key mr-2"></i> Change Password
+                    </a>
+                </div>
+            </div>
+
+            {% if user.bio %}
+            <div class="mt-6">
+                <h3 class="text-lg font-semibold text-gray-900">About</h3>
+                <p class="mt-2 text-gray-700">{{ user.bio }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Statistics -->
+        <div class="p-6 sm:p-8 border-t border-gray-200">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Cases Created -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-900">Cases Created</h3>
+                    <p class="text-3xl font-bold text-blue-600">{{ user.cases|length if user.cases else 0 }}</p>
+                </div>
+
+                <!-- Cases Resolved -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-900">Cases Resolved</h3>
+                    <p class="text-3xl font-bold text-green-600">{{ user.resolved_cases|length if user.resolved_cases else 0 }}</p>
+                </div>
+
+                <!-- Account Status -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-900">Account Status</h3>
+                    <p class="text-3xl font-bold text-blue-600">Active</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="p-6 sm:p-8 border-t border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+            {% if user.cases %}
+                <div class="space-y-4">
+                    {% for case in user.cases[:5] %}
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-medium text-gray-900">Case #{{ case.id[:8] }}</p>
+                                <p class="text-sm text-gray-500">{{ case.created_at.strftime('%Y-%m-%d %H:%M') if case.created_at }}</p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-sm font-medium
+                                {% if case.status == 'OPEN' %}bg-green-100 text-green-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ case.status }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-500">No recent activity</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
