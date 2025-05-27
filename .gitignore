@@ -1,6 +1,40 @@
-.venv/
+# Python
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
 .env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project specific
 env_variables.yaml
-catcare/static/uploads/*
-!/catcare/static/uploads/.keep
+*.log
+*.sqlite3
+
+# Media uploads
+catcare/catcare/static/uploads/*
+!catcare/catcare/static/uploads/.gitkeep
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+coverage.xml
+*.cover
