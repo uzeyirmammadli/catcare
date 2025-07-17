@@ -22,8 +22,8 @@ env_variables.yaml
 *.sqlite3
 
 # Media uploads
-catcare/catcare/static/uploads/*
-!catcare/catcare/static/uploads/.gitkeep
+catcare/static/uploads/*
+!catcare/static/uploads/.gitkeep
 
 # Distribution / packaging
 dist/
@@ -38,3 +38,38 @@ htmlcov/
 .cache
 coverage.xml
 *.cover
+.pytest_cache/
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Migration scripts (one-time use)
+migrate_*.py
+cloud_storage.py
+
+# Working files and summaries (development artifacts)
+*_SUMMARY.md
+*_GUIDE.md
+*_IMPROVEMENTS.md
+test_*.py
+fix_*.py
+performance_fixes.py
+speed_up_app.py
+seed_*.py
+create_*.py
+gunicorn_optimized.conf.py
+
+# Binary files
+cloud-sql-proxy
+*.exe

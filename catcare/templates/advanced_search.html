@@ -1,8 +1,26 @@
 {% extends "base.html" %}
 
 {% block content %}
+
 <body class="bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
-    <form method="GET" action="{{ url_for('main.advanced_search') }}" class="bg-white shadow-lg rounded-lg px-8 pt-6 pb-8 mb-8">
+    <!-- Saved Searches Section -->
+    {% if current_user.is_authenticated %}
+    <div class="bg-white shadow-lg rounded-lg px-8 pt-6 pb-8 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-gray-800">Saved Searches</h2>
+            <button type="button" id="saveCurrentSearch"
+                class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                <i class="fas fa-save mr-2"></i>Save Current Search
+            </button>
+        </div>
+        <div id="savedSearchesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Saved searches will be loaded here -->
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="GET" action="{{ url_for('main.advanced_search') }}"
+        class="bg-white shadow-lg rounded-lg px-8 pt-6 pb-8 mb-8">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- Location Filter with Map -->
             <div class="lg:col-span-2">
@@ -11,18 +29,27 @@
                 </label>
                 <div class="flex flex-col space-y-2">
                     <div class="flex gap-2">
-                        <select name="location" id="location" 
-                                class="flex-1 px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
-                            <option value="">All Locations</option>
-                            {% for location in locations %}
-                                <option value="{{ location }}" {% if filters.location == location %}selected{% endif %}>
+                        <div class="flex-1 relative">
+                            <input type="text" name="location" id="locationInput" value="{{ filters.location }}"
+                                placeholder="Type location or select from dropdown..."
+                                class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
+                                autocomplete="off">
+                            <div id="locationSuggestions"
+                                class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 hidden max-h-60 overflow-y-auto">
+                                <!-- Auto-complete suggestions will appear here -->
+                            </div>
+                            <select name="location_select" id="locationSelect"
+                                class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500 mt-2">
+                                <option value="">Or select from existing locations</option>
+                                {% for location in locations %}
+                                <option value="{{ location }}" {% if filters.location==location %}selected{% endif %}>
                                     {{ location }}
                                 </option>
-                            {% endfor %}
-                        </select>
-                        <button type="button" 
-                                id="getLocation" 
-                                class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="button" id="getLocation"
+                            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
                             <i class="fas fa-location-dot mr-2"></i>Get Location
                         </button>
                     </div>
@@ -30,39 +57,55 @@
                     <input type="hidden" id="latitude" name="latitude" value="{{ filters.latitude }}">
                     <input type="hidden" id="longitude" name="longitude" value="{{ filters.longitude }}">
                     <p id="locationStatus" class="text-sm text-gray-500"></p>
-                    <!-- Map container -->
-                    <div id="searchMap" class="h-48 rounded-lg shadow-md mt-2 hidden"></div>
+                    <!-- Map container with controls -->
+                    <div id="searchMap" class="h-64 rounded-lg shadow-md mt-2 hidden relative">
+                        <!-- Map control panel -->
+                        <div class="absolute top-2 right-2 z-10 bg-white rounded-lg shadow-md p-2 space-y-2">
+                            <button id="toggleClusters"
+                                class="w-full px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition">
+                                <i class="fas fa-layer-group mr-1"></i>Clusters
+                            </button>
+                            <button id="toggleHeatmap"
+                                class="w-full px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition">
+                                <i class="fas fa-fire mr-1"></i>Heatmap
+                            </button>
+                            <button id="toggleDrawing"
+                                class="w-full px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition">
+                                <i class="fas fa-draw-polygon mr-1"></i>Draw
+                            </button>
+                            <button id="planRoute"
+                                class="w-full px-3 py-1 bg-purple-500 text-white text-xs rounded hover:bg-purple-600 transition">
+                                <i class="fas fa-route mr-1"></i>Route
+                            </button>
+                        </div>
+                    </div>
                     <div class="mt-2">
                         <label class="block text-gray-700 text-sm font-bold mb-2" for="radius">
                             Search Radius (km)
                         </label>
-                        <input type="number" 
-                               id="radius" 
-                               name="radius" 
-                               value="{{ filters.radius|default(5) }}" 
-                               min="0.1" 
-                               max="100" 
-                               step="0.1"
-                               class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
+                        <input type="number" id="radius" name="radius" value="{{ filters.radius|default(5) }}" min="0.1"
+                            max="100" step="0.1"
+                            class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
                     </div>
                 </div>
             </div>
-            
+
             <!-- Status Filter -->
             <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="status">
                     Status
                 </label>
-                <select name="status" id="status" class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
+                <select name="status" id="status"
+                    class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
                     <option value="">All Statuses</option>
                     {% for status in statuses %}
-                    <option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>
+                    <option value="{{ status }}" {% if filters.status==status %}selected{% endif %}>
                         {{ status }}
                     </option>
                     {% endfor %}
                 </select>
             </div>
-            
+
             <!-- Multiple Needs Filter -->
             <div class="lg:col-span-2">
                 <label class="block text-gray-700 text-sm font-bold mb-2">
@@ -70,104 +113,98 @@
                 </label>
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <label class="inline-flex items-center space-x-2">
-                        <input type="checkbox" id="select-all-needs" 
-                               class="form-checkbox text-blue-500">
+                        <input type="checkbox" id="select-all-needs" class="form-checkbox text-blue-500">
                         <span class="font-medium">All Needs</span>
                     </label>
                     <label class="inline-flex items-center space-x-2">
-                        <input type="checkbox" name="needs[]" value="medical" 
-                               {% if 'medical' in filters.needs %}checked{% endif %}
-                               class="form-checkbox text-blue-500">
+                        <input type="checkbox" name="needs[]" value="medical" {% if 'medical' in filters.needs
+                            %}checked{% endif %} class="form-checkbox text-blue-500">
                         <span>Medical Care</span>
                     </label>
                     <label class="inline-flex items-center space-x-2">
-                        <input type="checkbox" name="needs[]" value="food"
-                               {% if 'food' in filters.needs %}checked{% endif %}
-                               class="form-checkbox text-blue-500">
+                        <input type="checkbox" name="needs[]" value="food" {% if 'food' in filters.needs %}checked{%
+                            endif %} class="form-checkbox text-blue-500">
                         <span>Food/Water</span>
                     </label>
                     <label class="inline-flex items-center space-x-2">
-                        <input type="checkbox" name="needs[]" value="shelter"
-                               {% if 'shelter' in filters.needs %}checked{% endif %}
-                               class="form-checkbox text-blue-500">
+                        <input type="checkbox" name="needs[]" value="shelter" {% if 'shelter' in filters.needs
+                            %}checked{% endif %} class="form-checkbox text-blue-500">
                         <span>Shelter</span>
                     </label>
                     <label class="inline-flex items-center space-x-2">
-                        <input type="checkbox" name="needs[]" value="rescue"
-                               {% if 'rescue' in filters.needs %}checked{% endif %}
-                               class="form-checkbox text-blue-500">
+                        <input type="checkbox" name="needs[]" value="rescue" {% if 'rescue' in filters.needs %}checked{%
+                            endif %} class="form-checkbox text-blue-500">
                         <span>Rescue</span>
                     </label>
                     <label class="inline-flex items-center space-x-2">
-                        <input type="checkbox" name="needs[]" value="vaccination"
-                               {% if 'vaccination' in filters.needs %}checked{% endif %}
-                               class="form-checkbox text-blue-500">
+                        <input type="checkbox" name="needs[]" value="vaccination" {% if 'vaccination' in filters.needs
+                            %}checked{% endif %} class="form-checkbox text-blue-500">
                         <span>Vaccination</span>
                     </label>
                     <label class="inline-flex items-center space-x-2">
-                        <input type="checkbox" name="needs[]" value="sterilization"
-                               {% if 'sterilization' in filters.needs %}checked{% endif %}
-                               class="form-checkbox text-blue-500">
+                        <input type="checkbox" name="needs[]" value="sterilization" {% if 'sterilization' in
+                            filters.needs %}checked{% endif %} class="form-checkbox text-blue-500">
                         <span>Sterilization</span>
                     </label>
                 </div>
             </div>
-                
-                <!-- Date Range -->
-                <div>
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="date_from">
-                        From Date
-                    </label>
-                    <input type="date" name="date_from" id="date_from"
-                           value="{{ filters.date_from }}"
-                           class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
-                </div>
-                
-                <div>
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="date_to">
-                        To Date
-                    </label>
-                    <input type="date" name="date_to" id="date_to"
-                           value="{{ filters.date_to }}"
-                           class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
-                </div>
-                
-                <!-- Sort Options -->
-                <div>
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="sort_by">
-                        Sort By
-                    </label>
-                    <select name="sort_by" id="sort_by" class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
-                        {% for value, label in sort_options %}
-                        <option value="{{ value }}" {% if filters.sort_by == value %}selected{% endif %}>
-                            {{ label }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div>
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="sort_order">
-                        Sort Order
-                    </label>
-                    <select name="sort_order" id="sort_order" class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
-                        <option value="desc" {% if filters.sort_order == 'desc' %}selected{% endif %}>Descending</option>
-                        <option value="asc" {% if filters.sort_order == 'asc' %}selected{% endif %}>Ascending</option>
-                    </select>
-                </div>
+
+            <!-- Date Range -->
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="date_from">
+                    From Date
+                </label>
+                <input type="date" name="date_from" id="date_from" value="{{ filters.date_from }}"
+                    class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
             </div>
-            
-            <div class="flex items-center justify-end mt-6">
-                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105">
-                    Search
-                </button>
+
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="date_to">
+                    To Date
+                </label>
+                <input type="date" name="date_to" id="date_to" value="{{ filters.date_to }}"
+                    class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
             </div>
-        </form>
-        
-        {% if cases %}
+
+            <!-- Sort Options -->
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="sort_by">
+                    Sort By
+                </label>
+                <select name="sort_by" id="sort_by"
+                    class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
+                    {% for value, label in sort_options %}
+                    <option value="{{ value }}" {% if filters.sort_by==value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="sort_order">
+                    Sort Order
+                </label>
+                <select name="sort_order" id="sort_order"
+                    class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
+                    <option value="desc" {% if filters.sort_order=='desc' %}selected{% endif %}>Descending</option>
+                    <option value="asc" {% if filters.sort_order=='asc' %}selected{% endif %}>Ascending</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-end mt-6">
+            <button type="submit"
+                class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105">
+                Search
+            </button>
+        </div>
+    </form>
+
+    {% if cases %}
     <div class="bg-white shadow-lg rounded-lg px-8 pt-6 pb-8">
         <h2 class="text-2xl font-bold mb-6 text-gray-800">Search Results</h2>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for case in cases %}
             <div class="border rounded-lg p-4 hover:shadow-md transition duration-300">
@@ -175,7 +212,7 @@
                 <p class="mb-1"><span class="font-semibold">Location:</span> {{ case.location }}</p>
                 {% if case.distance is defined %}
                 <p class="mb-1">
-                    <span class="font-semibold">Distance:</span> 
+                    <span class="font-semibold">Distance:</span>
                     <span class="text-blue-600">{{ case.distance }} km</span>
                 </p>
                 {% endif %}
@@ -184,15 +221,15 @@
                     <span class="font-semibold">Needs:</span>
                     <div class="flex flex-wrap gap-1 mt-1">
                         {% if case.needs %}
-                            {% for need in case.needs %}
-                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                                    {{ need }}
-                                </span>
-                            {% endfor %}
+                        {% for need in case.needs %}
+                        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                            {{ need }}
+                        </span>
+                        {% endfor %}
                         {% else %}
-                            <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
-                                No needs specified
-                            </span>
+                        <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+                            No needs specified
+                        </span>
                         {% endif %}
                     </div>
                 </div>
@@ -201,186 +238,732 @@
                 <div id="map-{{ case.id }}" class="h-32 rounded-lg shadow-md mb-2"></div>
                 {% endif %}
                 <p class="mb-1">
-                    <span class="font-semibold">Status:</span> 
+                    <span class="font-semibold">Status:</span>
                     <span class="px-2 py-1 rounded-full text-xs font-semibold
                         {% if case.status == 'OPEN' %}bg-green-200 text-green-800
                         {% else %}bg-gray-200 text-gray-800{% endif %}">
                         {{ case.status }}
                     </span>
                 </p>
-                <p class="mb-3"><span class="font-semibold">Created:</span> {{ case.created_at.strftime('%Y-%m-%d') }}</p>
-                <a href="{{ url_for('main.view_case_details', case_id=case.id) }}" 
-                   class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition duration-300">
+                <p class="mb-3"><span class="font-semibold">Created:</span> {{ case.created_at.strftime('%Y-%m-%d') }}
+                </p>
+                <a href="{{ url_for('main.view_case_details', case_id=case.id) }}"
+                    class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition duration-300">
                     View Details
                 </a>
             </div>
             {% endfor %}
         </div>
-            
-            <!-- Pagination -->
-            {% if pagination.pages > 1 %}
-            <div class="flex justify-center mt-8">
-                <nav class="inline-flex rounded-md shadow-sm" aria-label="Pagination">
-                    {% for page_num in range(1, pagination.pages + 1) %}
-                    <a href="{{ url_for('main.advanced_search', page=page_num, **filters) }}"
-                       class="px-4 py-2 {% if page_num == current_page %}bg-blue-500 text-white{% else %}bg-white text-blue-500{% endif %} border-r border-gray-200 hover:bg-blue-50 {% if loop.first %}rounded-l-md{% endif %} {% if loop.last %}rounded-r-md border-r-0{% endif %} focus:z-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        {{ page_num }}
-                    </a>
-                    {% endfor %}
-                </nav>
-            </div>
-            {% endif %}
-        </div>
-        {% else %}
-        <div class="bg-white shadow-lg rounded-lg px-8 py-6 text-center">
-            <p class="text-gray-600 text-lg">No cases found matching your criteria.</p>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <div class="flex justify-center mt-8">
+            <nav class="inline-flex rounded-md shadow-sm" aria-label="Pagination">
+                {% for page_num in range(1, pagination.pages + 1) %}
+                <a href="{{ url_for('main.advanced_search', page=page_num, **filters) }}"
+                    class="px-4 py-2 {% if page_num == current_page %}bg-blue-500 text-white{% else %}bg-white text-blue-500{% endif %} border-r border-gray-200 hover:bg-blue-50 {% if loop.first %}rounded-l-md{% endif %} {% if loop.last %}rounded-r-md border-r-0{% endif %} focus:z-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    {{ page_num }}
+                </a>
+                {% endfor %}
+            </nav>
         </div>
         {% endif %}
     </div>
+    {% else %}
+    <div class="bg-white shadow-lg rounded-lg px-8 py-6 text-center">
+        <p class="text-gray-600 text-lg">No cases found matching your criteria.</p>
+    </div>
+    {% endif %}
 </body>
 {% endblock %}
+
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize search map
-    const searchMap = L.map('searchMap').setView([40.4093, 49.8671], 12); // Default to Baku coordinates
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(searchMap);
-    
-    let searchMarker;
-    let searchCircle;
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize search map with advanced features
+        const searchMap = L.map('searchMap').setView([40.4093, 49.8671], 12); // Default to Baku coordinates
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(searchMap);
 
-    // Function to update the search radius circle
-    function updateSearchRadius() {
-        const radius = document.getElementById('radius').value * 1000; // Convert to meters
-        
-        if (searchMarker) {
-            const latLng = searchMarker.getLatLng();
-            
-            if (searchCircle) {
-                searchMap.removeLayer(searchCircle);
+        // Map layers and controls
+        let searchMarker;
+        let searchCircle;
+        let markerClusterGroup;
+        let heatmapLayer;
+        let drawingLayer;
+        let routingControl;
+        let isClusteringEnabled = false;
+        let isHeatmapEnabled = false;
+        let isDrawingEnabled = false;
+
+        // Initialize marker cluster group
+        markerClusterGroup = L.markerClusterGroup({
+            chunkedLoading: true,
+            spiderfyOnMaxZoom: false,
+            showCoverageOnHover: false,
+            zoomToBoundsOnClick: true
+        });
+
+        // Custom marker icons based on case status/priority
+        const markerIcons = {
+            OPEN: L.divIcon({
+                className: 'custom-marker open-case',
+                html: '<div class="marker-pin bg-red-500"><i class="fas fa-exclamation text-white"></i></div>',
+                iconSize: [30, 30],
+                iconAnchor: [15, 30]
+            }),
+            RESOLVED: L.divIcon({
+                className: 'custom-marker resolved-case',
+                html: '<div class="marker-pin bg-green-500"><i class="fas fa-check text-white"></i></div>',
+                iconSize: [30, 30],
+                iconAnchor: [15, 30]
+            }),
+            URGENT: L.divIcon({
+                className: 'custom-marker urgent-case',
+                html: '<div class="marker-pin bg-red-600 animate-pulse"><i class="fas fa-heart text-white"></i></div>',
+                iconSize: [35, 35],
+                iconAnchor: [17, 35]
+            }),
+            MEDICAL: L.divIcon({
+                className: 'custom-marker medical-case',
+                html: '<div class="marker-pin bg-blue-500"><i class="fas fa-plus text-white"></i></div>',
+                iconSize: [30, 30],
+                iconAnchor: [15, 30]
+            })
+        };
+
+        // Initialize drawing layer
+        drawingLayer = new L.FeatureGroup();
+        searchMap.addLayer(drawingLayer);
+
+        // Drawing controls
+        const drawControl = new L.Control.Draw({
+            edit: {
+                featureGroup: drawingLayer,
+                remove: true
+            },
+            draw: {
+                polygon: {
+                    allowIntersection: false,
+                    drawError: {
+                        color: '#e1e100',
+                        message: '<strong>Error:</strong> shape edges cannot cross!'
+                    },
+                    shapeOptions: {
+                        color: '#97009c'
+                    }
+                },
+                polyline: true,
+                rect: {
+                    shapeOptions: {
+                        clickable: false
+                    }
+                },
+                circle: true,
+                marker: true,
+                circlemarker: false
             }
-            
-            searchCircle = L.circle(latLng, {
-                radius: radius,
-                fillColor: '#3b82f6',
-                fillOpacity: 0.1,
-                color: '#3b82f6',
-                weight: 1
-            }).addTo(searchMap);
-            
-            // Fit bounds to show the entire circle
-            searchMap.fitBounds(searchCircle.getBounds());
-        }
-    }
+        });
 
-    // Get location button handler
-    document.getElementById('getLocation').addEventListener('click', function() {
-        const locationStatus = document.getElementById('locationStatus');
-        locationStatus.textContent = 'Getting location...';
-        
-        if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition(function(position) {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                
-                document.getElementById('latitude').value = lat;
-                document.getElementById('longitude').value = lon;
-                
-                // Show and update map
-                document.getElementById('searchMap').classList.remove('hidden');
-                searchMap.setView([lat, lon], 15);
-                
-                if (searchMarker) {
-                    searchMap.removeLayer(searchMarker);
+        // Add custom CSS for markers
+        const markerStyles = `
+            <style>
+                .custom-marker .marker-pin {
+                    width: 30px;
+                    height: 30px;
+                    border-radius: 50% 50% 50% 0;
+                    position: absolute;
+                    transform: rotate(-45deg);
+                    left: 50%;
+                    top: 50%;
+                    margin: -15px 0 0 -15px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
                 }
-                searchMarker = L.marker([lat, lon]).addTo(searchMap);
-                
-                // Update radius circle
-                updateSearchRadius();
-                
-                // Get address
-                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        document.getElementById('location').value = data.display_name;
-                        locationStatus.textContent = 'Location detected!';
-                        locationStatus.className = 'text-sm text-green-600';
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        locationStatus.textContent = 'Could not get address. Using coordinates.';
-                        locationStatus.className = 'text-sm text-yellow-600';
-                    });
-            }, function(error) {
-                console.error('Error:', error);
-                locationStatus.textContent = 'Could not get location.';
-                locationStatus.className = 'text-sm text-red-600';
-            });
-        } else {
-            locationStatus.textContent = 'Location services not available.';
-            locationStatus.className = 'text-sm text-red-600';
+                .custom-marker .marker-pin i {
+                    transform: rotate(45deg);
+                    font-size: 12px;
+                }
+                .safe-zone {
+                    fill: rgba(34, 197, 94, 0.2);
+                    stroke: #22c55e;
+                    stroke-width: 2;
+                }
+                .danger-zone {
+                    fill: rgba(239, 68, 68, 0.2);
+                    stroke: #ef4444;
+                    stroke-width: 2;
+                }
+            </style>
+        `;
+        document.head.insertAdjacentHTML('beforeend', markerStyles);
+
+        // Interactive Map Control Handlers
+
+        // Toggle Clustering
+        document.getElementById('toggleClusters').addEventListener('click', function () {
+            isClusteringEnabled = !isClusteringEnabled;
+            this.classList.toggle('bg-blue-700', isClusteringEnabled);
+            this.innerHTML = isClusteringEnabled ?
+                '<i class="fas fa-layer-group mr-1"></i>Clusters ON' :
+                '<i class="fas fa-layer-group mr-1"></i>Clusters';
+
+            if (isClusteringEnabled) {
+                loadCasesWithClustering();
+            } else {
+                markerClusterGroup.clearLayers();
+                searchMap.removeLayer(markerClusterGroup);
+                loadCasesWithoutClustering();
+            }
+        });
+
+        // Toggle Heatmap
+        document.getElementById('toggleHeatmap').addEventListener('click', function () {
+            isHeatmapEnabled = !isHeatmapEnabled;
+            this.classList.toggle('bg-red-700', isHeatmapEnabled);
+            this.innerHTML = isHeatmapEnabled ?
+                '<i class="fas fa-fire mr-1"></i>Heatmap ON' :
+                '<i class="fas fa-fire mr-1"></i>Heatmap';
+
+            if (isHeatmapEnabled) {
+                loadHeatmapData();
+            } else if (heatmapLayer) {
+                searchMap.removeLayer(heatmapLayer);
+            }
+        });
+
+        // Toggle Drawing Tools
+        document.getElementById('toggleDrawing').addEventListener('click', function () {
+            isDrawingEnabled = !isDrawingEnabled;
+            this.classList.toggle('bg-green-700', isDrawingEnabled);
+            this.innerHTML = isDrawingEnabled ?
+                '<i class="fas fa-draw-polygon mr-1"></i>Draw ON' :
+                '<i class="fas fa-draw-polygon mr-1"></i>Draw';
+
+            if (isDrawingEnabled) {
+                searchMap.addControl(drawControl);
+            } else {
+                searchMap.removeControl(drawControl);
+            }
+        });
+
+        // Route Planning
+        document.getElementById('planRoute').addEventListener('click', function () {
+            if (routingControl) {
+                searchMap.removeControl(routingControl);
+                routingControl = null;
+                this.innerHTML = '<i class="fas fa-route mr-1"></i>Route';
+                this.classList.remove('bg-purple-700');
+            } else {
+                initializeRouting();
+                this.innerHTML = '<i class="fas fa-route mr-1"></i>Route ON';
+                this.classList.add('bg-purple-700');
+            }
+        });
+
+        // Load cases with clustering
+        function loadCasesWithClustering() {
+            markerClusterGroup.clearLayers();
+
+            {% if cases %}
+            const caseMarkers = [];
+            {% for case in cases %}
+            {% if case.latitude and case.longitude %}
+            const marker{{ loop.index }} = L.marker([{{ case.latitude }}, {{ case.longitude }}], {
+                icon: getMarkerIcon('{{ case.status }}', {{ case.needs|tojson }})
+            }).bindPopup(`
+                <div class="p-2">
+                    <h4 class="font-bold text-blue-600">Case #{{ case.id[:8] }}</h4>
+                    <p><strong>Location:</strong> {{ case.location }}</p>
+                    <p><strong>Status:</strong> <span class="px-2 py-1 rounded text-xs {% if case.status == 'OPEN' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %}">{{ case.status }}</span></p>
+                    <p><strong>Needs:</strong> {{ case.needs|join(', ') if case.needs else 'None specified' }}</p>
+                    <a href="{{ url_for('main.view_case_details', case_id=case.id) }}" class="inline-block mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600">View Details</a>
+                </div>
+            `);
+            caseMarkers.push(marker{{ loop.index }});
+            {% endif %}
+            {% endfor %}
+
+            markerClusterGroup.addLayers(caseMarkers);
+            {% endif %}
+
+            searchMap.addLayer(markerClusterGroup);
         }
-    });
 
-    // Initialize result maps
-    {% for case in cases %}
-        {% if case.latitude and case.longitude %}
-            const resultMap{{ case.id }} = L.map('map-{{ case.id }}').setView([{{ case.latitude }}, {{ case.longitude }}], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(resultMap{{ case.id }});
-            L.marker([{{ case.latitude }}, {{ case.longitude }}]).addTo(resultMap{{ case.id }});
-        {% endif %}
-    {% endfor %}
+        // Load cases without clustering
+        function loadCasesWithoutClustering() {
+            {% if cases %}
+            {% for case in cases %}
+            {% if case.latitude and case.longitude %}
+            L.marker([{{ case.latitude }}, {{ case.longitude }}], {
+                icon: getMarkerIcon('{{ case.status }}', {{ case.needs|tojson }})
+            }).addTo(searchMap).bindPopup(`
+                <div class="p-2">
+                    <h4 class="font-bold text-blue-600">Case #{{ case.id[:8] }}</h4>
+                    <p><strong>Location:</strong> {{ case.location }}</p>
+                    <p><strong>Status:</strong> <span class="px-2 py-1 rounded text-xs {% if case.status == 'OPEN' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %}">{{ case.status }}</span></p>
+                    <p><strong>Needs:</strong> {{ case.needs|join(', ') if case.needs else 'None specified' }}</p>
+                    <a href="{{ url_for('main.view_case_details', case_id=case.id) }}" class="inline-block mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600">View Details</a>
+                </div>
+            `);
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+        }
 
-    // Select All Needs functionality
-    const selectAllNeeds = document.getElementById('select-all-needs');
-    const needCheckboxes = document.querySelectorAll('input[name="needs[]"]');
-    
-    selectAllNeeds.addEventListener('change', function() {
-        needCheckboxes.forEach(checkbox => {
-            checkbox.checked = this.checked;
-        });
-    });
-    
-    // Update "Select All" state based on individual checkboxes
-    needCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const allChecked = Array.from(needCheckboxes).every(cb => cb.checked);
-            selectAllNeeds.checked = allChecked;
-        });
-    });
+        // Load heatmap data
+        function loadHeatmapData() {
+            {% if cases %}
+            const heatmapData = [
+                {% for case in cases %}
+                {% if case.latitude and case.longitude %}
+                [{{ case.latitude }}, {{ case.longitude }}, {% if case.status == 'OPEN' %}1{% else %}0.3{% endif %}],
+                {% endif %}
+                {% endfor %}
+            ];
 
-    // Location dropdown change handler
-    document.getElementById('location').addEventListener('change', function() {
-        if (this.value === '') {
-            // Clear coordinates when "All Locations" is selected
-            document.getElementById('latitude').value = '';
-            document.getElementById('longitude').value = '';
-            document.getElementById('searchMap').classList.add('hidden');
+            if (heatmapData.length > 0) {
+                heatmapLayer = L.heatLayer(heatmapData, {
+                    radius: 25,
+                    blur: 15,
+                    maxZoom: 17,
+                    gradient: {
+                        0.0: 'blue',
+                        0.5: 'yellow',
+                        1.0: 'red'
+                    }
+                }).addTo(searchMap);
+            }
+            {% endif %}
+        }
+
+        // Get marker icon based on case status and needs
+        function getMarkerIcon(status, needs) {
+            // Determine priority based on needs
+            if (needs && needs.includes('medical')) {
+                return markerIcons.MEDICAL;
+            } else if (status === 'OPEN' && needs && (needs.includes('rescue') || needs.includes('emergency'))) {
+                return markerIcons.URGENT;
+            } else if (status === 'RESOLVED') {
+                return markerIcons.RESOLVED;
+            } else {
+                return markerIcons.OPEN;
+            }
+        }
+
+        // Initialize routing
+        function initializeRouting() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    const userLat = position.coords.latitude;
+                    const userLon = position.coords.longitude;
+
+                    // Find nearest open cases for routing
+                    const openCases = [
+                        {% for case in cases %}
+                        {% if case.latitude and case.longitude and case.status == 'OPEN' %}
+                        {
+                            lat: {{ case.latitude }},
+                            lng: {{case.longitude}},
+                            name: 'Case #{{ case.id[:8] }}',
+                            location: '{{ case.location }}'
+                        }{%if not loop.last%},{% endif%}
+                        {% endif %}
+                        {% endfor %}
+                    ];
+
+                    if (openCases.length > 0) {
+                        // Create route to nearest case
+                        const nearestCase = findNearestCase(userLat, userLon, openCases);
+
+                        routingControl = L.Routing.control({
+                            waypoints: [
+                                L.latLng(userLat, userLon),
+                                L.latLng(nearestCase.lat, nearestCase.lng)
+                            ],
+                            routeWhileDragging: true,
+                            addWaypoints: false,
+                            createMarker: function (i, waypoint, n) {
+                                const marker = L.marker(waypoint.latLng, {
+                                    draggable: true,
+                                    icon: i === 0 ?
+                                        L.divIcon({
+                                            className: 'custom-marker user-location',
+                                            html: '<div class="marker-pin bg-blue-600"><i class="fas fa-user text-white"></i></div>',
+                                            iconSize: [30, 30],
+                                            iconAnchor: [15, 30]
+                                        }) :
+                                        getMarkerIcon('OPEN', [])
+                                });
+
+                                if (i === 0) {
+                                    marker.bindPopup('Your Location');
+                                } else {
+                                    marker.bindPopup(`Destination: ${nearestCase.name}<br>${nearestCase.location}`);
+                                }
+
+                                return marker;
+                            }
+                        }).addTo(searchMap);
+                    } else {
+                        alert('No open cases found for routing.');
+                    }
+                }, function(error) {
+                    alert('Could not get your location for routing. Please enable location services.');
+                });
+            }
+        }
+
+        // Find nearest case to user location
+        function findNearestCase(userLat, userLon, cases) {
+            let nearestCase = cases[0];
+            let minDistance = calculateDistance(userLat, userLon, nearestCase.lat, nearestCase.lng);
+
+            for (let i = 1; i < cases.length; i++) {
+                const distance = calculateDistance(userLat, userLon, cases[i].lat, cases[i].lng);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestCase = cases[i];
+                }
+            }
+
+            return nearestCase;
+        }
+
+        // Calculate distance between two points
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius of the Earth in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        // Reverse geocode coordinates to get address
+        function reverseGeocode(lat, lng) {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.display_name) {
+                        // Update the location input field with the address
+                        document.getElementById('locationInput').value = data.display_name;
+                        document.getElementById('locationStatus').textContent = `Location: ${data.display_name}`;
+                    } else {
+                        // Fallback to coordinates if no address found
+                        document.getElementById('locationInput').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        document.getElementById('locationStatus').textContent = `Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Reverse geocoding error:', error);
+                    // Fallback to coordinates
+                    document.getElementById('locationInput').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                    document.getElementById('locationStatus').textContent = `Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                });
+        }
+
+        // Map click handler for setting search location
+        searchMap.on('click', function(e) {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+            
+            // Set coordinates
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+            
+            // Reverse geocode to get address
+            reverseGeocode(lat, lng);
+            
+            // Update marker
             if (searchMarker) {
                 searchMap.removeLayer(searchMarker);
             }
+            searchMarker = L.marker([lat, lng]).addTo(searchMap)
+                .bindPopup('Search Location')
+                .openPopup();
+            
+            // Update search radius circle
+            const radius = parseFloat(document.getElementById('radius').value) * 1000; // Convert km to meters
             if (searchCircle) {
                 searchMap.removeLayer(searchCircle);
             }
-        }
-    });
+            searchCircle = L.circle([lat, lng], {
+                color: 'blue',
+                fillColor: '#30f',
+                fillOpacity: 0.1,
+                radius: radius
+            }).addTo(searchMap);
+        });
 
-    // Radius input change handler
-    document.getElementById('radius').addEventListener('input', updateSearchRadius);
-    
-    // Initialize radius if coordinates are preset
-    const initialLat = document.getElementById('latitude').value;
-    const initialLon = document.getElementById('longitude').value;
-    if (initialLat && initialLon) {
+        // Drawing event handlers
+        searchMap.on('draw:created', function (e) {
+            const layer = e.layer;
+            drawingLayer.addLayer(layer);
+            
+            // You can add logic here to handle the drawn shapes
+            console.log('Shape drawn:', e.layerType);
+        });
+
+        searchMap.on('draw:edited', function (e) {
+            console.log('Shapes edited');
+        });
+
+        searchMap.on('draw:deleted', function (e) {
+            console.log('Shapes deleted');
+        });
+
+        // Location input handlers with autocomplete
+        document.getElementById('locationInput').addEventListener('input', function() {
+            const query = this.value;
+            if (query.length > 2) {
+                searchLocations(query);
+            } else {
+                document.getElementById('locationSuggestions').classList.add('hidden');
+            }
+        });
+
+        // Location autocomplete function
+        function searchLocations(query) {
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const suggestionsDiv = document.getElementById('locationSuggestions');
+                    suggestionsDiv.innerHTML = '';
+                    
+                    if (data && data.length > 0) {
+                        data.forEach(location => {
+                            const suggestion = document.createElement('div');
+                            suggestion.className = 'p-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200';
+                            suggestion.textContent = location.display_name;
+                            suggestion.addEventListener('click', function() {
+                                document.getElementById('locationInput').value = location.display_name;
+                                document.getElementById('latitude').value = location.lat;
+                                document.getElementById('longitude').value = location.lon;
+                                document.getElementById('locationStatus').textContent = `Location: ${location.display_name}`;
+                                suggestionsDiv.classList.add('hidden');
+                                
+                                // Show map and center on selected location
+                                document.getElementById('searchMap').classList.remove('hidden');
+                                searchMap.setView([location.lat, location.lon], 15);
+                                
+                                // Add marker
+                                if (searchMarker) {
+                                    searchMap.removeLayer(searchMarker);
+                                }
+                                searchMarker = L.marker([location.lat, location.lon]).addTo(searchMap)
+                                    .bindPopup(location.display_name)
+                                    .openPopup();
+                                
+                                // Add search radius circle
+                                const radius = parseFloat(document.getElementById('radius').value) * 1000;
+                                if (searchCircle) {
+                                    searchMap.removeLayer(searchCircle);
+                                }
+                                searchCircle = L.circle([location.lat, location.lon], {
+                                    color: 'blue',
+                                    fillColor: '#30f',
+                                    fillOpacity: 0.1,
+                                    radius: radius
+                                }).addTo(searchMap);
+                            });
+                            suggestionsDiv.appendChild(suggestion);
+                        });
+                        suggestionsDiv.classList.remove('hidden');
+                    } else {
+                        suggestionsDiv.classList.add('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Location search error:', error);
+                    document.getElementById('locationSuggestions').classList.add('hidden');
+                });
+        }
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!document.getElementById('locationInput').contains(e.target) && 
+                !document.getElementById('locationSuggestions').contains(e.target)) {
+                document.getElementById('locationSuggestions').classList.add('hidden');
+            }
+        });
+
+        document.getElementById('locationSelect').addEventListener('change', function() {
+            const selectedLocation = this.value;
+            if (selectedLocation) {
+                document.getElementById('locationInput').value = selectedLocation;
+            }
+        });
+
+        document.getElementById('getLocation').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    document.getElementById('latitude').value = lat;
+                    document.getElementById('longitude').value = lng;
+                    document.getElementById('locationStatus').textContent = `Location found: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                    
+                    // Reverse geocode to get address
+                    reverseGeocode(lat, lng);
+                    
+                    // Show map and center on user location
+                    document.getElementById('searchMap').classList.remove('hidden');
+                    searchMap.setView([lat, lng], 15);
+                    
+                    // Add user location marker
+                    if (searchMarker) {
+                        searchMap.removeLayer(searchMarker);
+                    }
+                    searchMarker = L.marker([lat, lng]).addTo(searchMap)
+                        .bindPopup('Your Location')
+                        .openPopup();
+                    
+                    // Add search radius circle
+                    const radius = parseFloat(document.getElementById('radius').value) * 1000; // Convert km to meters
+                    if (searchCircle) {
+                        searchMap.removeLayer(searchCircle);
+                    }
+                    searchCircle = L.circle([lat, lng], {
+                        color: 'blue',
+                        fillColor: '#30f',
+                        fillOpacity: 0.1,
+                        radius: radius
+                    }).addTo(searchMap);
+                    
+                }, function(error) {
+                    document.getElementById('locationStatus').textContent = 'Could not get your location.';
+                    console.error('Geolocation error:', error);
+                });
+            } else {
+                document.getElementById('locationStatus').textContent = 'Geolocation is not supported by this browser.';
+            }
+        });
+
+        // Radius change handler
+        document.getElementById('radius').addEventListener('change', function() {
+            if (searchCircle) {
+                const radius = parseFloat(this.value) * 1000; // Convert km to meters
+                searchCircle.setRadius(radius);
+            }
+        });
+
+        // Select all needs checkbox handler
+        document.getElementById('select-all-needs').addEventListener('change', function() {
+            const needsCheckboxes = document.querySelectorAll('input[name="needs[]"]');
+            needsCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+
+        // Individual needs checkbox handlers
+        document.querySelectorAll('input[name="needs[]"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const allCheckboxes = document.querySelectorAll('input[name="needs[]"]');
+                const checkedCheckboxes = document.querySelectorAll('input[name="needs[]"]:checked');
+                const selectAllCheckbox = document.getElementById('select-all-needs');
+                
+                if (checkedCheckboxes.length === allCheckboxes.length) {
+                    selectAllCheckbox.checked = true;
+                    selectAllCheckbox.indeterminate = false;
+                } else if (checkedCheckboxes.length === 0) {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = false;
+                } else {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = true;
+                }
+            });
+        });
+
+        // Initialize search location if coordinates exist in filters
+        {% if filters.latitude and filters.longitude %}
         document.getElementById('searchMap').classList.remove('hidden');
-        const latLng = [parseFloat(initialLat), parseFloat(initialLon)];
-        searchMap.setView(latLng, 15);
-        searchMarker = L.marker(latLng).addTo(searchMap);
-        updateSearchRadius();
-    }
+        searchMap.setView([{{ filters.latitude }}, {{ filters.longitude }}], 15);
+        
+        // Add search location marker
+        searchMarker = L.marker([{{ filters.latitude }}, {{ filters.longitude }}]).addTo(searchMap)
+            .bindPopup('Search Location')
+            .openPopup();
+        
+        // Add search radius circle
+        const initialRadius = {{ filters.radius|default(5) }} * 1000; // Convert km to meters
+        searchCircle = L.circle([{{ filters.latitude }}, {{ filters.longitude }}], {
+            color: 'blue',
+            fillColor: '#30f',
+            fillOpacity: 0.1,
+            radius: initialRadius
+        }).addTo(searchMap);
+        {% endif %}
+
+        // Initialize individual case maps
+        {% if cases %}
+        {% for case in cases %}
+        {% if case.latitude and case.longitude %}
+        const caseMap{{ loop.index }} = L.map('map-{{ case.id }}').setView([{{ case.latitude }}, {{ case.longitude }}], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(caseMap{{ loop.index }});
+        
+        L.marker([{{ case.latitude }}, {{ case.longitude }}], {
+            icon: getMarkerIcon('{{ case.status }}', {{ case.needs|tojson }})
+        }).addTo(caseMap{{ loop.index }})
+        .bindPopup('Case #{{ case.id[:8] }}<br>{{ case.location }}');
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+
+        // Saved searches functionality
+        {% if current_user.is_authenticated %}
+        document.getElementById('saveCurrentSearch').addEventListener('click', function() {
+            const searchParams = new URLSearchParams(window.location.search);
+            const searchData = {};
+            
+            // Collect current search parameters
+            for (const [key, value] of searchParams) {
+                if (searchData[key]) {
+                    if (Array.isArray(searchData[key])) {
+                        searchData[key].push(value);
+                    } else {
+                        searchData[key] = [searchData[key], value];
+                    }
+                } else {
+                    searchData[key] = value;
+                }
+            }
+            
+            const searchName = prompt('Enter a name for this saved search:');
+            if (searchName) {
+                // Save search logic would go here
+                // This would require an API endpoint to save searches
+                console.log('Saving search:', searchName, searchData);
+                alert('Search saved successfully!');
+            }
+        });
+
+        // Load saved searches
+        function loadSavedSearches() {
+            // This would load saved searches from the server
+            // For now, just a placeholder
+            console.log('Loading saved searches...');
+        }
+
+        // Set search as default
+        function setAsDefault(searchId) {
+            // This would require an additional API endpoint to set default
+            alert('Set as default functionality coming soon!');
+        }
+        {% endif %}
+    });
 </script>
 {% endblock %}
