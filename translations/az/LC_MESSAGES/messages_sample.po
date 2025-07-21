@@ -1,0 +1,339 @@
+# Azerbaijani translations for Cat Care App
+# Copyright (C) 2025 Cat Care Team
+# This file is distributed under the same license as the Cat Care project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Cat Care 1.0\n"
+"Report-Msgid-Bugs-To: support@catcare.az\n"
+"POT-Creation-Date: 2025-07-17 22:22+0400\n"
+"PO-Revision-Date: 2025-07-17 22:22+0400\n"
+"Last-Translator: Cat Care Team\n"
+"Language: az\n"
+"Language-Team: Azerbaijani\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+# Navigation
+msgid "Home"
+msgstr "Ana səhifə"
+
+msgid "Report Case"
+msgstr "Hal bildir"
+
+msgid "Search"
+msgstr "Axtarış"
+
+msgid "Resolved Cases"
+msgstr "Həll edilmiş hallar"
+
+msgid "Volunteer"
+msgstr "Könüllü"
+
+msgid "Admin"
+msgstr "İdarəçi"
+
+msgid "Profile"
+msgstr "Profil"
+
+msgid "Login"
+msgstr "Giriş"
+
+msgid "Logout"
+msgstr "Çıxış"
+
+msgid "Register"
+msgstr "Qeydiyyat"
+
+# Common actions
+msgid "Save"
+msgstr "Saxla"
+
+msgid "Cancel"
+msgstr "Ləğv et"
+
+msgid "Delete"
+msgstr "Sil"
+
+msgid "Edit"
+msgstr "Redaktə et"
+
+msgid "View"
+msgstr "Bax"
+
+msgid "Submit"
+msgstr "Göndər"
+
+msgid "Filter"
+msgstr "Filtr"
+
+msgid "Reset"
+msgstr "Sıfırla"
+
+msgid "Back"
+msgstr "Geri"
+
+msgid "Next"
+msgstr "Növbəti"
+
+msgid "Previous"
+msgstr "Əvvəlki"
+
+# Status
+msgid "Open"
+msgstr "Açıq"
+
+msgid "Resolved"
+msgstr "Həll edilib"
+
+msgid "Active"
+msgstr "Aktiv"
+
+msgid "Inactive"
+msgstr "Qeyri-aktiv"
+
+msgid "Verified"
+msgstr "Təsdiqlənib"
+
+msgid "Unverified"
+msgstr "Təsdiqlənməyib"
+
+# Roles
+msgid "Admin"
+msgstr "İdarəçi"
+
+msgid "Volunteer"
+msgstr "Könüllü"
+
+msgid "Reporter"
+msgstr "Xəbərçi"
+
+# Case needs
+msgid "Medical Care"
+msgstr "Tibbi yardım"
+
+msgid "Food/Water"
+msgstr "Yemək/Su"
+
+msgid "Shelter"
+msgstr "Sığınacaq"
+
+msgid "Rescue"
+msgstr "Xilasetmə"
+
+msgid "Vaccination"
+msgstr "Peyvənd"
+
+msgid "Sterilization"
+msgstr "Sterilizasiya"
+
+# Messages
+msgid "Success"
+msgstr "Uğur"
+
+msgid "Error"
+msgstr "Xəta"
+
+msgid "Warning"
+msgstr "Xəbərdarlıq"
+
+msgid "Information"
+msgstr "Məlumat"
+
+msgid "Loading..."
+msgstr "Yüklənir..."
+
+msgid "No data available"
+msgstr "Məlumat yoxdur"
+
+msgid "Are you sure?"
+msgstr "Əminsiniz?"
+
+# Forms
+msgid "Username"
+msgstr "İstifadəçi adı"
+
+msgid "Email"
+msgstr "E-poçt"
+
+msgid "Password"
+msgstr "Şifrə"
+
+msgid "Confirm Password"
+msgstr "Şifrəni təsdiq et"
+
+msgid "First Name"
+msgstr "Ad"
+
+msgid "Last Name"
+msgstr "Soyad"
+
+msgid "Location"
+msgstr "Yer"
+
+msgid "Description"
+msgstr "Təsvir"
+
+msgid "Phone"
+msgstr "Telefon"
+
+msgid "Required"
+msgstr "Mütləq"
+
+msgid "Optional"
+msgstr "İstəyə bağlı"
+
+# Authentication
+msgid "Sign in to your account"
+msgstr "Hesabınıza daxil olun"
+
+msgid "Create your account"
+msgstr "Hesabınızı yaradın"
+
+msgid "I want to join as:"
+msgstr "Mən qoşulmaq istəyirəm:"
+
+msgid "Report new cases and track existing ones"
+msgstr "Yeni halları bildir və mövcudları izlə"
+
+msgid "Help resolve cases and provide assistance"
+msgstr "Halları həll etməyə kömək et və yardım göstər"
+
+msgid "Already have an account?"
+msgstr "Artıq hesabınız var?"
+
+msgid "Sign in here"
+msgstr "Buradan daxil olun"
+
+msgid "Don't have an account?"
+msgstr "Hesabınız yoxdur?"
+
+msgid "Register here"
+msgstr "Buradan qeydiyyatdan keçin"
+
+# Cat Care specific
+msgid "Cat Rescue App"
+msgstr "Pişik Xilasetmə Tətbiqi"
+
+msgid "Help us make a difference in the lives of cats in need. Report, track, and resolve cases to support our feline friends."
+msgstr "Ehtiyacı olan pişiklərin həyatında dəyişiklik yaratmağa kömək edin. Pişik dostlarımızı dəstəkləmək üçün halları bildirin, izləyin və həll edin."
+
+msgid "Making a difference, one cat at a time."
+msgstr "Hər dəfə bir pişiklə dəyişiklik yaradırıq."
+
+# Time expressions
+msgid "Today"
+msgstr "Bu gün"
+
+msgid "Yesterday"
+msgstr "Dünən"
+
+msgid "days ago"
+msgstr "gün əvvəl"
+
+msgid "hours ago"
+msgstr "saat əvvəl"
+
+msgid "minutes ago"
+msgstr "dəqiqə əvvəl"
+
+msgid "Just now"
+msgstr "İndicə"
+
+# Admin panel
+msgid "User Management"
+msgstr "İstifadəçi İdarəetməsi"
+
+msgid "Admin Dashboard"
+msgstr "İdarəçi Paneli"
+
+msgid "Total Users"
+msgstr "Ümumi İstifadəçilər"
+
+msgid "Total Cases"
+msgstr "Ümumi Hallar"
+
+msgid "Open Cases"
+msgstr "Açıq Hallar"
+
+msgid "Recent Users"
+msgstr "Son İstifadəçilər"
+
+msgid "Recent Cases"
+msgstr "Son Hallar"
+
+msgid "Change Role"
+msgstr "Rolu dəyiş"
+
+msgid "Activate User"
+msgstr "İstifadəçini aktivləşdir"
+
+msgid "Deactivate User"
+msgstr "İstifadəçini deaktivləşdir"
+
+# Volunteer dashboard
+msgid "Volunteer Case Management"
+msgstr "Könüllü Hal İdarəetməsi"
+
+msgid "Volunteer Dashboard"
+msgstr "Könüllü Paneli"
+
+msgid "Urgent Cases"
+msgstr "Təcili Hallar"
+
+msgid "Your Role"
+msgstr "Sizin Rolunuz"
+
+msgid "Open Cases Requiring Attention"
+msgstr "Diqqət tələb edən açıq hallar"
+
+msgid "URGENT"
+msgstr "TƏCİLİ"
+
+msgid "Reported"
+msgstr "Bildirildi"
+
+msgid "Distance"
+msgstr "Məsafə"
+
+msgid "Needs"
+msgstr "Ehtiyaclar"
+
+msgid "No needs specified"
+msgstr "Heç bir ehtiyac göstərilməyib"
+
+msgid "View Details"
+msgstr "Təfərrüatları gör"
+
+msgid "Resolve"
+msgstr "Həll et"
+
+msgid "No Open Cases"
+msgstr "Açıq hal yoxdur"
+
+msgid "Great job! All cases have been resolved."
+msgstr "Əla iş! Bütün hallar həll edilib."
+
+msgid "Quick Actions"
+msgstr "Sürətli Əməliyyatlar"
+
+msgid "Advanced Search"
+msgstr "Ətraflı Axtarış"
+
+msgid "Find specific cases"
+msgstr "Xüsusi halları tap"
+
+msgid "Resolved Cases"
+msgstr "Həll edilmiş hallar"
+
+msgid "View completed work"
+msgstr "Tamamlanmış işlərə bax"
+
+msgid "Report New Case"
+msgstr "Yeni Hal Bildir"
+
+msgid "Add a new case"
+msgstr "Yeni hal əlavə et"

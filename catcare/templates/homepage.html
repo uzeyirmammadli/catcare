@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}CatCare - Help Street Cats in Azerbaijan{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 min-h-screen flex items-center">
+    <div class="absolute inset-0 bg-black opacity-20"></div>
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+            <div class="text-white">
+                <h1 class="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+                    {{ _('Help Street Cats in') }} <span class="text-yellow-300">{{ _('Azerbaijan') }}</span>
+                </h1>
+                <p class="text-xl md:text-2xl mb-8 text-gray-200 leading-relaxed">
+                    {{ _('Join our community of volunteers to rescue, care for, and find homes for street cats across Azerbaijan. Every cat deserves love, care, and a safe place to call home.') }}
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="{{ url_for('main.report') }}"
+                        class="inline-flex items-center justify-center px-8 py-4 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transform hover:scale-105 transition-all duration-300 shadow-lg">
+                        <i class="fas fa-plus-circle mr-3"></i>{{ _('Report a Case') }}
+                    </a>
+                    <a href="{{ url_for('main.advanced_search') }}"
+                        class="inline-flex items-center justify-center px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-xl hover:bg-white hover:text-blue-600 transform hover:scale-105 transition-all duration-300">
+                        <i class="fas fa-map-marker-alt mr-3"></i>{{ _('Find Cases Near Me') }}
+                    </a>
+                </div>
+            </div>
+            <div class="hidden lg:block">
+                <img src="{{ url_for('static', filename='uploads/placeholder.jpg') }}" alt="Rescued cats"
+                    class="rounded-2xl shadow-2xl w-full h-96 object-cover" onerror="this.style.display='none'">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">{{ _('How It Works') }}</h2>
+            <p class="text-xl text-gray-600">{{ _('Simple steps to help street cats in need') }}</p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-8">
+            <div
+                class="relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 text-center">
+                <div
+                    class="absolute -top-4 right-4 bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg">
+                    1</div>
+                <div class="text-blue-600 mb-6">
+                    <i class="fas fa-camera text-5xl"></i>
+                </div>
+                <h4 class="text-xl font-bold text-gray-900 mb-4">{{ _('Report a Cat in Need') }}</h4>
+                <p class="text-gray-600">{{ _('Take photos, add location details, and describe what help the cat needs - food, medical care, or shelter.') }}</p>
+            </div>
+            <div
+                class="relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 text-center">
+                <div
+                    class="absolute -top-4 right-4 bg-green-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg">
+                    2</div>
+                <div class="text-green-600 mb-6">
+                    <i class="fas fa-hands-helping text-5xl"></i>
+                </div>
+                <h4 class="text-xl font-bold text-gray-900 mb-4">{{ _('Volunteers Respond') }}</h4>
+                <p class="text-gray-600">{{ _('Local volunteers and organizations see your report and coordinate to provide the necessary help.') }}</p>
+            </div>
+            <div
+                class="relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 text-center">
+                <div
+                    class="absolute -top-4 right-4 bg-red-600 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg">
+                    3</div>
+                <div class="text-red-600 mb-6">
+                    <i class="fas fa-heart text-5xl"></i>
+                </div>
+                <h4 class="text-xl font-bold text-gray-900 mb-4">{{ _('Track Progress') }}</h4>
+                <p class="text-gray-600">{{ _('Follow the cat\'s journey from rescue to recovery, with updates and photos from volunteers.') }}</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Stats Dashboard -->
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">{{ _('Our Impact') }}</h2>
+            <p class="text-xl text-gray-600">{{ _('Together, we\'re making a difference') }}</p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-8">
+            <div
+                class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 text-center">
+                <div class="text-blue-600 mb-6">
+                    <i class="fas fa-cat text-5xl"></i>
+                </div>
+                <div class="text-4xl font-bold text-gray-900 mb-2 stat-number"
+                    data-target="{{ stats.cats_helped or 1234 }}">0</div>
+                <div class="text-lg text-gray-600 font-semibold">{{ _('Cats Helped') }}</div>
+            </div>
+            <div
+                class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 text-center">
+                <div class="text-green-600 mb-6">
+                    <i class="fas fa-users text-5xl"></i>
+                </div>
+                <div class="text-4xl font-bold text-gray-900 mb-2 stat-number"
+                    data-target="{{ stats.active_volunteers or 567 }}">0</div>
+                <div class="text-lg text-gray-600 font-semibold">{{ _('Active Volunteers') }}</div>
+            </div>
+            <div
+                class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 text-center">
+                <div class="text-yellow-600 mb-6">
+                    <i class="fas fa-chart-line text-5xl"></i>
+                </div>
+                <div class="text-4xl font-bold text-gray-900 mb-2 stat-number"
+                    data-target="{{ stats.success_rate or 89 }}">0</div>
+                <div class="text-lg text-gray-600 font-semibold">{{ _('% Success Rate') }}</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Recent Success Stories -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">{{ _('Success Stories') }}</h2>
+            <p class="text-xl text-gray-600">{{ _('Real cats, real transformations, real hope') }}</p>
+        </div>
+        <div class="grid lg:grid-cols-3 md:grid-cols-2 gap-8">
+            {% if success_stories %}
+            {% for story in success_stories %}
+            <div
+                class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden">
+                {% if story.before_photo and story.after_photo %}
+                <div class="grid grid-cols-2 h-48">
+                    <div class="relative">
+                        <img src="{{ story.before_photo }}" alt="Before" class="w-full h-full object-cover">
+                        <span
+                            class="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs">{{ _('Before') }}</span>
+                    </div>
+                    <div class="relative">
+                        <img src="{{ story.after_photo }}" alt="After" class="w-full h-full object-cover">
+                        <span
+                            class="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs">{{ _('After') }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <img src="{{ url_for('static', filename='uploads/placeholder.jpg') }}" alt="Success story"
+                    class="w-full h-48 object-cover">
+                {% endif %}
+                <div class="p-6">
+                    <h5 class="text-xl font-bold text-gray-900 mb-3">{{ story.title }}</h5>
+                    <p class="text-gray-600 mb-4">{{ story.description }}</p>
+                    <div class="text-sm text-gray-500">
+                        <span class="inline-flex items-center">
+                            <i class="fas fa-map-marker-alt mr-1"></i>{{ story.location }}
+                        </span>
+                        <span class="inline-flex items-center ml-4">
+                            <i class="fas fa-calendar mr-1"></i>{{ story.date }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <!-- Default success stories -->
+            <div
+                class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden">
+                <img src="{{ url_for('static', filename='uploads/placeholder.jpg') }}" alt="Success story"
+                    class="w-full h-48 object-cover">
+                <div class="p-6">
+                    <h5 class="text-xl font-bold text-gray-900 mb-3">{{ _("Misha's Recovery") }}</h5>
+                    <p class="text-gray-600 mb-4">{{ _("Found injured on the streets of Baku, Misha received medical care and found a loving home within 2 weeks.") }}</p>
+                    <div class="text-sm text-gray-500">
+                        <span class="inline-flex items-center">
+                            <i class="fas fa-map-marker-alt mr-1"></i>{{ _('Baku') }}
+                        </span>
+                        <span class="inline-flex items-center ml-4">
+                            <i class="fas fa-calendar mr-1"></i>{{ _('2 weeks ago') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div
+                class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden">
+                <img src="{{ url_for('static', filename='uploads/placeholder.jpg') }}" alt="Success story"
+                    class="w-full h-48 object-cover">
+                <div class="p-6">
+                    <h5 class="text-xl font-bold text-gray-900 mb-3">{{ _("Luna's New Life") }}</h5>
+                    <p class="text-gray-600 mb-4">{{ _("Rescued from harsh winter conditions, Luna was nursed back to health and now lives happily with her new family.") }}</p>
+                    <div class="text-sm text-gray-500">
+                        <span class="inline-flex items-center">
+                            <i class="fas fa-map-marker-alt mr-1"></i>{{ _('Ganja') }}
+                        </span>
+                        <span class="inline-flex items-center ml-4">
+                            <i class="fas fa-calendar mr-1"></i>{{ _('1 month ago') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div
+                class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden">
+                <img src="{{ url_for('static', filename='uploads/placeholder.jpg') }}" alt="Success story"
+                    class="w-full h-48 object-cover">
+                <div class="p-6">
+                    <h5 class="text-xl font-bold text-gray-900 mb-3">{{ _('The Kitten Family') }}</h5>
+                    <p class="text-gray-600 mb-4">{{ _('A mother cat and her 4 kittens were rescued together and all found homes in the same neighborhood.') }}</p>
+                    <div class="text-sm text-gray-500">
+                        <span class="inline-flex items-center">
+                            <i class="fas fa-map-marker-alt mr-1"></i>{{ _('Sumgait') }}
+                        </span>
+                        <span class="inline-flex items-center ml-4">
+                            <i class="fas fa-calendar mr-1"></i>{{ _('3 weeks ago') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Get Started Section -->
+<section class="py-16 bg-blue-600 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-white mb-4">{{ _('Ready to Make a Difference?') }}</h2>
+            <p class="text-xl text-blue-100">{{ _('Join thousands of volunteers helping street cats across Azerbaijan') }}</p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-8">
+            <div
+                class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl p-8 text-center border border-white border-opacity-20 hover:bg-opacity-20 transition-all duration-300 transform hover:-translate-y-2">
+                <div class="text-white mb-6">
+                    <i class="fas fa-plus-circle text-5xl"></i>
+                </div>
+                <h4 class="text-xl font-bold text-white mb-4">{{ _('Report a Case') }}</h4>
+                <p class="text-blue-100 mb-6">{{ _('Found a cat that needs help? Report it now and connect with local volunteers.') }}</p>
+                <a href="{{ url_for('main.report') }}"
+                    class="inline-block px-6 py-3 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-colors duration-300">
+                    {{ _('Report Now') }}
+                </a>
+            </div>
+            <div
+                class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl p-8 text-center border border-white border-opacity-20 hover:bg-opacity-20 transition-all duration-300 transform hover:-translate-y-2">
+                <div class="text-white mb-6">
+                    <i class="fas fa-hands-helping text-5xl"></i>
+                </div>
+                <h4 class="text-xl font-bold text-white mb-4">{{ _('Become a Volunteer') }}</h4>
+                <p class="text-blue-100 mb-6">{{ _('Join our community of volunteers and help cats in your area get the care they need.') }}</p>
+                <a href="{{ url_for('main.register') }}"
+                    class="inline-block px-6 py-3 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-colors duration-300">
+                    {{ _('Join Us') }}
+                </a>
+            </div>
+            <div
+                class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl p-8 text-center border border-white border-opacity-20 hover:bg-opacity-20 transition-all duration-300 transform hover:-translate-y-2">
+                <div class="text-white mb-6">
+                    <i class="fas fa-search text-5xl"></i>
+                </div>
+                <h4 class="text-xl font-bold text-white mb-4">{{ _('View Active Cases') }}</h4>
+                <p class="text-blue-100 mb-6">{{ _('Browse current cases in your area and see how you can help cats in need.') }}</p>
+                <a href="{{ url_for('main.show_cases') }}"
+                    class="inline-block px-6 py-3 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-colors duration-300">
+                    {{ _('Browse Cases') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Custom CSS for animations -->
+<style>
+    /* Animation for counting numbers */
+    @keyframes countUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .stat-number {
+        animation: countUp 0.8s ease-out;
+    }
+</style>
+
+<!-- JavaScript for counter animation -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Animate counters
+        const counters = document.querySelectorAll('.stat-number');
+
+        const animateCounter = (counter) => {
+            const target = parseInt(counter.getAttribute('data-target'));
+            const increment = target / 100;
+            let current = 0;
+
+            const updateCounter = () => {
+                if (current < target) {
+                    current += increment;
+                    counter.textContent = Math.ceil(current);
+                    setTimeout(updateCounter, 20);
+                } else {
+                    counter.textContent = target;
+                }
+            };
+
+            updateCounter();
+        };
+
+        // Intersection Observer for counter animation
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const counter = entry.target;
+                    animateCounter(counter);
+                    observer.unobserve(counter);
+                }
+            });
+        });
+
+        counters.forEach(counter => {
+            observer.observe(counter);
+        });
+    });
+</script>
+{% endblock %}

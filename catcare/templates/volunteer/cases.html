@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Volunteer Case Management</h1>
+        <div class="flex space-x-4">
+            <span class="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg font-semibold">
+                <i class="fas fa-hands-helping mr-2"></i>Volunteer Dashboard
+            </span>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-red-100 text-red-500">
+                    <i class="fas fa-exclamation-circle text-2xl"></i>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-gray-700">Open Cases</h3>
+                    <p class="text-3xl font-bold text-red-600">{{ cases|length }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100 text-yellow-500">
+                    <i class="fas fa-clock text-2xl"></i>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-gray-700">Urgent Cases</h3>
+                    <p class="text-3xl font-bold text-yellow-600">
+                        {{ cases|selectattr('needs', 'defined')|selectattr('needs')|map('select', 'in', ['medical', 'rescue'])|list|length }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-500">
+                    <i class="fas fa-user-check text-2xl"></i>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-gray-700">Your Role</h3>
+                    <p class="text-lg font-bold text-green-600">{{ current_user.role }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cases Grid -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-6">Open Cases Requiring Attention</h2>
+        
+        {% if cases %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for case in cases %}
+            <div class="border rounded-lg p-4 hover:shadow-md transition duration-300 {% if case.needs and ('medical' in case.needs or 'rescue' in case.needs) %}border-red-300 bg-red-50{% endif %}">
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="font-bold text-lg text-blue-600">Case #{{ case.id[:8] }}</h3>
+                    {% if case.needs and ('medical' in case.needs or 'rescue' in case.needs) %}
+                    <span class="px-2 py-1 bg-red-500 text-white text-xs rounded-full animate-pulse">
+                        URGENT
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <div class="space-y-2 mb-4">
+                    <p class="text-sm">
+                        <span class="font-semibold text-gray-700">Location:</span> 
+                        <span class="text-gray-600">{{ case.location }}</span>
+                    </p>
+                    
+                    <p class="text-sm">
+                        <span class="font-semibold text-gray-700">Reported:</span> 
+                        <span class="text-gray-600">{{ case.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </p>
+                    
+                    {% if case.distance is defined %}
+                    <p class="text-sm">
+                        <span class="font-semibold text-gray-700">Distance:</span>
+                        <span class="text-blue-600 font-semibold">{{ case.distance }} km</span>
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Needs Display -->
+                <div class="mb-4">
+                    <span class="font-semibold text-gray-700 text-sm">Needs:</span>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        {% if case.needs %}
+                        {% for need in case.needs %}
+                        <span class="px-2 py-1 text-xs rounded-full font-semibold
+                            {% if need == 'medical' %}bg-red-100 text-red-800
+                            {% elif need == 'rescue' %}bg-orange-100 text-orange-800
+                            {% elif need == 'food' %}bg-green-100 text-green-800
+                            {% elif need == 'shelter' %}bg-blue-100 text-blue-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ need|title }}
+                        </span>
+                        {% endfor %}
+                        {% else %}
+                        <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
+                            No needs specified
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Case Images -->
+                {% if case.photos %}
+                <div class="mb-4">
+                    <div class="flex space-x-2 overflow-x-auto">
+                        {% for photo in case.photos[:3] %}
+                        <img src="{{ safe_image_url(photo) }}" 
+                             alt="Case photo" 
+                             class="w-16 h-16 object-cover rounded-lg flex-shrink-0">
+                        {% endfor %}
+                        {% if case.photos|length > 3 %}
+                        <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center text-xs text-gray-600">
+                            +{{ case.photos|length - 3 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Action Buttons -->
+                <div class="flex space-x-2">
+                    <a href="{{ url_for('main.view_case_details', case_id=case.id) }}" 
+                       class="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-center py-2 px-3 rounded-lg text-sm font-semibold transition duration-300">
+                        <i class="fas fa-eye mr-1"></i>View Details
+                    </a>
+                    
+                    {% if current_user.can_resolve_case(case) %}
+                    <a href="{{ url_for('main.resolve_case', case_id=case.id) }}" 
+                       class="flex-1 bg-green-500 hover:bg-green-600 text-white text-center py-2 px-3 rounded-lg text-sm font-semibold transition duration-300">
+                        <i class="fas fa-check mr-1"></i>Resolve
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <div class="flex justify-center mt-8">
+            <nav class="inline-flex rounded-md shadow-sm" aria-label="Pagination">
+                {% for page_num in range(1, pagination.pages + 1) %}
+                <a href="{{ url_for('main.volunteer_cases', page=page_num) }}"
+                   class="px-4 py-2 {% if page_num == pagination.page %}bg-blue-500 text-white{% else %}bg-white text-blue-500{% endif %} border-r border-gray-200 hover:bg-blue-50 {% if loop.first %}rounded-l-md{% endif %} {% if loop.last %}rounded-r-md border-r-0{% endif %}">
+                    {{ page_num }}
+                </a>
+                {% endfor %}
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-12">
+            <div class="text-gray-400 mb-4">
+                <i class="fas fa-clipboard-list text-6xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">No Open Cases</h3>
+            <p class="text-gray-500">Great job! All cases have been resolved.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a href="{{ url_for('main.advanced_search') }}" 
+               class="flex items-center p-4 bg-purple-100 hover:bg-purple-200 rounded-lg transition duration-300">
+                <i class="fas fa-search text-purple-600 text-2xl mr-4"></i>
+                <div>
+                    <h3 class="font-semibold text-purple-800">Advanced Search</h3>
+                    <p class="text-sm text-purple-600">Find specific cases</p>
+                </div>
+            </a>
+            
+            <a href="{{ url_for('main.show_resolved_cases') }}" 
+               class="flex items-center p-4 bg-green-100 hover:bg-green-200 rounded-lg transition duration-300">
+                <i class="fas fa-check-circle text-green-600 text-2xl mr-4"></i>
+                <div>
+                    <h3 class="font-semibold text-green-800">Resolved Cases</h3>
+                    <p class="text-sm text-green-600">View completed work</p>
+                </div>
+            </a>
+            
+            <a href="{{ url_for('main.report') }}" 
+               class="flex items-center p-4 bg-orange-100 hover:bg-orange-200 rounded-lg transition duration-300">
+                <i class="fas fa-plus-circle text-orange-600 text-2xl mr-4"></i>
+                <div>
+                    <h3 class="font-semibold text-orange-800">Report New Case</h3>
+                    <p class="text-sm text-orange-600">Add a new case</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

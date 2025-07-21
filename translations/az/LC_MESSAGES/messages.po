@@ -1,0 +1,1112 @@
+# Azerbaijani translations for Cat Care App
+# Copyright (C) 2025 Cat Care Team
+# This file is distributed under the same license as the Cat Care project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Cat Care 1.0\n"
+"Report-Msgid-Bugs-To: support@catcare.az\n"
+"POT-Creation-Date: 2025-07-17 22:22+0400\n"
+"PO-Revision-Date: 2025-07-17 22:22+0400\n"
+"Last-Translator: Cat Care Team\n"
+"Language: az\n"
+"Language-Team: Azerbaijani\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+# Navigation
+msgid "Home"
+msgstr "Ana səhifə"
+
+msgid "Report Case"
+msgstr "Hal bildir"
+
+msgid "Search"
+msgstr "Axtarış"
+
+msgid "Resolved Cases"
+msgstr "Həll edilmiş hallar"
+
+msgid "Volunteer"
+msgstr "Könüllü"
+
+msgid "Admin"
+msgstr "İdarəçi"
+
+msgid "Profile"
+msgstr "Profil"
+
+msgid "Login"
+msgstr "Giriş"
+
+msgid "Logout"
+msgstr "Çıxış"
+
+msgid "Register"
+msgstr "Qeydiyyat"
+
+# Common actions
+msgid "Save"
+msgstr "Saxla"
+
+msgid "Cancel"
+msgstr "Ləğv et"
+
+msgid "Delete"
+msgstr "Sil"
+
+msgid "Edit"
+msgstr "Redaktə et"
+
+msgid "View"
+msgstr "Bax"
+
+msgid "Submit"
+msgstr "Göndər"
+
+msgid "Filter"
+msgstr "Filtr"
+
+msgid "Reset"
+msgstr "Sıfırla"
+
+msgid "Back"
+msgstr "Geri"
+
+msgid "Next"
+msgstr "Növbəti"
+
+msgid "Previous"
+msgstr "Əvvəlki"
+
+# Status
+msgid "Open"
+msgstr "Açıq"
+
+msgid "Resolved"
+msgstr "Həll edilib"
+
+msgid "Active"
+msgstr "Aktiv"
+
+msgid "Inactive"
+msgstr "Qeyri-aktiv"
+
+msgid "Verified"
+msgstr "Təsdiqlənib"
+
+msgid "Unverified"
+msgstr "Təsdiqlənməyib"
+
+# Roles
+msgid "Admin"
+msgstr "İdarəçi"
+
+msgid "Volunteer"
+msgstr "Könüllü"
+
+msgid "Reporter"
+msgstr "Xəbərçi"
+
+# Case needs
+msgid "Medical Care"
+msgstr "Tibbi yardım"
+
+msgid "Food/Water"
+msgstr "Yemək/Su"
+
+msgid "Shelter"
+msgstr "Sığınacaq"
+
+msgid "Rescue"
+msgstr "Xilasetmə"
+
+msgid "Vaccination"
+msgstr "Peyvənd"
+
+msgid "Sterilization"
+msgstr "Sterilizasiya"
+
+# Messages
+msgid "Success"
+msgstr "Uğur"
+
+msgid "Error"
+msgstr "Xəta"
+
+msgid "Warning"
+msgstr "Xəbərdarlıq"
+
+msgid "Information"
+msgstr "Məlumat"
+
+msgid "Loading..."
+msgstr "Yüklənir..."
+
+msgid "No data available"
+msgstr "Məlumat yoxdur"
+
+msgid "Are you sure?"
+msgstr "Əminsiniz?"
+
+# Forms
+msgid "Username"
+msgstr "İstifadəçi adı"
+
+msgid "Email"
+msgstr "E-poçt"
+
+msgid "Password"
+msgstr "Şifrə"
+
+msgid "Confirm Password"
+msgstr "Şifrəni təsdiq et"
+
+msgid "First Name"
+msgstr "Ad"
+
+msgid "Last Name"
+msgstr "Soyad"
+
+msgid "Location"
+msgstr "Yer"
+
+msgid "Description"
+msgstr "Təsvir"
+
+msgid "Phone"
+msgstr "Telefon"
+
+msgid "Required"
+msgstr "Mütləq"
+
+msgid "Optional"
+msgstr "İstəyə bağlı"
+
+# Authentication
+msgid "Sign in to your account"
+msgstr "Hesabınıza daxil olun"
+
+msgid "Create your account"
+msgstr "Hesabınızı yaradın"
+
+msgid "I want to join as:"
+msgstr "Mən qoşulmaq istəyirəm:"
+
+msgid "Report new cases and track existing ones"
+msgstr "Yeni halları bildir və mövcudları izlə"
+
+msgid "Help resolve cases and provide assistance"
+msgstr "Halları həll etməyə kömək et və yardım göstər"
+
+msgid "Already have an account?"
+msgstr "Artıq hesabınız var?"
+
+msgid "Sign in here"
+msgstr "Buradan daxil olun"
+
+msgid "Don't have an account?"
+msgstr "Hesabınız yoxdur?"
+
+msgid "Register here"
+msgstr "Buradan qeydiyyatdan keçin"
+
+# Cat Care specific
+msgid "Cat Rescue App"
+msgstr "Pişik Xilasetmə Tətbiqi"
+
+msgid "Help us make a difference in the lives of cats in need. Report, track, and resolve cases to support our feline friends."
+msgstr "Ehtiyacı olan pişiklərin həyatında dəyişiklik yaratmağa kömək edin. Pişik dostlarımızı dəstəkləmək üçün halları bildirin, izləyin və həll edin."
+
+msgid "Making a difference, one cat at a time."
+msgstr "Hər dəfə bir pişiklə dəyişiklik yaradırıq."
+
+# Time expressions
+msgid "Today"
+msgstr "Bu gün"
+
+msgid "Yesterday"
+msgstr "Dünən"
+
+msgid "days ago"
+msgstr "gün əvvəl"
+
+msgid "hours ago"
+msgstr "saat əvvəl"
+
+msgid "minutes ago"
+msgstr "dəqiqə əvvəl"
+
+msgid "Just now"
+msgstr "İndicə"
+
+# Admin panel
+msgid "User Management"
+msgstr "İstifadəçi İdarəetməsi"
+
+msgid "Admin Dashboard"
+msgstr "İdarəçi Paneli"
+
+msgid "Total Users"
+msgstr "Ümumi İstifadəçilər"
+
+msgid "Total Cases"
+msgstr "Ümumi Hallar"
+
+msgid "Open Cases"
+msgstr "Açıq Hallar"
+
+msgid "Recent Users"
+msgstr "Son İstifadəçilər"
+
+msgid "Recent Cases"
+msgstr "Son Hallar"
+
+msgid "Change Role"
+msgstr "Rolu dəyiş"
+
+msgid "Activate User"
+msgstr "İstifadəçini aktivləşdir"
+
+msgid "Deactivate User"
+msgstr "İstifadəçini deaktivləşdir"
+
+# Volunteer dashboard
+msgid "Volunteer Case Management"
+msgstr "Könüllü Hal İdarəetməsi"
+
+msgid "Volunteer Dashboard"
+msgstr "Könüllü Paneli"
+
+msgid "Urgent Cases"
+msgstr "Təcili Hallar"
+
+msgid "Your Role"
+msgstr "Sizin Rolunuz"
+
+msgid "Open Cases Requiring Attention"
+msgstr "Diqqət tələb edən açıq hallar"
+
+msgid "URGENT"
+msgstr "TƏCİLİ"
+
+msgid "Reported"
+msgstr "Bildirildi"
+
+msgid "Distance"
+msgstr "Məsafə"
+
+msgid "Needs"
+msgstr "Ehtiyaclar"
+
+msgid "No needs specified"
+msgstr "Heç bir ehtiyac göstərilməyib"
+
+msgid "View Details"
+msgstr "Təfərrüatları gör"
+
+msgid "Resolve"
+msgstr "Həll et"
+
+msgid "No Open Cases"
+msgstr "Açıq hal yoxdur"
+
+msgid "Great job! All cases have been resolved."
+msgstr "Əla iş! Bütün hallar həll edilib."
+
+msgid "Quick Actions"
+msgstr "Sürətli Əməliyyatlar"
+
+msgid "Advanced Search"
+msgstr "Ətraflı Axtarış"
+
+msgid "Find specific cases"
+msgstr "Xüsusi halları tap"
+
+msgid "Resolved Cases"
+msgstr "Həll edilmiş hallar"
+
+msgid "View completed work"
+msgstr "Tamamlanmış işlərə bax"
+
+msgid "Report New Case"
+msgstr "Yeni Hal Bildir"
+
+msgid "Add a new case"
+msgstr "Yeni hal əlavə et"
+
+# Homepage specific translations
+msgid "Help Street Cats in"
+msgstr "Küçə pişiklərini xilas edin"
+
+msgid "Azerbaijan"
+msgstr "Azərbaycanda"
+
+msgid "Join our community of volunteers to rescue, care for, and find homes for street cats across Azerbaijan. Every cat deserves love, care, and a safe place to call home."
+msgstr "Azərbaycan boyu küçə pişiklərini xilas etmək, onlara qayğı göstərmək və ev tapmaq üçün könüllülər icmamıza qoşulun. Hər pişik sevgi, qayğı və təhlükəsiz yaşayış yeri haqq edir."
+
+msgid "Report a Case"
+msgstr "Hal bildir"
+
+msgid "Find Cases Near Me"
+msgstr "Yaxınımdakı halları tap"
+
+msgid "How It Works"
+msgstr "Necə işləyir"
+
+msgid "Simple steps to help street cats in need"
+msgstr "Ehtiyacı olan küçə pişiklərinə kömək etmək üçün sadə addımlar"
+
+msgid "Our Impact"
+msgstr "Bizim təsirimiz"
+
+msgid "Together, we're making a difference"
+msgstr "Birlikdə dəyişiklik yaradırıq"
+
+msgid "Success Stories"
+msgstr "Uğur hekayələri"
+
+msgid "Real cats, real transformations, real hope"
+msgstr "Həqiqi pişiklər, həqiqi dəyişikliklər, həqiqi ümid"
+
+msgid "Ready to Make a Difference?"
+msgstr "Dəyişiklik yaratmağa hazırsınız?"
+
+msgid "Join thousands of volunteers helping street cats across Azerbaijan"
+msgstr "Azərbaycan boyu küçə pişiklərinə kömək edən minlərlə könüllüyə qoşulun"
+
+# Additional navigation and UI translations
+msgid "Volunteer Cases"
+msgstr "Könüllü halları"
+
+msgid "Admin Panel"
+msgstr "İdarəçi paneli"
+
+msgid "Making a difference, one cat at a time."
+msgstr "Hər dəfə bir pişiklə dəyişiklik yaradırıq."
+
+# Footer translation
+msgid "Cat Rescue App"
+msgstr "Pişik Xilasetmə Tətbiqi"
+
+# Additional button translations
+msgid "Report a Case"
+msgstr "Hal bildir"
+
+msgid "Find Cases Near Me"
+msgstr "Yaxınımdakı halları tap"
+
+# Homepage button translations that might be missing
+msgid "Hal bildir"
+msgstr "Hal bildir"
+
+msgid "Yaxınımdakı halları tap"
+msgstr "Yaxınımdakı halları tap"
+
+# Authentication page translations
+msgid "Sign in to your account"
+msgstr "Hesabınıza daxil olun"
+
+msgid "Username or Email"
+msgstr "İstifadəçi adı və ya E-poçt"
+
+msgid "Or continue with"
+msgstr "Və ya davam edin"
+
+msgid "Don't have an account?"
+msgstr "Hesabınız yoxdur?"
+
+msgid "Register here"
+msgstr "Buradan qeydiyyatdan keçin"
+
+msgid "Forgot your password?"
+msgstr "Şifrənizi unutmusunuz?"
+
+msgid "Resend verification email"
+msgstr "Təsdiq e-poçtunu yenidən göndər"
+
+msgid "Create your account"
+msgstr "Hesabınızı yaradın"
+
+msgid "I want to join as:"
+msgstr "Mən qoşulmaq istəyirəm:"
+
+msgid "Report new cases and track existing ones"
+msgstr "Yeni halları bildir və mövcudları izlə"
+
+msgid "Help resolve cases and provide assistance"
+msgstr "Halları həll etməyə kömək et və yardım göstər"
+
+msgid "Already have an account?"
+msgstr "Artıq hesabınız var?"
+
+msgid "Sign in here"
+msgstr "Buradan daxil olun"
+
+# Report page translations
+msgid "Report a New Case"
+msgstr "Yeni Hal Bildir"
+
+msgid "Upload Photos"
+msgstr "Şəkillər yüklə"
+
+msgid "Upload Videos"
+msgstr "Videolar yüklə"
+
+msgid "Select multiple photos"
+msgstr "Çoxlu şəkil seçin"
+
+msgid "Select multiple videos"
+msgstr "Çoxlu video seçin"
+
+msgid "Get Location"
+msgstr "Yer məlumatı al"
+
+msgid "Select Needs"
+msgstr "Ehtiyacları seçin"
+
+msgid "Select all that apply"
+msgstr "Uyğun olanların hamısını seçin"
+
+msgid "Other"
+msgstr "Digər"
+
+msgid "Submit Report"
+msgstr "Hesabatı göndər"
+
+# Search page translations
+msgid "Search Results"
+msgstr "Axtarış nəticələri"
+
+msgid "No cases found matching your criteria."
+msgstr "Kriteriyalarınıza uyğun hal tapılmadı."
+
+msgid "Created"
+msgstr "Yaradılıb"
+
+# Profile and user pages
+msgid "Profile"
+msgstr "Profil"
+
+msgid "Edit Profile"
+msgstr "Profili redaktə et"
+
+msgid "Change Password"
+msgstr "Şifrəni dəyiş"
+
+msgid "Current Password"
+msgstr "Cari şifrə"
+
+msgid "New Password"
+msgstr "Yeni şifrə"
+
+msgid "Confirm New Password"
+msgstr "Yeni şifrəni təsdiq et"
+
+# Case management
+msgid "Case Details"
+msgstr "Hal təfərrüatları"
+
+msgid "Update Case"
+msgstr "Halı yenilə"
+
+msgid "Resolve Case"
+msgstr "Halı həll et"
+
+msgid "Delete Case"
+msgstr "Halı sil"
+
+msgid "Add Comment"
+msgstr "Şərh əlavə et"
+
+msgid "Comments"
+msgstr "Şərhlər"
+
+# Common UI elements
+msgid "Loading..."
+msgstr "Yüklənir..."
+
+msgid "Please wait..."
+msgstr "Zəhmət olmasa gözləyin..."
+
+msgid "Are you sure you want to delete this?"
+msgstr "Bunu silmək istədiyinizə əminsiniz?"
+
+msgid "Yes, delete it"
+msgstr "Bəli, silin"
+
+msgid "No, keep it"
+msgstr "Xeyr, saxlayın"
+
+# Error messages
+msgid "An error occurred"
+msgstr "Xəta baş verdi"
+
+msgid "Please try again"
+msgstr "Zəhmət olmasa yenidən cəhd edin"
+
+msgid "Invalid input"
+msgstr "Yanlış giriş"
+
+msgid "Required field"
+msgstr "Mütləq sahə"
+
+# Success messages
+msgid "Successfully saved"
+msgstr "Uğurla saxlanıldı"
+
+msgid "Successfully updated"
+msgstr "Uğurla yeniləndi"
+
+msgid "Successfully deleted"
+msgstr "Uğurla silindi"
+
+# Date and time
+msgid "Date"
+msgstr "Tarix"
+
+msgid "Time"
+msgstr "Vaxt"
+
+msgid "From Date"
+msgstr "Başlama tarixi"
+
+msgid "To Date"
+msgstr "Bitmə tarixi"
+
+# Additional form elements
+msgid "Sort By"
+msgstr "Sırala"
+
+msgid "Sort Order"
+msgstr "Sıralama qaydası"
+
+msgid "Ascending"
+msgstr "Artan"
+
+msgid "Descending"
+msgstr "Azalan"
+
+msgid "All Statuses"
+msgstr "Bütün statuslar"
+
+msgid "All Needs"
+msgstr "Bütün ehtiyaclar"
+
+# Profile page translations
+msgid "Member since"
+msgstr "Üzv olub"
+
+msgid "About"
+msgstr "Haqqında"
+
+msgid "Cases Created"
+msgstr "Yaradılmış hallar"
+
+msgid "Cases Resolved"
+msgstr "Həll edilmiş hallar"
+
+msgid "Account Status"
+msgstr "Hesab statusu"
+
+msgid "Recent Activity"
+msgstr "Son fəaliyyət"
+
+msgid "No recent activity"
+msgstr "Son fəaliyyət yoxdur"
+
+msgid "Not provided"
+msgstr "Təqdim edilməyib"
+
+msgid "Unknown"
+msgstr "Naməlum"
+
+# Saved searches
+msgid "Saved Searches"
+msgstr "Saxlanmış axtarışlar"
+
+msgid "Save Current Search"
+msgstr "Cari axtarışı saxla"
+
+msgid "Search Radius (km)"
+msgstr "Axtarış radiusu (km)"
+
+msgid "Or select from existing locations"
+msgstr "Və ya mövcud yerlərdən seçin"
+
+msgid "Get Location"
+msgstr "Yer məlumatı al"
+
+msgid "Creation Date"
+msgstr "Yaradılma tarixi"
+
+# Success stories content
+msgid "Success in 6"
+msgstr "6-da uğur"
+
+msgid "Success in Mingachevir"
+msgstr "Mingəçevirdə uğur"
+
+msgid "Success in Baku"
+msgstr "Bakıda uğur"
+
+msgid "Success in Ganja"
+msgstr "Gəncədə uğur"
+
+msgid "Success in Lankaran"
+msgstr "Lənkəranda uğur"
+
+msgid "Success in Quba"
+msgstr "Qubada uğur"
+
+msgid "Street cat with broken leg received surgery and rehabilitation, now fully recovered."
+msgstr "Ayağı sınmış küçə pişiyi əməliyyat və reabilitasiya aldı, indi tamamilə sağalıb."
+
+msgid "Found injured on the streets, received medical care and found a loving home within 2 weeks."
+msgstr "Küçədə yaralı tapıldı, tibbi yardım aldı və 2 həftə ərzində sevgi dolu ev tapdı."
+
+msgid "Rescued from harsh winter conditions, nursed back to health and now lives happily with new family."
+msgstr "Sərt qış şəraitindən xilas edildi, sağlamlığa qayıtdı və indi yeni ailə ilə xoşbəxt yaşayır."
+
+msgid "Senior cat rescued from construction site, given comfortable retirement home."
+msgstr "Yaşlı pişik tikinti sahəsindən xilas edildi, rahat təqaüd evi verildi."
+
+msgid "Abandoned kitten bottle-fed by volunteers, grew strong and found perfect family."
+msgstr "Tərk edilmiş bala pişik könüllülər tərəfindən şüşə ilə qidalandırıldı, gücləndi və mükəmməl ailə tapdı."
+
+# How it works section
+msgid "Report a Cat in Need"
+msgstr "Ehtiyacı olan pişiyi bildir"
+
+msgid "Take photos, add location details, and describe what help the cat needs - food, medical care, or shelter."
+msgstr "Şəkillər çəkin, yer məlumatları əlavə edin və pişiyə hansı köməyin lazım olduğunu təsvir edin - yemək, tibbi yardım və ya sığınacaq."
+
+msgid "Volunteers Respond"
+msgstr "Könüllülər cavab verir"
+
+msgid "Local volunteers and organizations see your report and coordinate to provide the necessary help."
+msgstr "Yerli könüllülər və təşkilatlar hesabatınızı görür və lazımi köməyi təmin etmək üçün koordinasiya edirlər."
+
+msgid "Track Progress"
+msgstr "Tərəqqini izlə"
+
+msgid "Follow the cat's journey from rescue to recovery, with updates and photos from volunteers."
+msgstr "Pişiyin xilasetmədən sağalmaya qədər olan səyahətini könüllülərin yeniləmələri və şəkilləri ilə izləyin."
+
+# Impact statistics
+msgid "Cats Helped"
+msgstr "Kömək edilən pişiklər"
+
+msgid "Active Volunteers"
+msgstr "Aktiv könüllülər"
+
+msgid "% Success Rate"
+msgstr "% Uğur nisbəti"
+
+# Call to action section
+msgid "Become a Volunteer"
+msgstr "Könüllü ol"
+
+msgid "Join our community of volunteers and help cats in your area get the care they need."
+msgstr "Könüllülər icmamıza qoşulun və ərazinizdəki pişiklərə lazım olan qayğını göstərməyə kömək edin."
+
+msgid "View Active Cases"
+msgstr "Aktiv halları gör"
+
+msgid "Browse current cases in your area and see how you can help cats in need."
+msgstr "Ərazinizdəki cari halları nəzərdən keçirin və ehtiyacı olan pişiklərə necə kömək edə biləcəyinizi görün."
+
+msgid "Report Now"
+msgstr "İndi bildir"
+
+msgid "Join Us"
+msgstr "Bizə qoşul"
+
+msgid "Browse Cases"
+msgstr "Halları nəzərdən keçir"
+
+# Additional location-related
+msgid "Before"
+msgstr "Əvvəl"
+
+msgid "After"
+msgstr "Sonra"
+
+msgid "success"
+msgstr "uğur"
+
+# Date formats
+msgid "July 2025"
+msgstr "İyul 2025"
+
+msgid "June 2025"
+msgstr "İyun 2025"
+
+msgid "May 2025"
+msgstr "May 2025"
+
+# Location service messages
+msgid "Getting location..."
+msgstr "Yer məlumatı alınır..."
+
+msgid "Location access denied. Please enable location services and refresh the page."
+msgstr "Yer məlumatına giriş rədd edildi. Zəhmət olmasa yer xidmətlərini aktivləşdirin və səhifəni yeniləyin."
+
+msgid "Location updated successfully!"
+msgstr "Yer məlumatı uğurla yeniləndi!"
+
+msgid "Got coordinates, but could not get precise address"
+msgstr "Koordinatlar alındı, lakin dəqiq ünvan alına bilmədi"
+
+msgid "Location access denied. Please enable location services."
+msgstr "Yer məlumatına giriş rədd edildi. Zəhmət olmasa yer xidmətlərini aktivləşdirin."
+
+msgid "Location information unavailable. Please try again."
+msgstr "Yer məlumatı əlçatan deyil. Zəhmət olmasa yenidən cəhd edin."
+
+msgid "Location request timed out. Please try again."
+msgstr "Yer məlumatı sorğusu vaxt bitdi. Zəhmət olmasa yenidən cəhd edin."
+
+msgid "Could not get location. Please enter manually."
+msgstr "Yer məlumatı alına bilmədi. Zəhmət olmasa əl ilə daxil edin."
+
+msgid "Location services not available in your browser."
+msgstr "Brauzerinizdə yer xidmətləri mövcud deyil."
+
+msgid "Location found"
+msgstr "Yer tapıldı"
+
+msgid "Your Location"
+msgstr "Sizin yeriniz"
+
+msgid "Active Cases"
+msgstr "Aktiv hallar"
+
+# Cases page translations
+msgid "Photo"
+msgstr "Şəkil"
+
+msgid "Updated At"
+msgstr "Yenilənmə tarixi"
+
+msgid "Actions"
+msgstr "Əməliyyatlar"
+
+msgid "No cases found"
+msgstr "Heç bir hal tapılmadı"
+
+msgid "View"
+msgstr "Bax"
+
+msgid "Edit"
+msgstr "Redaktə et"
+
+msgid "Delete"
+msgstr "Sil"
+
+msgid "Resolve"
+msgstr "Həll et"
+
+msgid "Previous"
+msgstr "Əvvəlki"
+
+msgid "Next"
+msgstr "Növbəti"
+
+msgid "Page"
+msgstr "Səhifə"
+
+msgid "of"
+msgstr "/"
+
+# Homepage translations
+msgid "How It Works"
+msgstr "Necə işləyir"
+
+msgid "Simple steps to help street cats in need"
+msgstr "Ehtiyacı olan küçə pişiklərinə kömək etmək üçün sadə addımlar"
+
+msgid "Before"
+msgstr "Əvvəl"
+
+msgid "After"
+msgstr "Sonra"
+
+msgid "Misha's Recovery"
+msgstr "Mişanın sağalması"
+
+msgid "Found injured on the streets of Baku, Misha received medical care and found a loving home within 2 weeks."
+msgstr "Bakı küçələrində yaralı tapılan Miş tibbi yardım aldı və 2 həftə ərzində sevgi dolu ev tapdı."
+
+msgid "Luna's New Life"
+msgstr "Lunanın yeni həyatı"
+
+msgid "Rescued from harsh winter conditions, Luna was nursed back to health and now lives happily with her new family."
+msgstr "Sərt qış şəraitindən xilas edilən Luna sağlamlığa qayıtdı və indi yeni ailəsi ilə xoşbəxt yaşayır."
+
+msgid "The Kitten Family"
+msgstr "Bala pişik ailəsi"
+
+msgid "A mother cat and her 4 kittens were rescued together and all found homes in the same neighborhood."
+msgstr "Ana pişik və 4 balası birlikdə xilas edildi və hamısı eyni məhəllədə ev tapdı."
+
+msgid "2 weeks ago"
+msgstr "2 həftə əvvəl"
+
+msgid "1 month ago"
+msgstr "1 ay əvvəl"
+
+msgid "3 weeks ago"
+msgstr "3 həftə əvvəl"
+
+msgid "Baku"
+msgstr "Bakı"
+
+msgid "Ganja"
+msgstr "Gəncə"
+
+msgid "Sumgait"
+msgstr "Sumqayıt"
+
+msgid "Found a cat that needs help? Report it now and connect with local volunteers."
+msgstr "Köməyə ehtiyacı olan pişik tapdınız? İndi bildirin və yerli könüllülərlə əlaqə saxlayın."
+
+msgid "Join our community of volunteers and help cats in your area get the care they need."
+msgstr "Könüllülər icmamıza qoşulun və ərazinizdəki pişiklərə lazım olan qayğını göstərməyə kömək edin."
+
+msgid "Browse current cases in your area and see how you can help cats in need."
+msgstr "Ərazinizdəki cari halları nəzərdən keçirin və ehtiyacı olan pişiklərə necə kömək edə biləcəyinizi görün."# Addition
+al homepage translations that were missing
+msgid "Take photos, add location details, and describe what help the cat needs - food, medical care, or shelter."
+msgstr "Şəkillər çəkin, yer məlumatları əlavə edin və pişiyə hansı köməyin lazım olduğunu təsvir edin - yemək, tibbi yardım və ya sığınacaq."
+
+msgid "Local volunteers and organizations see your report and coordinate to provide the necessary help."
+msgstr "Yerli könüllülər və təşkilatlar hesabatınızı görür və lazımi köməyi təmin etmək üçün koordinasiya edirlər."
+
+msgid "Follow the cat's journey from rescue to recovery, with updates and photos from volunteers."
+msgstr "Pişiyin xilasetmədən sağalmaya qədər olan səyahətini könüllülərin yeniləmələri və şəkilləri ilə izləyin."
+
+msgid "Together, we're making a difference"
+msgstr "Birlikdə dəyişiklik yaradırıq"# Advanced
+ search page translations
+msgid "Or select from existing locations"
+msgstr "Və ya mövcud yerlərdən seçin"
+
+msgid "All Statuses"
+msgstr "Bütün statuslar"
+
+msgid "All Needs"
+msgstr "Bütün ehtiyaclar"
+
+msgid "Medical Care"
+msgstr "Tibbi yardım"
+
+msgid "Food/Water"
+msgstr "Yemək/Su"
+
+msgid "Shelter"
+msgstr "Sığınacaq"
+
+msgid "Rescue"
+msgstr "Xilasetmə"
+
+msgid "Vaccination"
+msgstr "Peyvənd"
+
+msgid "Sterilization"
+msgstr "Sterilizasiya"
+
+msgid "From Date"
+msgstr "Başlama tarixi"
+
+msgid "To Date"
+msgstr "Bitmə tarixi"
+
+msgid "Sort By"
+msgstr "Sırala"
+
+msgid "Sort Order"
+msgstr "Sıralama qaydası"
+
+msgid "Creation Date"
+msgstr "Yaradılma tarixi"
+
+msgid "Ascending"
+msgstr "Artan"
+
+msgid "Descending"
+msgstr "Azalan"
+
+msgid "Search"
+msgstr "Axtarış"
+
+msgid "Search Radius (km)"
+msgstr "Axtarış radiusu (km)"
+
+msgid "Type location or select from dropdown..."
+msgstr "Yer yazın və ya açılan menyudan seçin..."# Additiona
+l missing translations for advanced search
+msgid "None"
+msgstr "Heç biri"
+
+msgid "dd/mm/yyyy"
+msgstr "gg/aa/iiii"
+
+msgid "Get Location"
+msgstr "Yer məlumatı al"
+
+msgid "Creation Date"
+msgstr "Yaradılma tarixi"msg
+id "None specified"
+msgstr "Heç biri göstərilməyib"msg
+id "Last Updated"
+msgstr "Son yenilənmə"
+
+msgid "Distance"
+msgstr "Məsafə"# 
+Case details page translations
+msgid "Case Details"
+msgstr "Hal təfərrüatları"
+
+msgid "Photos"
+msgstr "Şəkillər"
+
+msgid "Videos"
+msgstr "Videolar"
+
+msgid "Your browser does not support the video tag."
+msgstr "Brauzeriniz video etiketini dəstəkləmir."
+
+msgid "Resolution Details"
+msgstr "Həll təfərrüatları"
+
+msgid "Resolved on:"
+msgstr "Həll edilmə tarixi:"
+
+msgid "Resolved by:"
+msgstr "Həll edən:"
+
+msgid "Resolution Notes"
+msgstr "Həll qeydləri"
+
+msgid "Resolution Photos"
+msgstr "Həll şəkilləri"
+
+msgid "Resolution Videos"
+msgstr "Həll videoları"
+
+msgid "Your browser does not support video playback."
+msgstr "Brauzeriniz video oynatmağı dəstəkləmir."
+
+msgid "Resolution Documents"
+msgstr "Həll sənədləri"
+
+msgid "View Document"
+msgstr "Sənədə bax"
+
+msgid "Case ID"
+msgstr "Hal ID"
+
+msgid "Location"
+msgstr "Yer"
+
+msgid "Needs"
+msgstr "Ehtiyaclar"
+
+msgid "No needs specified"
+msgstr "Heç bir ehtiyac göstərilməyib"
+
+msgid "Created At"
+msgstr "Yaradılma tarixi"
+
+msgid "Edit"
+msgstr "Redaktə et"
+
+msgid "Delete"
+msgstr "Sil"
+
+msgid "Back"
+msgstr "Geri"
+
+msgid "Home"
+msgstr "Ana səhifə"
+
+msgid "Add Comment"
+msgstr "Şərh əlavə et"
+
+msgid "Comments"
+msgstr "Şərhlər"
+
+msgid "No comments yet. Be the first to share your thoughts!"
+msgstr "Hələ şərh yoxdur. Fikirlərinizi bölüşən ilk siz olun!"
+
+msgid "Are you sure you want to delete this comment?"
+msgstr "Bu şərhi silmək istədiyinizə əminsiniz?"#
+ Additional case details page translations
+msgid "Case photo"
+msgstr "Hal şəkli"
+
+msgid "Resolution photo"
+msgstr "Həll şəkli"
+
+msgid "Case Details - Cat Rescue App"
+msgstr "Hal Təfərrüatları - Pişik Xilasetmə Tətbiqi"
+
+msgid "Content"
+msgstr "Məzmun"
+
+msgid "Submit"
+msgstr "Göndər"# Stat
+us translations
+msgid "OPEN"
+msgstr "AÇIQ"
+
+msgid "RESOLVED"
+msgstr "HƏLL EDİLİB"
+
+# Need type translations
+msgid "medical"
+msgstr "tibbi"
+
+msgid "food"
+msgstr "yemək"
+
+msgid "shelter"
+msgstr "sığınacaq"
+
+msgid "rescue"
+msgstr "xilasetmə"
+
+msgid "vaccination"
+msgstr "peyvənd"
+
+msgid "sterilization"
+msgstr "sterilizasiya"
+
+msgid "other"
+msgstr "digər"
+
+# Capitalized versions for display
+msgid "Medical"
+msgstr "Tibbi"
+
+msgid "Food"
+msgstr "Yemək"
+
+msgid "Shelter"
+msgstr "Sığınacaq"
+
+msgid "Rescue"
+msgstr "Xilasetmə"
+
+msgid "Vaccination"
+msgstr "Peyvənd"
+
+msgid "Sterilization"
+msgstr "Sterilizasiya"
+
+msgid "Other"
+msgstr "Digər"

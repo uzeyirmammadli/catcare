@@ -7,10 +7,10 @@
     {% if current_user.is_authenticated %}
     <div class="bg-white shadow-lg rounded-lg px-8 pt-6 pb-8 mb-6">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold text-gray-800">Saved Searches</h2>
+            <h2 class="text-xl font-bold text-gray-800">{{ _('Saved Searches') }}</h2>
             <button type="button" id="saveCurrentSearch"
                 class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
-                <i class="fas fa-save mr-2"></i>Save Current Search
+                <i class="fas fa-save mr-2"></i>{{ _('Save Current Search') }}
             </button>
         </div>
         <div id="savedSearchesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -25,13 +25,13 @@
             <!-- Location Filter with Map -->
             <div class="lg:col-span-2">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="location">
-                    Location
+                    {{ _('Location') }}
                 </label>
                 <div class="flex flex-col space-y-2">
                     <div class="flex gap-2">
                         <div class="flex-1 relative">
                             <input type="text" name="location" id="locationInput" value="{{ filters.location }}"
-                                placeholder="Type location or select from dropdown..."
+                                placeholder="{{ _('Type location or select from dropdown...') }}"
                                 class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500"
                                 autocomplete="off">
                             <div id="locationSuggestions"
@@ -40,7 +40,7 @@
                             </div>
                             <select name="location_select" id="locationSelect"
                                 class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500 mt-2">
-                                <option value="">Or select from existing locations</option>
+                                <option value="">{{ _('Or select from existing locations') }}</option>
                                 {% for location in locations %}
                                 <option value="{{ location }}" {% if filters.location==location %}selected{% endif %}>
                                     {{ location }}
@@ -50,7 +50,7 @@
                         </div>
                         <button type="button" id="getLocation"
                             class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-                            <i class="fas fa-location-dot mr-2"></i>Get Location
+                            <i class="fas fa-location-dot mr-2"></i>{{ _('Get Location') }}
                         </button>
                     </div>
                     <!-- Hidden inputs for coordinates -->
@@ -81,7 +81,7 @@
                     </div>
                     <div class="mt-2">
                         <label class="block text-gray-700 text-sm font-bold mb-2" for="radius">
-                            Search Radius (km)
+                            {{ _('Search Radius (km)') }}
                         </label>
                         <input type="number" id="radius" name="radius" value="{{ filters.radius|default(5) }}" min="0.1"
                             max="100" step="0.1"
@@ -93,11 +93,11 @@
             <!-- Status Filter -->
             <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="status">
-                    Status
+                    {{ _('Status') }}
                 </label>
                 <select name="status" id="status"
                     class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
-                    <option value="">All Statuses</option>
+                    <option value="">{{ _('All Statuses') }}</option>
                     {% for status in statuses %}
                     <option value="{{ status }}" {% if filters.status==status %}selected{% endif %}>
                         {{ status }}
@@ -109,42 +109,42 @@
             <!-- Multiple Needs Filter -->
             <div class="lg:col-span-2">
                 <label class="block text-gray-700 text-sm font-bold mb-2">
-                    Needs
+                    {{ _('Needs') }}
                 </label>
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <label class="inline-flex items-center space-x-2">
                         <input type="checkbox" id="select-all-needs" class="form-checkbox text-blue-500">
-                        <span class="font-medium">All Needs</span>
+                        <span class="font-medium">{{ _('All Needs') }}</span>
                     </label>
                     <label class="inline-flex items-center space-x-2">
                         <input type="checkbox" name="needs[]" value="medical" {% if 'medical' in filters.needs
                             %}checked{% endif %} class="form-checkbox text-blue-500">
-                        <span>Medical Care</span>
+                        <span>{{ _('Medical Care') }}</span>
                     </label>
                     <label class="inline-flex items-center space-x-2">
                         <input type="checkbox" name="needs[]" value="food" {% if 'food' in filters.needs %}checked{%
                             endif %} class="form-checkbox text-blue-500">
-                        <span>Food/Water</span>
+                        <span>{{ _('Food/Water') }}</span>
                     </label>
                     <label class="inline-flex items-center space-x-2">
                         <input type="checkbox" name="needs[]" value="shelter" {% if 'shelter' in filters.needs
                             %}checked{% endif %} class="form-checkbox text-blue-500">
-                        <span>Shelter</span>
+                        <span>{{ _('Shelter') }}</span>
                     </label>
                     <label class="inline-flex items-center space-x-2">
                         <input type="checkbox" name="needs[]" value="rescue" {% if 'rescue' in filters.needs %}checked{%
                             endif %} class="form-checkbox text-blue-500">
-                        <span>Rescue</span>
+                        <span>{{ _('Rescue') }}</span>
                     </label>
                     <label class="inline-flex items-center space-x-2">
                         <input type="checkbox" name="needs[]" value="vaccination" {% if 'vaccination' in filters.needs
                             %}checked{% endif %} class="form-checkbox text-blue-500">
-                        <span>Vaccination</span>
+                        <span>{{ _('Vaccination') }}</span>
                     </label>
                     <label class="inline-flex items-center space-x-2">
                         <input type="checkbox" name="needs[]" value="sterilization" {% if 'sterilization' in
                             filters.needs %}checked{% endif %} class="form-checkbox text-blue-500">
-                        <span>Sterilization</span>
+                        <span>{{ _('Sterilization') }}</span>
                     </label>
                 </div>
             </div>
@@ -152,7 +152,7 @@
             <!-- Date Range -->
             <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="date_from">
-                    From Date
+                    {{ _('From Date') }}
                 </label>
                 <input type="date" name="date_from" id="date_from" value="{{ filters.date_from }}"
                     class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
@@ -160,7 +160,7 @@
 
             <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="date_to">
-                    To Date
+                    {{ _('To Date') }}
                 </label>
                 <input type="date" name="date_to" id="date_to" value="{{ filters.date_to }}"
                     class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
@@ -169,7 +169,7 @@
             <!-- Sort Options -->
             <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="sort_by">
-                    Sort By
+                    {{ _('Sort By') }}
                 </label>
                 <select name="sort_by" id="sort_by"
                     class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
@@ -183,12 +183,14 @@
 
             <div>
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="sort_order">
-                    Sort Order
+                    {{ _('Sort Order') }}
                 </label>
                 <select name="sort_order" id="sort_order"
                     class="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-blue-500">
-                    <option value="desc" {% if filters.sort_order=='desc' %}selected{% endif %}>Descending</option>
-                    <option value="asc" {% if filters.sort_order=='asc' %}selected{% endif %}>Ascending</option>
+                    <option value="desc" {% if filters.sort_order=='desc' %}selected{% endif %}>{{ _('Descending') }}
+                    </option>
+                    <option value="asc" {% if filters.sort_order=='asc' %}selected{% endif %}>{{ _('Ascending') }}
+                    </option>
                 </select>
             </div>
         </div>
@@ -196,14 +198,14 @@
         <div class="flex items-center justify-end mt-6">
             <button type="submit"
                 class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105">
-                Search
+                {{ _('Search') }}
             </button>
         </div>
     </form>
 
     {% if cases %}
     <div class="bg-white shadow-lg rounded-lg px-8 pt-6 pb-8">
-        <h2 class="text-2xl font-bold mb-6 text-gray-800">Search Results</h2>
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">{{ _('Search Results') }}</h2>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for case in cases %}
@@ -212,13 +214,13 @@
                 <p class="mb-1"><span class="font-semibold">Location:</span> {{ case.location }}</p>
                 {% if case.distance is defined %}
                 <p class="mb-1">
-                    <span class="font-semibold">Distance:</span>
+                    <span class="font-semibold">{{ _('Distance') }}:</span>
                     <span class="text-blue-600">{{ case.distance }} km</span>
                 </p>
                 {% endif %}
                 <!-- Display multiple needs -->
                 <div class="mb-2">
-                    <span class="font-semibold">Needs:</span>
+                    <span class="font-semibold">{{ _('Needs') }}:</span>
                     <div class="flex flex-wrap gap-1 mt-1">
                         {% if case.needs %}
                         {% for need in case.needs %}
@@ -228,7 +230,7 @@
                         {% endfor %}
                         {% else %}
                         <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
-                            No needs specified
+                            {{ _('No needs specified') }}
                         </span>
                         {% endif %}
                     </div>
@@ -238,7 +240,7 @@
                 <div id="map-{{ case.id }}" class="h-32 rounded-lg shadow-md mb-2"></div>
                 {% endif %}
                 <p class="mb-1">
-                    <span class="font-semibold">Status:</span>
+                    <span class="font-semibold">{{ _('Status') }}:</span>
                     <span class="px-2 py-1 rounded-full text-xs font-semibold
                         {% if case.status == 'OPEN' %}bg-green-200 text-green-800
                         {% else %}bg-gray-200 text-gray-800{% endif %}">
@@ -249,7 +251,7 @@
                 </p>
                 <a href="{{ url_for('main.view_case_details', case_id=case.id) }}"
                     class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition duration-300">
-                    View Details
+                    {{ _('View Details') }}
                 </a>
             </div>
             {% endfor %}
@@ -271,7 +273,7 @@
     </div>
     {% else %}
     <div class="bg-white shadow-lg rounded-lg px-8 py-6 text-center">
-        <p class="text-gray-600 text-lg">No cases found matching your criteria.</p>
+        <p class="text-gray-600 text-lg">{{ _('No cases found matching your criteria.') }}</p>
     </div>
     {% endif %}
 </body>
@@ -473,7 +475,7 @@
             {% for case in cases %}
             {% if case.latitude and case.longitude %}
             const marker{{ loop.index }} = L.marker([{{ case.latitude }}, {{ case.longitude }}], {
-                icon: getMarkerIcon('{{ case.status }}', {{ case.needs|tojson }})
+                icon: getMarkerIcon('{{ case.status }}', {{ case.needs | tojson }})
             }).bindPopup(`
                 <div class="p-2">
                     <h4 class="font-bold text-blue-600">Case #{{ case.id[:8] }}</h4>
@@ -499,7 +501,7 @@
             {% for case in cases %}
             {% if case.latitude and case.longitude %}
             L.marker([{{ case.latitude }}, {{ case.longitude }}], {
-                icon: getMarkerIcon('{{ case.status }}', {{ case.needs|tojson }})
+                icon: getMarkerIcon('{{ case.status }}', {{ case.needs | tojson }})
             }).addTo(searchMap).bindPopup(`
                 <div class="p-2">
                     <h4 class="font-bold text-blue-600">Case #{{ case.id[:8] }}</h4>
@@ -567,10 +569,10 @@
                         {% if case.latitude and case.longitude and case.status == 'OPEN' %}
                         {
                             lat: {{ case.latitude }},
-                            lng: {{case.longitude}},
+                            lng: {{ case.longitude }},
                             name: 'Case #{{ case.id[:8] }}',
                             location: '{{ case.location }}'
-                        }{%if not loop.last%},{% endif%}
+                        }{% if not loop.last %},{% endif %}
                         {% endif %}
                         {% endfor %}
                     ];
@@ -612,7 +614,7 @@
                         alert('No open cases found for routing.');
                     }
                 }, function(error) {
-                    alert('Could not get your location for routing. Please enable location services.');
+                                            alert('Could not get your location for routing. Please enable location services.');
                 });
             }
         }
@@ -648,7 +650,7 @@
         // Reverse geocode coordinates to get address
         function reverseGeocode(lat, lng) {
             const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
-            
+
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
@@ -671,17 +673,17 @@
         }
 
         // Map click handler for setting search location
-        searchMap.on('click', function(e) {
+        searchMap.on('click', function (e) {
             const lat = e.latlng.lat;
             const lng = e.latlng.lng;
-            
+
             // Set coordinates
             document.getElementById('latitude').value = lat;
             document.getElementById('longitude').value = lng;
-            
+
             // Reverse geocode to get address
             reverseGeocode(lat, lng);
-            
+
             // Update marker
             if (searchMarker) {
                 searchMap.removeLayer(searchMarker);
@@ -689,7 +691,7 @@
             searchMarker = L.marker([lat, lng]).addTo(searchMap)
                 .bindPopup('Search Location')
                 .openPopup();
-            
+
             // Update search radius circle
             const radius = parseFloat(document.getElementById('radius').value) * 1000; // Convert km to meters
             if (searchCircle) {
@@ -707,7 +709,7 @@
         searchMap.on('draw:created', function (e) {
             const layer = e.layer;
             drawingLayer.addLayer(layer);
-            
+
             // You can add logic here to handle the drawn shapes
             console.log('Shape drawn:', e.layerType);
         });
@@ -721,7 +723,7 @@
         });
 
         // Location input handlers with autocomplete
-        document.getElementById('locationInput').addEventListener('input', function() {
+        document.getElementById('locationInput').addEventListener('input', function () {
             const query = this.value;
             if (query.length > 2) {
                 searchLocations(query);
@@ -733,29 +735,29 @@
         // Location autocomplete function
         function searchLocations(query) {
             const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`;
-            
+
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
                     const suggestionsDiv = document.getElementById('locationSuggestions');
                     suggestionsDiv.innerHTML = '';
-                    
+
                     if (data && data.length > 0) {
                         data.forEach(location => {
                             const suggestion = document.createElement('div');
                             suggestion.className = 'p-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200';
                             suggestion.textContent = location.display_name;
-                            suggestion.addEventListener('click', function() {
+                            suggestion.addEventListener('click', function () {
                                 document.getElementById('locationInput').value = location.display_name;
                                 document.getElementById('latitude').value = location.lat;
                                 document.getElementById('longitude').value = location.lon;
                                 document.getElementById('locationStatus').textContent = `Location: ${location.display_name}`;
                                 suggestionsDiv.classList.add('hidden');
-                                
+
                                 // Show map and center on selected location
                                 document.getElementById('searchMap').classList.remove('hidden');
                                 searchMap.setView([location.lat, location.lon], 15);
-                                
+
                                 // Add marker
                                 if (searchMarker) {
                                     searchMap.removeLayer(searchMarker);
@@ -763,7 +765,7 @@
                                 searchMarker = L.marker([location.lat, location.lon]).addTo(searchMap)
                                     .bindPopup(location.display_name)
                                     .openPopup();
-                                
+
                                 // Add search radius circle
                                 const radius = parseFloat(document.getElementById('radius').value) * 1000;
                                 if (searchCircle) {
@@ -790,68 +792,128 @@
         }
 
         // Hide suggestions when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!document.getElementById('locationInput').contains(e.target) && 
+        document.addEventListener('click', function (e) {
+            if (!document.getElementById('locationInput').contains(e.target) &&
                 !document.getElementById('locationSuggestions').contains(e.target)) {
                 document.getElementById('locationSuggestions').classList.add('hidden');
             }
         });
 
-        document.getElementById('locationSelect').addEventListener('change', function() {
+        document.getElementById('locationSelect').addEventListener('change', function () {
             const selectedLocation = this.value;
             if (selectedLocation) {
                 document.getElementById('locationInput').value = selectedLocation;
             }
         });
 
-        document.getElementById('getLocation').addEventListener('click', function() {
+        document.getElementById('getLocation').addEventListener('click', function () {
+            const locationStatus = document.getElementById('locationStatus');
+            const button = document.getElementById('getLocation');
+
+            // Disable button and show loading state
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>{{ _("Getting location...") }}';
+            locationStatus.textContent = '{{ _("Getting location...") }}';
+            locationStatus.className = 'text-blue-600 text-sm mt-1';
+
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    
-                    document.getElementById('latitude').value = lat;
-                    document.getElementById('longitude').value = lng;
-                    document.getElementById('locationStatus').textContent = `Location found: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                    
-                    // Reverse geocode to get address
-                    reverseGeocode(lat, lng);
-                    
-                    // Show map and center on user location
-                    document.getElementById('searchMap').classList.remove('hidden');
-                    searchMap.setView([lat, lng], 15);
-                    
-                    // Add user location marker
-                    if (searchMarker) {
-                        searchMap.removeLayer(searchMarker);
+                // Check if location permission is already granted
+                if (navigator.permissions) {
+                    navigator.permissions.query({ name: 'geolocation' }).then(function (result) {
+                        console.log('Geolocation permission:', result.state);
+                        if (result.state === 'denied') {
+                            showLocationError('{{ _("Location access denied. Please enable location services and refresh the page.") }}');
+                            return;
+                        }
+                    });
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                    function (position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+
+                        console.log('Got coordinates:', lat, lng);
+
+                        document.getElementById('latitude').value = lat;
+                        document.getElementById('longitude').value = lng;
+                        locationStatus.textContent = `{{ _("Location found") }}: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        locationStatus.className = 'text-green-600 text-sm mt-1';
+
+                        // Reverse geocode to get address
+                        reverseGeocode(lat, lng);
+
+                        // Show map and center on user location
+                        document.getElementById('searchMap').classList.remove('hidden');
+                        searchMap.setView([lat, lng], 15);
+
+                        // Add user location marker
+                        if (searchMarker) {
+                            searchMap.removeLayer(searchMarker);
+                        }
+                        searchMarker = L.marker([lat, lng]).addTo(searchMap)
+                            .bindPopup('{{ _("Your Location") }}')
+                            .openPopup();
+
+                        // Add search radius circle
+                        const radius = parseFloat(document.getElementById('radius').value) * 1000; // Convert km to meters
+                        if (searchCircle) {
+                            searchMap.removeLayer(searchCircle);
+                        }
+                        searchCircle = L.circle([lat, lng], {
+                            color: 'blue',
+                            fillColor: '#30f',
+                            fillOpacity: 0.1,
+                            radius: radius
+                        }).addTo(searchMap);
+
+                        resetButton();
+                    },
+                    function (error) {
+                        console.error('Geolocation error:', error);
+                        let errorMessage = '';
+
+                        switch (error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage = '{{ _("Location access denied. Please enable location services.") }}';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage = '{{ _("Location information unavailable. Please try again.") }}';
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage = '{{ _("Location request timed out. Please try again.") }}';
+                                break;
+                            default:
+                                errorMessage = '{{ _("Could not get location. Please enter manually.") }}';
+                                break;
+                        }
+
+                        showLocationError(errorMessage);
+                    },
+                    {
+                        enableHighAccuracy: true,  // Request high accuracy
+                        timeout: 15000,            // 15 second timeout
+                        maximumAge: 300000         // Accept cached position up to 5 minutes old
                     }
-                    searchMarker = L.marker([lat, lng]).addTo(searchMap)
-                        .bindPopup('Your Location')
-                        .openPopup();
-                    
-                    // Add search radius circle
-                    const radius = parseFloat(document.getElementById('radius').value) * 1000; // Convert km to meters
-                    if (searchCircle) {
-                        searchMap.removeLayer(searchCircle);
-                    }
-                    searchCircle = L.circle([lat, lng], {
-                        color: 'blue',
-                        fillColor: '#30f',
-                        fillOpacity: 0.1,
-                        radius: radius
-                    }).addTo(searchMap);
-                    
-                }, function(error) {
-                    document.getElementById('locationStatus').textContent = 'Could not get your location.';
-                    console.error('Geolocation error:', error);
-                });
+                );
             } else {
-                document.getElementById('locationStatus').textContent = 'Geolocation is not supported by this browser.';
+                showLocationError('{{ _("Location services not available in your browser.") }}');
+            }
+
+            function showLocationError(message) {
+                locationStatus.textContent = message;
+                locationStatus.className = 'text-red-600 text-sm mt-1';
+                resetButton();
+            }
+
+            function resetButton() {
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-location-dot mr-2"></i>{{ _("Get Location") }}';
             }
         });
 
         // Radius change handler
-        document.getElementById('radius').addEventListener('change', function() {
+        document.getElementById('radius').addEventListener('change', function () {
             if (searchCircle) {
                 const radius = parseFloat(this.value) * 1000; // Convert km to meters
                 searchCircle.setRadius(radius);
@@ -859,7 +921,7 @@
         });
 
         // Select all needs checkbox handler
-        document.getElementById('select-all-needs').addEventListener('change', function() {
+        document.getElementById('select-all-needs').addEventListener('change', function () {
             const needsCheckboxes = document.querySelectorAll('input[name="needs[]"]');
             needsCheckboxes.forEach(checkbox => {
                 checkbox.checked = this.checked;
@@ -868,11 +930,11 @@
 
         // Individual needs checkbox handlers
         document.querySelectorAll('input[name="needs[]"]').forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
+            checkbox.addEventListener('change', function () {
                 const allCheckboxes = document.querySelectorAll('input[name="needs[]"]');
                 const checkedCheckboxes = document.querySelectorAll('input[name="needs[]"]:checked');
                 const selectAllCheckbox = document.getElementById('select-all-needs');
-                
+
                 if (checkedCheckboxes.length === allCheckboxes.length) {
                     selectAllCheckbox.checked = true;
                     selectAllCheckbox.indeterminate = false;
@@ -890,12 +952,12 @@
         {% if filters.latitude and filters.longitude %}
         document.getElementById('searchMap').classList.remove('hidden');
         searchMap.setView([{{ filters.latitude }}, {{ filters.longitude }}], 15);
-        
+
         // Add search location marker
         searchMarker = L.marker([{{ filters.latitude }}, {{ filters.longitude }}]).addTo(searchMap)
             .bindPopup('Search Location')
             .openPopup();
-        
+
         // Add search radius circle
         const initialRadius = {{ filters.radius|default(5) }} * 1000; // Convert km to meters
         searchCircle = L.circle([{{ filters.latitude }}, {{ filters.longitude }}], {
@@ -914,21 +976,21 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(caseMap{{ loop.index }});
-        
+
         L.marker([{{ case.latitude }}, {{ case.longitude }}], {
-            icon: getMarkerIcon('{{ case.status }}', {{ case.needs|tojson }})
+            icon: getMarkerIcon('{{ case.status }}', {{ case.needs | tojson }})
         }).addTo(caseMap{{ loop.index }})
-        .bindPopup('Case #{{ case.id[:8] }}<br>{{ case.location }}');
+            .bindPopup('Case #{{ case.id[:8] }}<br>{{ case.location }}');
         {% endif %}
         {% endfor %}
         {% endif %}
 
         // Saved searches functionality
         {% if current_user.is_authenticated %}
-        document.getElementById('saveCurrentSearch').addEventListener('click', function() {
+        document.getElementById('saveCurrentSearch').addEventListener('click', function () {
             const searchParams = new URLSearchParams(window.location.search);
             const searchData = {};
-            
+
             // Collect current search parameters
             for (const [key, value] of searchParams) {
                 if (searchData[key]) {
@@ -941,7 +1003,7 @@
                     searchData[key] = value;
                 }
             }
-            
+
             const searchName = prompt('Enter a name for this saved search:');
             if (searchName) {
                 // Save search logic would go here

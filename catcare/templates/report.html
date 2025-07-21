@@ -4,36 +4,36 @@
 
          <!-- Report a New Case Form -->
          <div class="bg-white p-8 rounded-lg shadow-md w-full max-w mx-auto">
-            <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Report a New Case</h2>
+            <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">{{ _('Report a New Case') }}</h2>
             <form action="{{ url_for('main.report') }}" method="POST" enctype="multipart/form-data">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Photos Upload -->
                     <div class="mb-4">
-                        <label for="photos" class="block text-gray-700 text-sm font-bold mb-2">Upload Photos</label>
+                        <label for="photos" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Upload Photos') }}</label>
                         <input type="file" 
                                id="photos"
                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                name="photos[]"
                                accept="image/*"
                                multiple>
-                        <p class="text-sm text-gray-500 mt-1">Select multiple photos</p>
+                        <p class="text-sm text-gray-500 mt-1">{{ _('Select multiple photos') }}</p>
                     </div>
             
                     <!-- Videos Upload -->
                     <div class="mb-4">
-                        <label for="videos" class="block text-gray-700 text-sm font-bold mb-2">Upload Videos</label>
+                        <label for="videos" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Upload Videos') }}</label>
                         <input type="file" 
                                id="videos"
                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                                name="videos[]"
                                accept="video/*"
                                multiple>
-                        <p class="text-sm text-gray-500 mt-1">Select multiple videos</p>
+                        <p class="text-sm text-gray-500 mt-1">{{ _('Select multiple videos') }}</p>
                     </div>
                 </div>
                 
                 <div class="mb-4">
-                    <label for="location" class="block text-gray-700 text-sm font-bold mb-2">Location</label>
+                    <label for="location" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Location') }}</label>
                     <div class="flex items-center gap-2">
                         <input type="text" 
                                id="location"
@@ -43,7 +43,7 @@
                         <button type="button" 
                                 id="getLocation" 
                                 class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <i class="fas fa-location-dot mr-2"></i>Get Location
+                            <i class="fas fa-location-dot mr-2"></i>{{ _('Get Location') }}
                         </button>
                     </div>
                     <!-- Hidden inputs for coordinates -->
@@ -53,7 +53,7 @@
                 </div>
                 
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Select Needs</label>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">{{ _('Select Needs') }}</label>
                     <div class="bg-white p-4 rounded shadow">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="flex items-center">
@@ -62,7 +62,7 @@
                                        value="medical" 
                                        class="form-checkbox h-5 w-5 text-blue-600 rounded"
                                        id="need-medical">
-                                <label for="need-medical" class="ml-2">Medical Care</label>
+                                <label for="need-medical" class="ml-2">{{ _('Medical Care') }}</label>
                             </div>
                             
                             <div class="flex items-center">
@@ -71,7 +71,7 @@
                                        value="food" 
                                        class="form-checkbox h-5 w-5 text-blue-600 rounded"
                                        id="need-food">
-                                <label for="need-food" class="ml-2">Food/Water</label>
+                                <label for="need-food" class="ml-2">{{ _('Food/Water') }}</label>
                             </div>
                             
                             <div class="flex items-center">
@@ -80,7 +80,7 @@
                                        value="shelter" 
                                        class="form-checkbox h-5 w-5 text-blue-600 rounded"
                                        id="need-shelter">
-                                <label for="need-shelter" class="ml-2">Shelter</label>
+                                <label for="need-shelter" class="ml-2">{{ _('Shelter') }}</label>
                             </div>
                             
                             <div class="flex items-center">
@@ -89,7 +89,7 @@
                                        value="rescue" 
                                        class="form-checkbox h-5 w-5 text-blue-600 rounded"
                                        id="need-rescue">
-                                <label for="need-rescue" class="ml-2">Rescue/Relocation</label>
+                                <label for="need-rescue" class="ml-2">{{ _('Rescue') }}</label>
                             </div>
                             
                             <div class="flex items-center">
@@ -98,7 +98,7 @@
                                        value="vaccination" 
                                        class="form-checkbox h-5 w-5 text-blue-600 rounded"
                                        id="need-vaccination">
-                                <label for="need-vaccination" class="ml-2">Vaccination</label>
+                                <label for="need-vaccination" class="ml-2">{{ _('Vaccination') }}</label>
                             </div>
                             
                             <div class="flex items-center">
@@ -107,7 +107,7 @@
                                        value="sterilization" 
                                        class="form-checkbox h-5 w-5 text-blue-600 rounded"
                                        id="need-sterilization">
-                                <label for="need-sterilization" class="ml-2">Sterilization</label>
+                                <label for="need-sterilization" class="ml-2">{{ _('Sterilization') }}</label>
                             </div>
                             
                             <div class="flex items-center">
@@ -116,96 +116,167 @@
                                        value="other" 
                                        class="form-checkbox h-5 w-5 text-blue-600 rounded"
                                        id="need-other">
-                                <label for="need-other" class="ml-2">Other</label>
+                                <label for="need-other" class="ml-2">{{ _('Other') }}</label>
                             </div>
                         </div>
                         
-                        <p class="text-sm text-gray-500 mt-2">Select all that apply</p>
+                        <p class="text-sm text-gray-500 mt-2">{{ _('Select all that apply') }}</p>
                     </div>
                 </div>
                 
                 <button type="submit" 
                         class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Submit Report
+                    {{ _('Submit Report') }}
                 </button>
             </form>
         </div>
     </div>
     <script>
         document.getElementById('getLocation').addEventListener('click', function() {
-    const locationStatus = document.getElementById('locationStatus');
-    locationStatus.textContent = 'Getting location...';
-    
-    if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
+            const locationStatus = document.getElementById('locationStatus');
+            const button = document.getElementById('getLocation');
             
-            // Update hidden inputs
-            document.getElementById('latitude').value = lat;
-            document.getElementById('longitude').value = lon;
+            // Disable button and show loading state
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>{{ _("Getting location...") }}';
+            locationStatus.textContent = '{{ _("Getting location...") }}';
+            locationStatus.className = 'mt-1 text-sm text-blue-600';
             
-            // Use Nominatim with more precise parameters
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`)
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Location data:', data); // For debugging
-                    
-                    // Construct a more precise address
-                    let address = '';
-                    if (data.address) {
-                        const addr = data.address;
-                        const parts = [];
+            if ("geolocation" in navigator) {
+                // Check if location permission is already granted
+                if (navigator.permissions) {
+                    navigator.permissions.query({name: 'geolocation'}).then(function(result) {
+                        console.log('Geolocation permission:', result.state);
+                        if (result.state === 'denied') {
+                            showLocationError('{{ _("Location access denied. Please enable location services and refresh the page.") }}');
+                            return;
+                        }
+                    });
+                }
+                
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
                         
-                        // Add building number and street
-                        if (addr.house_number) parts.push(addr.house_number);
-                        if (addr.road) parts.push(addr.road);
+                        console.log('Got coordinates:', lat, lon);
                         
-                        // Add neighborhood/suburb
-                        if (addr.suburb) parts.push(addr.suburb);
-                        if (addr.neighbourhood) parts.push(addr.neighbourhood);
+                        // Update hidden inputs
+                        document.getElementById('latitude').value = lat;
+                        document.getElementById('longitude').value = lon;
                         
-                        // Add city district and city
-                        if (addr.city_district) parts.push(addr.city_district);
-                        if (addr.city) parts.push(addr.city);
+                        // Use Nominatim with more precise parameters and error handling
+                        const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1&accept-language=en`;
                         
-                        // Add postcode and country
-                        if (addr.postcode) parts.push(addr.postcode);
-                        if (addr.country) parts.push(addr.country);
+                        fetch(nominatimUrl, {
+                            headers: {
+                                'User-Agent': 'CatCareApp/1.0'
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('Location data:', data);
+                            
+                            // Construct a more precise address
+                            let address = '';
+                            if (data.address) {
+                                const addr = data.address;
+                                const parts = [];
+                                
+                                // Add building number and street
+                                if (addr.house_number) parts.push(addr.house_number);
+                                if (addr.road) parts.push(addr.road);
+                                
+                                // Add neighborhood/suburb
+                                if (addr.suburb) parts.push(addr.suburb);
+                                if (addr.neighbourhood) parts.push(addr.neighbourhood);
+                                
+                                // Add city district and city
+                                if (addr.city_district) parts.push(addr.city_district);
+                                if (addr.city) parts.push(addr.city);
+                                
+                                // Add postcode and country
+                                if (addr.postcode) parts.push(addr.postcode);
+                                if (addr.country) parts.push(addr.country);
+                                
+                                address = parts.join(', ');
+                            } else if (data.display_name) {
+                                address = data.display_name;
+                            } else {
+                                address = `${lat}, ${lon}`;
+                            }
+                            
+                            document.getElementById('location').value = address;
+                            locationStatus.textContent = '{{ _("Location updated successfully!") }}';
+                            locationStatus.className = 'mt-1 text-sm text-green-600';
+                            
+                            // Update map if it exists
+                            if (typeof updateLocationMap === 'function') {
+                                updateLocationMap(lat, lon);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error getting address:', error);
+                            // Fallback to coordinates
+                            document.getElementById('location').value = `${lat}, ${lon}`;
+                            locationStatus.textContent = '{{ _("Got coordinates, but could not get precise address") }}';
+                            locationStatus.className = 'mt-1 text-sm text-yellow-600';
+                        })
+                        .finally(() => {
+                            resetButton();
+                        });
+                    },
+                    function(error) {
+                        console.error('Geolocation error:', error);
+                        let errorMessage = '';
                         
-                        address = parts.join(', ');
-                    } else {
-                        address = data.display_name;
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage = '{{ _("Location access denied. Please enable location services.") }}';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage = '{{ _("Location information unavailable. Please try again.") }}';
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage = '{{ _("Location request timed out. Please try again.") }}';
+                                break;
+                            default:
+                                errorMessage = '{{ _("Could not get location. Please enter manually.") }}';
+                                break;
+                        }
+                        
+                        showLocationError(errorMessage);
+                    },
+                    {
+                        enableHighAccuracy: true,  // Request high accuracy
+                        timeout: 15000,            // 15 second timeout (increased)
+                        maximumAge: 300000         // Accept cached position up to 5 minutes old
                     }
-                    
-                    document.getElementById('location').value = address;
-                    locationStatus.textContent = 'Location updated successfully!';
-                    locationStatus.className = 'text-green-600';
-                    
-                    // Update map if it exists
-                    if (typeof updateLocationMap === 'function') {
-                        updateLocationMap(lat, lon);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error getting address:', error);
-                    document.getElementById('location').value = `${lat}, ${lon}`;
-                    locationStatus.textContent = 'Got coordinates, but could not get precise address';
-                    locationStatus.className = 'text-yellow-600';
-                });
-        }, function(error) {
-            console.error('Error:', error);
-            locationStatus.textContent = 'Could not get location. Please enter manually.';
-            locationStatus.className = 'text-red-600';
-        }, {
-            enableHighAccuracy: true,  // Request high accuracy
-            timeout: 10000,            // 10 second timeout
-            maximumAge: 0              // Don't use cached position
+                );
+            } else {
+                showLocationError('{{ _("Location services not available in your browser.") }}');
+            }
+            
+            function showLocationError(message) {
+                locationStatus.textContent = message;
+                locationStatus.className = 'mt-1 text-sm text-red-600';
+                resetButton();
+            }
+            
+            function resetButton() {
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-location-dot mr-2"></i>{{ _("Get Location") }}';
+            }
         });
-    } else {
-        locationStatus.textContent = 'Location services not available in your browser.';
-        locationStatus.className = 'text-red-600';
-    }
-});
-        </script>
+        
+        // Check if the page is served over HTTPS (required for geolocation on many browsers)
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+            console.warn('Geolocation may not work over HTTP. Consider using HTTPS.');
+        }
+    </script>
     {% endblock %}

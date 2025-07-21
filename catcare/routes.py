@@ -4,6 +4,7 @@ from uuid import uuid4
 from datetime import datetime, timedelta
 import logging
 from flask import request, render_template, redirect, url_for, jsonify, flash, abort, current_app
+from flask_babel import gettext as _
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 from flask import Blueprint, send_from_directory, send_file
@@ -13,7 +14,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from flask_wtf.csrf import generate_csrf
 from functools import wraps
 from .models import db, User, Comment, Case, SavedSearch
-from .forms import RegistrationForm, LoginForm, CommentForm, UpdateProfileForm, ChangePasswordForm
+from .forms import (RegistrationForm, LoginForm, CommentForm, UpdateProfileForm, 
+                   ChangePasswordForm, ResendVerificationForm, ForgotPasswordForm, 
+                   ResetPasswordForm, AdminUserForm)
 from . import db, login_manager
 from .services.storage_service import StorageService
 
@@ -117,14 +120,28 @@ def register():
                 flash("Email already registered. Please use a different email.", "error")
                 return render_template("register.html", form=form)
 
+            # Validate role selection
+            selected_role = form.role.data.upper()
+            if selected_role not in ['REPORTER', 'VOLUNTEER']:
+                flash("Invalid role selection.", "error")
+                return render_template("register.html", form=form)
+            
             # Create new user
             user = User(
-                username=form.username.data, email=form.email.data, join_date=datetime.utcnow()
+                username=form.username.data, 
+                email=form.email.data, 
+                join_date=datetime.utcnow(),
+                role=selected_role
             )
             user.set_password(form.password.data)
             db.session.add(user)
             db.session.commit()
-            flash("Registration successful! Please log in.", "success")
+            
+            # Send verification email
+            from .services.auth_service import AuthService
+            AuthService.send_verification_email(user)
+            
+            flash("Registration successful! Please check your email to verify your account.", "success")
             return redirect(url_for("main.login"))
         except Exception as e:
             db.session.rollback()
@@ -146,7 +163,21 @@ def login():
         ).first()
 
         if user and user.check_password(form.password.data):
+            if not user.is_active:
+                flash("Your account has been deactivated. Please contact support.", "error")
+                return render_template("login.html", form=form)
+            
             login_user(user, remember=form.remember.data)
+            user.update_last_login()
+            
+            # Generate JWT refresh token for API access
+            user.generate_jwt_refresh_token()
+            db.session.commit()
+            
+            # Show verification reminder if not verified
+            if not user.is_verified:
+                flash("Please verify your email address to access all features.", "warning")
+            
             next_page = request.args.get("next")
             return redirect(next_page if next_page else url_for("main.homepage"))
         else:
@@ -164,10 +195,15 @@ def check_users():
 @main.route("/logout")
 @login_required
 def logout():
-    print("Logging out user")
+    # Clear JWT refresh token
+    if current_user.jwt_refresh_token:
+        current_user.jwt_refresh_token = None
+        current_user.jwt_refresh_expires = None
+        db.session.commit()
+    
     logout_user()
-    print(f"User authenticated: {current_user.is_authenticated}")
-    return redirect(url_for("main.show_cases"))
+    flash("You have been logged out successfully.", "success")
+    return redirect(url_for("main.homepage"))
 
 
 @main.route("/profile")
@@ -463,11 +499,24 @@ def advanced_search():
             query = query.filter(Case.status == filters["status"].upper())
 
         if filters["needs"]:
-            from sqlalchemy import or_
-
-            # Use ANY operator which is more widely supported
-            need_conditions = [Case.needs.any(need) for need in filters["needs"]]
-            query = query.filter(or_(*need_conditions))
+            from sqlalchemy import or_, text
+            
+            # Handle needs filtering based on database type
+            need_conditions = []
+            for need in filters["needs"]:
+                # Sanitize the need value to prevent SQL injection
+                safe_need = need.replace("'", "''")  # Escape single quotes
+                
+                # For PostgreSQL, use array contains operator
+                if db.engine.dialect.name == 'postgresql':
+                    need_conditions.append(text(f"'{safe_need}' = ANY(needs)"))
+                else:
+                    # For SQLite and others, search in JSON string
+                    # Use JSON_EXTRACT if available, otherwise fallback to LIKE
+                    need_conditions.append(Case.needs.like(f'%"{safe_need}"%'))
+            
+            if need_conditions:
+                query = query.filter(or_(*need_conditions))
 
         if filters["date_from"]:
             date_from = datetime.strptime(filters["date_from"], "%Y-%m-%d")
@@ -547,14 +596,14 @@ def advanced_search():
 
         # Sort options
         sort_options = [
-            ("created_at", "Creation Date"),
-            ("updated_at", "Last Updated"),
-            ("location", "Location"),
-            ("status", "Status"),
+            ("created_at", _("Creation Date")),
+            ("updated_at", _("Last Updated")),
+            ("location", _("Location")),
+            ("status", _("Status")),
         ]
 
         if filters["latitude"] and filters["longitude"]:
-            sort_options.append(("distance", "Distance"))
+            sort_options.append(("distance", _("Distance")))
 
         # Get saved searches for authenticated users
         saved_searches = []
@@ -965,3 +1014,386 @@ def load_saved_search(search_id):
         current_app.logger.error(f"Error loading saved search: {e}")
         flash("Failed to load saved search", "error")
         return redirect(url_for("main.advanced_search"))
+
+# Advanced Authentication Routes
+
+@main.route("/oauth/<provider>")
+def oauth_login(provider):
+    """Initiate OAuth login with specified provider"""
+    from .services.oauth_service import oauth_service
+    
+    if provider == 'google':
+        return oauth_service.get_google_auth_url()
+    elif provider == 'facebook':
+        return oauth_service.get_facebook_auth_url()
+    else:
+        flash('Unsupported OAuth provider', 'error')
+        return redirect(url_for('main.login'))
+
+
+@main.route("/oauth/callback/<provider>")
+def oauth_callback(provider):
+    """Handle OAuth callback"""
+    from .services.oauth_service import oauth_service
+    
+    try:
+        user = None
+        if provider == 'google':
+            user = oauth_service.handle_google_callback()
+        elif provider == 'facebook':
+            user = oauth_service.handle_facebook_callback()
+        
+        if user:
+            login_user(user, remember=True)
+            user.update_last_login()
+            db.session.commit()
+            flash(f'Successfully logged in with {provider.title()}!', 'success')
+            return redirect(url_for('main.homepage'))
+        else:
+            flash(f'Failed to authenticate with {provider.title()}', 'error')
+            
+    except Exception as e:
+        current_app.logger.error(f"OAuth callback error: {str(e)}")
+        flash('Authentication failed. Please try again.', 'error')
+    
+    return redirect(url_for('main.login'))
+
+
+@main.route("/verify-email/<token>")
+def verify_email(token):
+    """Verify user email with token"""
+    user = User.query.filter_by(verification_token=token).first()
+    
+    if not user:
+        flash('Invalid or expired verification token.', 'error')
+        return redirect(url_for('main.login'))
+    
+    if user.verify_account(token):
+        db.session.commit()
+        flash('Your email has been verified! You can now access all features.', 'success')
+        if current_user.is_authenticated and current_user.id == user.id:
+            return redirect(url_for('main.profile'))
+        else:
+            return redirect(url_for('main.login'))
+    else:
+        flash('Verification failed. Please try again.', 'error')
+        return redirect(url_for('main.login'))
+
+
+@main.route("/resend-verification", methods=["GET", "POST"])
+def resend_verification():
+    """Resend verification email"""
+    form = ResendVerificationForm()
+    
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        
+        if user:
+            if user.is_verified:
+                flash('Your account is already verified.', 'info')
+            else:
+                from .services.auth_service import AuthService
+                AuthService.send_verification_email(user)
+                flash('Verification email sent! Please check your inbox.', 'success')
+        else:
+            flash('Email address not found.', 'error')
+        
+        return redirect(url_for('main.login'))
+    
+    return render_template('resend_verification.html', form=form)
+
+
+@main.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    """Handle forgot password requests"""
+    form = ForgotPasswordForm()
+    
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        
+        if user:
+            # Generate password reset token
+            token = user.generate_verification_token()
+            db.session.commit()
+            
+            # In a real implementation, send email here
+            reset_url = url_for('main.reset_password', token=token, _external=True)
+            current_app.logger.info(f"Password reset URL for {user.email}: {reset_url}")
+            
+            flash('Password reset instructions sent to your email.', 'success')
+        else:
+            # Don't reveal if email exists or not
+            flash('If that email exists, password reset instructions have been sent.', 'info')
+        
+        return redirect(url_for('main.login'))
+    
+    return render_template('forgot_password.html', form=form)
+
+
+@main.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    """Reset password with token"""
+    user = User.query.filter_by(verification_token=token).first()
+    
+    if not user:
+        flash('Invalid or expired reset token.', 'error')
+        return redirect(url_for('main.login'))
+    
+    form = ResetPasswordForm()
+    
+    if form.validate_on_submit():
+        user.set_password(form.password.data)
+        user.verification_token = None  # Clear the token
+        db.session.commit()
+        
+        flash('Your password has been reset successfully!', 'success')
+        return redirect(url_for('main.login'))
+    
+    return render_template('reset_password.html', form=form)
+
+
+# JWT API Routes
+@main.route("/api/auth/login", methods=["POST"])
+def api_login():
+    """API endpoint for JWT authentication"""
+    from .services.auth_service import AuthService
+    
+    data = request.get_json()
+    
+    if not data or not data.get('login') or not data.get('password'):
+        return jsonify({'error': 'Missing credentials'}), 400
+    
+    # Find user by username or email
+    user = User.query.filter(
+        (User.username == data['login']) | (User.email == data['login'])
+    ).first()
+    
+    if not user or not user.check_password(data['password']):
+        return jsonify({'error': 'Invalid credentials'}), 401
+    
+    if not user.is_active:
+        return jsonify({'error': 'Account is deactivated'}), 401
+    
+    # Generate tokens
+    access_token = AuthService.generate_jwt_token(user.id)
+    refresh_token = user.generate_jwt_refresh_token()
+    
+    user.update_last_login()
+    db.session.commit()
+    
+    return jsonify({
+        'access_token': access_token,
+        'refresh_token': refresh_token,
+        'user': {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'role': user.role,
+            'is_verified': user.is_verified
+        }
+    })
+
+
+@main.route("/api/auth/refresh", methods=["POST"])
+def api_refresh_token():
+    """API endpoint for refreshing JWT tokens"""
+    from .services.auth_service import AuthService
+    
+    data = request.get_json()
+    
+    if not data or not data.get('refresh_token'):
+        return jsonify({'error': 'Missing refresh token'}), 400
+    
+    access_token, new_refresh_token = AuthService.refresh_jwt_token(data['refresh_token'])
+    
+    if not access_token:
+        return jsonify({'error': 'Invalid or expired refresh token'}), 401
+    
+    return jsonify({
+        'access_token': access_token,
+        'refresh_token': new_refresh_token
+    })
+
+
+# Admin Routes (Role-based access control)
+from .services.auth_service import require_admin, require_volunteer_or_admin
+
+@main.route("/admin")
+@require_admin
+def admin_dashboard():
+    """Admin dashboard"""
+    total_users = User.query.count()
+    total_cases = Case.query.count()
+    open_cases = Case.query.filter_by(status='OPEN').count()
+    resolved_cases = Case.query.filter_by(status='RESOLVED').count()
+    
+    recent_users = User.query.order_by(User.join_date.desc()).limit(5).all()
+    recent_cases = Case.query.order_by(Case.created_at.desc()).limit(5).all()
+    
+    stats = {
+        'total_users': total_users,
+        'total_cases': total_cases,
+        'open_cases': open_cases,
+        'resolved_cases': resolved_cases
+    }
+    
+    return render_template('admin/dashboard.html', 
+                         stats=stats, 
+                         recent_users=recent_users, 
+                         recent_cases=recent_cases)
+
+
+@main.route("/admin/users")
+@require_admin
+def admin_users():
+    """Admin user management"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    
+    query = User.query.order_by(User.join_date.desc())
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    return render_template('admin/users.html', 
+                         users=pagination.items, 
+                         pagination=pagination)
+
+
+@main.route("/admin/users/<int:user_id>/edit", methods=["GET", "POST"])
+@require_admin
+def admin_edit_user(user_id):
+    """Admin edit user"""
+    user = User.query.get_or_404(user_id)
+    form = AdminUserForm()
+    
+    if form.validate_on_submit():
+        user.username = form.username.data
+        user.email = form.email.data
+        user.first_name = form.first_name.data
+        user.last_name = form.last_name.data
+        user.role = form.role.data.upper()
+        user.is_active = form.is_active.data
+        user.is_verified = form.is_verified.data
+        
+        db.session.commit()
+        flash(f'User {user.username} updated successfully!', 'success')
+        return redirect(url_for('main.admin_users'))
+    
+    elif request.method == 'GET':
+        form.username.data = user.username
+        form.email.data = user.email
+        form.first_name.data = user.first_name
+        form.last_name.data = user.last_name
+        form.role.data = user.role
+        form.is_active.data = user.is_active
+        form.is_verified.data = user.is_verified
+    
+    return render_template('admin/edit_user.html', form=form, user=user)
+
+
+@main.route("/admin/users/<int:user_id>/toggle-status", methods=["POST"])
+@require_admin
+def admin_toggle_user_status(user_id):
+    """Toggle user active status"""
+    user = User.query.get_or_404(user_id)
+    
+    if user.is_active:
+        user.deactivate()
+        flash(f'User {user.username} has been deactivated.', 'warning')
+    else:
+        user.activate()
+        flash(f'User {user.username} has been activated.', 'success')
+    
+    db.session.commit()
+    return redirect(url_for('main.admin_users'))
+
+
+@main.route("/admin/users/<int:user_id>/change-role", methods=["POST"])
+@require_admin
+def admin_change_user_role(user_id):
+    """Quick change user role via AJAX"""
+    user = User.query.get_or_404(user_id)
+    
+    try:
+        data = request.get_json()
+        new_role = data.get('role', '').upper()
+        
+        if new_role not in ['REPORTER', 'VOLUNTEER', 'ADMIN']:
+            return jsonify({'success': False, 'message': 'Invalid role specified'})
+        
+        old_role = user.role
+        user.role = new_role
+        db.session.commit()
+        
+        current_app.logger.info(f'Admin {current_user.username} changed user {user.username} role from {old_role} to {new_role}')
+        
+        return jsonify({
+            'success': True, 
+            'message': f'User {user.username} role changed from {old_role} to {new_role}'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f'Error changing user role: {str(e)}')
+        return jsonify({'success': False, 'message': 'An error occurred while changing the role'})
+
+
+# Volunteer Routes
+@main.route("/volunteer/cases")
+@require_volunteer_or_admin
+def volunteer_cases():
+    """Volunteer case management"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 15
+    
+    # Volunteers can see all open cases
+    query = Case.query.filter_by(status='OPEN').order_by(Case.created_at.desc())
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    return render_template('volunteer/cases.html', 
+                         cases=pagination.items, 
+                         pagination=pagination)
+
+
+# Update existing routes to use role-based access control
+@main.route("/resolve/<case_id>", methods=["GET", "POST"])
+@require_volunteer_or_admin
+def resolve_case_with_auth(case_id):
+    """Resolve case with role-based access control"""
+    return resolve_case(case_id)  # Call the existing function
+
+
+# Session management route
+@main.route("/api/auth/logout", methods=["POST"])
+@login_required
+def api_logout():
+    """API endpoint for logout"""
+    # Clear JWT refresh token
+    if current_user.jwt_refresh_token:
+        current_user.jwt_refresh_token = None
+        current_user.jwt_refresh_expires = None
+        db.session.commit()
+    
+    return jsonify({'message': 'Logged out successfully'})
+
+
+# Language switching routes
+@main.route("/set-language/<language>")
+def set_language(language):
+    """Set user language preference"""
+    from flask import session, request
+    
+    # Validate language
+    if language not in current_app.config['LANGUAGES']:
+        flash('Invalid language selection.', 'error')
+        return redirect(request.referrer or url_for('main.homepage'))
+    
+    # Set session language
+    session['language'] = language
+    
+    # Update user preference if logged in
+    if current_user.is_authenticated:
+        current_user.language = language
+        db.session.commit()
+    
+    flash(f'Language changed to {current_app.config["LANGUAGES"][language]}.', 'success')
+    return redirect(request.referrer or url_for('main.homepage'))
