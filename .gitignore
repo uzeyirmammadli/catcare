@@ -23,7 +23,9 @@ env_variables.yaml
 
 # Media uploads
 catcare/static/uploads/*
+catcare/catcare/static/uploads/*
 !catcare/static/uploads/.gitkeep
+!catcare/catcare/static/uploads/.gitkeep
 
 # Distribution / packaging
 dist/
@@ -70,6 +72,98 @@ seed_*.py
 create_*.py
 gunicorn_optimized.conf.py
 
+# Translation files (compiled)
+*.mo
+*.pot
+
+# Environment-specific configs
+nginx_*.conf
+gunicorn*.conf.py
+
 # Binary files
 cloud-sql-proxy
 *.exe
+
+# Google Cloud Platform files
+.gcloudignore
+gcloud_*.py
+cloud_*.py
+*_gcp.py
+service-account-*.json
+*.json.key
+gcp-*.json
+cloudsql-proxy
+cloud-sql-proxy*
+app.yaml
+cron.yaml
+dispatch.yaml
+queue.yaml
+index.yaml
+*.yaml.backup
+
+# Development and testing files
+dev.txt
+dev_*.txt
+*-dev.txt
+requirements-dev.txt
+development_*.py
+test_*.html
+test_*.js
+*_test.html
+*_test.js
+*_demo.html
+*_demo.js
+demo_*.html
+demo_*.js
+verify_*.py
+verify_*.js
+run_*.py
+run_*.js
+check_*.py
+benchmark_*.py
+
+# Kiro IDE files
+.kiro/
+
+# Temporary development files
+*.bak
+*.backup
+*.orig
+*_backup.*
+*_old.*
+*_temp.*
+scratch_*.py
+temp_*.py
+debug_*.py
+fix_*.py
+
+# Documentation drafts
+*_DRAFT.md
+*_TODO.md
+*_NOTES.md
+*_WIP.md
+
+# Performance and profiling
+*.prof
+*.profile
+profiling_*
+performance_*
+
+# Database dumps and backups
+*.dump
+*.sql.backup
+backup_*.sql
+
+# Jupyter notebooks (if any)
+*.ipynb
+.ipynb_checkpoints/
+
+# Node.js (if using any frontend build tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Webpack/build artifacts
+/static/dist/
+/static/build/
