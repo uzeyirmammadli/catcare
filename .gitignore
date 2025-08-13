@@ -122,6 +122,12 @@ run_*.js
 check_*.py
 benchmark_*.py
 
+# Test files in tests directory
+tests/*test*.js
+tests/*test*.py
+tests/camera-*.js
+tests/run-*.js
+
 # Kiro IDE files
 .kiro/
 
