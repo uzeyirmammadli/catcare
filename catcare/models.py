@@ -379,6 +379,159 @@ class SavedSearch(db.Model):
         return f"<SavedSearch {self.name} by User {self.user_id}>"
 
 
+class MediaMetadata(db.Model):
+    """Represents metadata for processed media files."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    case_id = db.Column(db.String(36), db.ForeignKey("case.id"), nullable=False, index=True)
+    filename = db.Column(db.String(255), nullable=False, index=True)
+    original_filename = db.Column(db.String(255))
+    file_size_original = db.Column(db.Integer)
+    file_size_processed = db.Column(db.Integer)
+    compression_ratio = db.Column(db.Numeric(5, 2))
+    format_original = db.Column(db.String(10))
+    format_processed = db.Column(db.String(10))
+    timestamp_original = db.Column(db.DateTime, index=True)
+    gps_latitude = db.Column(db.Numeric(10, 8))
+    gps_longitude = db.Column(db.Numeric(11, 8))
+    location_name = db.Column(db.String(255))
+    camera_make = db.Column(db.String(100))
+    camera_model = db.Column(db.String(100))
+    image_width = db.Column(db.Integer)
+    image_height = db.Column(db.Integer)
+    orientation = db.Column(db.Integer)
+    processing_time = db.Column(db.Numeric(8, 3))
+    created_at = db.Column(db.DateTime, default=func.now())
+
+    # Relationships
+    case = db.relationship("Case", backref="media_metadata")
+    thumbnails = db.relationship("MediaThumbnail", back_populates="media_metadata", cascade="all, delete-orphan")
+
+    def to_dict(self):
+        """Convert media metadata to dictionary representation."""
+        return {
+            'id': self.id,
+            'case_id': self.case_id,
+            'filename': self.filename,
+            'original_filename': self.original_filename,
+            'file_size_original': self.file_size_original,
+            'file_size_processed': self.file_size_processed,
+            'compression_ratio': float(self.compression_ratio) if self.compression_ratio else None,
+            'format_original': self.format_original,
+            'format_processed': self.format_processed,
+            'timestamp_original': self.timestamp_original.isoformat() if self.timestamp_original else None,
+            'gps_latitude': float(self.gps_latitude) if self.gps_latitude else None,
+            'gps_longitude': float(self.gps_longitude) if self.gps_longitude else None,
+            'location_name': self.location_name,
+            'camera_make': self.camera_make,
+            'camera_model': self.camera_model,
+            'image_width': self.image_width,
+            'image_height': self.image_height,
+            'orientation': self.orientation,
+            'processing_time': float(self.processing_time) if self.processing_time else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'thumbnails': [thumb.to_dict() for thumb in self.thumbnails]
+        }
+
+    def __repr__(self):
+        return f"<MediaMetadata {self.filename} for Case {self.case_id}>"
+
+
+class MediaThumbnail(db.Model):
+    """Represents thumbnail information for processed media."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    media_metadata_id = db.Column(db.Integer, db.ForeignKey("media_metadata.id"), nullable=False, index=True)
+    size_label = db.Column(db.String(20), nullable=False, index=True)  # e.g., "150x150", "300x300"
+    filename = db.Column(db.String(255), nullable=False)
+    file_size = db.Column(db.Integer)
+    width = db.Column(db.Integer)
+    height = db.Column(db.Integer)
+    created_at = db.Column(db.DateTime, default=func.now())
+
+    # Relationships
+    media_metadata = db.relationship("MediaMetadata", back_populates="thumbnails")
+
+    def to_dict(self):
+        """Convert thumbnail to dictionary representation."""
+        return {
+            'id': self.id,
+            'media_metadata_id': self.media_metadata_id,
+            'size_label': self.size_label,
+            'filename': self.filename,
+            'file_size': self.file_size,
+            'width': self.width,
+            'height': self.height,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+    def __repr__(self):
+        return f"<MediaThumbnail {self.size_label} for MediaMetadata {self.media_metadata_id}>"
+
+
+class BatchProcessingLog(db.Model):
+    """Represents batch processing operation logs."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    total_files = db.Column(db.Integer, nullable=False)
+    successful_files = db.Column(db.Integer, nullable=False)
+    failed_files = db.Column(db.Integer, nullable=False)
+    total_size_original = db.Column(db.BigInteger)
+    total_size_processed = db.Column(db.BigInteger)
+    average_compression_ratio = db.Column(db.Numeric(5, 2))
+    processing_time = db.Column(db.Numeric(8, 3))
+    started_at = db.Column(db.DateTime, index=True)
+    completed_at = db.Column(db.DateTime)
+    status = db.Column(db.String(20), nullable=False, index=True)  # STARTED, COMPLETED, FAILED, CANCELLED
+
+    # Relationships
+    user = db.relationship("User", backref="batch_processing_logs")
+
+    def to_dict(self):
+        """Convert batch processing log to dictionary representation."""
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'total_files': self.total_files,
+            'successful_files': self.successful_files,
+            'failed_files': self.failed_files,
+            'total_size_original': self.total_size_original,
+            'total_size_processed': self.total_size_processed,
+            'average_compression_ratio': float(self.average_compression_ratio) if self.average_compression_ratio else None,
+            'processing_time': float(self.processing_time) if self.processing_time else None,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'status': self.status
+        }
+
+    @classmethod
+    def get_user_stats(cls, user_id):
+        """Get processing statistics for a user."""
+        logs = cls.query.filter_by(user_id=user_id, status='COMPLETED').all()
+        if not logs:
+            return None
+        
+        total_files = sum(log.total_files for log in logs)
+        total_successful = sum(log.successful_files for log in logs)
+        total_failed = sum(log.failed_files for log in logs)
+        total_original_size = sum(log.total_size_original or 0 for log in logs)
+        total_processed_size = sum(log.total_size_processed or 0 for log in logs)
+        
+        return {
+            'total_batches': len(logs),
+            'total_files': total_files,
+            'successful_files': total_successful,
+            'failed_files': total_failed,
+            'success_rate': (total_successful / total_files * 100) if total_files > 0 else 0,
+            'total_size_saved': total_original_size - total_processed_size,
+            'average_compression_ratio': (total_processed_size / total_original_size * 100) if total_original_size > 0 else 0
+        }
+
+    def __repr__(self):
+        return f"<BatchProcessingLog {self.id} by User {self.user_id}: {self.status}>"
+
+
 def seed_database():
     """Seed the database with test data."""
     try:
