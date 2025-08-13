@@ -43,3 +43,12 @@ typing_extensions==4.12.2
 Werkzeug==3.0.2
 WTForms==3.1.2
 zipp==3.18.1
+
+# Image processing dependencies
+Pillow==10.4.0
+exifread==3.0.0
+python-magic==0.4.27
+pillow-heif==0.16.0
+
+# System monitoring dependencies
+psutil==6.0.0

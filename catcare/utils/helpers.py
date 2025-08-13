@@ -109,7 +109,9 @@ def create_response(
     data: Any = None, message: str = None, status: int = 200, error: str = None
 ) -> Dict[str, Any]:
     """Create standardized API response"""
-    response = {"success": status < 400, "status": status}
+    # If error is provided, it's not successful regardless of status
+    success = error is None and status < 400
+    response = {"success": success, "status": status}
 
     if data is not None:
         response["data"] = data

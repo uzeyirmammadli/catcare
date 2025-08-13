@@ -1,0 +1,581 @@
+/* Mobile-specific optimizations for camera capture interface */
+
+/* Base mobile styles */
+@media (max-width: 768px) {
+    .camera-capture-container {
+        padding: 0;
+        margin: 0;
+        width: 100vw;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 9999;
+        background: #000;
+    }
+
+    .camera-preview {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .camera-preview video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        background: #000;
+    }
+
+    /* Touch-friendly controls */
+    .camera-controls {
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+    }
+
+    .camera-controls button {
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        outline: none;
+        border: none;
+        cursor: pointer;
+    }
+
+    /* Primary capture buttons - larger for mobile */
+    .capture-btn,
+    .record-btn {
+        width: 4.5rem !important;
+        height: 4.5rem !important;
+        min-width: 4.5rem !important;
+        min-height: 4.5rem !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        transition: all 0.15s ease-in-out;
+    }
+
+    .capture-btn:active,
+    .record-btn:active {
+        transform: scale(0.95);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Secondary buttons */
+    .switch-camera-btn,
+    .close-btn {
+        width: 3rem !important;
+        height: 3rem !important;
+        min-width: 3rem !important;
+        min-height: 3rem !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .switch-camera-btn:active,
+    .close-btn:active {
+        transform: scale(0.9);
+    }
+
+    /* Photo count indicator */
+    .photo-count-indicator {
+        font-size: 0.875rem;
+        min-width: 1.75rem;
+        height: 1.75rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Recording indicator */
+    .recording-indicator {
+        top: 1rem !important;
+        left: 1rem !important;
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Switching indicator */
+    .switching-indicator {
+        font-size: 0.875rem;
+        padding: 0.75rem 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Captured media gallery */
+    .captured-media-container {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+        padding: 1rem;
+        max-height: 40vh;
+        overflow-y: auto;
+    }
+
+    .captured-media-grid {
+        display: flex;
+        gap: 0.5rem;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+
+    .captured-media-item {
+        flex-shrink: 0;
+        width: 4rem;
+        height: 4rem;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.2s ease-in-out;
+    }
+
+    .captured-media-item:active {
+        transform: scale(0.95);
+        border-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .captured-media-item img,
+    .captured-media-item video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+/* Portrait orientation optimizations */
+@media (max-width: 768px) and (orientation: portrait) {
+    .camera-controls.mobile-controls {
+        bottom: 2rem;
+        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+
+    /* Arrange controls in a row at the bottom */
+    .camera-controls.mobile-controls {
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    /* Position secondary controls on sides */
+    .switch-camera-btn {
+        position: absolute;
+        left: 2rem;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .close-btn {
+        position: absolute;
+        right: 2rem;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    /* Photo count indicator above capture button */
+    .photo-count-indicator {
+        top: -2.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
+
+/* Landscape orientation optimizations */
+@media (max-width: 768px) and (orientation: landscape) {
+    .camera-controls.mobile-controls {
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        padding-right: max(0.5rem, env(safe-area-inset-right));
+    }
+
+    /* Arrange controls in a column on the right */
+    .camera-controls.mobile-controls {
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    /* Position secondary controls above and below main button */
+    .switch-camera-btn {
+        position: relative;
+        order: -1;
+    }
+
+    .close-btn {
+        position: relative;
+        order: 1;
+    }
+
+    /* Photo count indicator to the left of capture button */
+    .photo-count-indicator {
+        left: -3rem;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    /* Adjust capture button size for landscape */
+    .capture-btn,
+    .record-btn {
+        width: 4rem !important;
+        height: 4rem !important;
+        min-width: 4rem !important;
+        min-height: 4rem !important;
+    }
+}
+
+/* High DPI displays */
+@media (max-width: 768px) and (-webkit-min-device-pixel-ratio: 2) {
+    .camera-controls button {
+        border-width: 0.5px;
+    }
+
+    .capture-btn,
+    .record-btn {
+        border-width: 2px;
+    }
+}
+
+/* Safe area support for devices with notches */
+@supports (padding: max(0px)) {
+    @media (max-width: 768px) {
+        .camera-capture-container {
+            padding-top: env(safe-area-inset-top);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .camera-controls.mobile-controls {
+            padding-bottom: max(2rem, env(safe-area-inset-bottom) + 1rem);
+        }
+
+        .recording-indicator {
+            top: max(1rem, env(safe-area-inset-top) + 0.5rem) !important;
+            left: max(1rem, env(safe-area-inset-left) + 0.5rem) !important;
+        }
+    }
+
+    @media (max-width: 768px) and (orientation: landscape) {
+        .camera-controls.mobile-controls {
+            padding-right: max(1rem, env(safe-area-inset-right) + 0.5rem);
+        }
+    }
+}
+
+/* Accessibility improvements for mobile */
+@media (max-width: 768px) {
+    .camera-controls button:focus {
+        outline: 2px solid #3b82f6;
+        outline-offset: 2px;
+    }
+
+    .camera-controls button:focus:not(:focus-visible) {
+        outline: none;
+    }
+
+    /* Larger touch targets for accessibility */
+    .camera-controls button {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
+
+/* Reduced motion preferences */
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+    .camera-controls button {
+        transition: none;
+    }
+
+    .capture-btn:active,
+    .record-btn:active,
+    .switch-camera-btn:active,
+    .close-btn:active {
+        transform: none;
+    }
+
+    .photo-count-indicator {
+        transition: opacity 0.2s ease-in-out;
+    }
+}
+
+/* Dark mode support */
+@media (max-width: 768px) and (prefers-color-scheme: dark) {
+    .camera-capture-container {
+        background: #000;
+    }
+
+    .captured-media-container {
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+    }
+
+    .captured-media-item {
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .captured-media-item:active {
+        border-color: rgba(255, 255, 255, 0.4);
+    }
+}
+
+/* Error handling and feedback styles */
+@media (max-width: 768px) {
+    /* Loading indicators */
+    .camera-loading-indicator,
+    .error-processing-indicator,
+    .permission-request-modal,
+    .retry-progress-modal {
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+    }
+
+    /* Progress indicators */
+    .capture-progress-indicator,
+    .recording-start-progress,
+    .recording-stop-progress {
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+    }
+
+    /* Feedback indicators */
+    .switching-indicator,
+    .camera-switch-success,
+    .camera-switch-error,
+    .capture-success,
+    .capture-error,
+    .recording-started,
+    .recording-start-error,
+    .recording-stop-error {
+        animation: slideInFromTop 0.3s ease-out;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    @keyframes slideInFromTop {
+        from {
+            transform: translate(-50%, -100%);
+            opacity: 0;
+        }
+        to {
+            transform: translate(-50%, 0);
+            opacity: 1;
+        }
+    }
+
+    /* Flash effect for photo capture */
+    .capture-flash {
+        animation: flashEffect 0.3s ease-out;
+    }
+
+    @keyframes flashEffect {
+        0% { opacity: 0; }
+        50% { opacity: 0.8; }
+        100% { opacity: 0; }
+    }
+
+    /* Enhanced fallback interface */
+    .camera-fallback {
+        animation: fadeInUp 0.4s ease-out;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Retry button enhancements */
+    .retry-button {
+        transition: all 0.2s ease-in-out;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+
+    .retry-button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+
+    .retry-button:active:not(:disabled) {
+        transform: translateY(0);
+    }
+
+    .retry-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    /* Permission modal enhancements */
+    .permission-request-modal .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* Error message styling improvements */
+    .camera-fallback h3 {
+        margin-bottom: 0.75rem;
+    }
+
+    .camera-fallback h4 {
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .camera-fallback h5 {
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .camera-fallback ol,
+    .camera-fallback ul {
+        margin-left: 0;
+        padding-left: 1.25rem;
+    }
+
+    .camera-fallback li {
+        margin-bottom: 0.25rem;
+        line-height: 1.4;
+    }
+
+    /* Responsive adjustments for error messages */
+    .camera-fallback .bg-blue-50,
+    .camera-fallback .bg-green-50,
+    .camera-fallback .bg-red-50,
+    .camera-fallback .bg-yellow-50,
+    .camera-fallback .bg-orange-50 {
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+    }
+
+    /* Loading spinner improvements */
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* Pulse animation for status indicators */
+    .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+}
+
+/* Performance optimizations */
+@media (max-width: 768px) {
+    .camera-preview video {
+        will-change: transform;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        transform: translateZ(0); /* Force hardware acceleration */
+        contain: layout style paint;
+    }
+
+    .camera-controls {
+        will-change: transform;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        contain: layout style;
+    }
+
+    .camera-controls button {
+        will-change: transform;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        transform: translateZ(0);
+        contain: layout style paint;
+    }
+
+    /* Performance optimization for feedback elements */
+    .switching-indicator,
+    .camera-switch-success,
+    .camera-switch-error,
+    .capture-success,
+    .capture-error,
+    .recording-started,
+    .recording-start-error,
+    .recording-stop-error {
+        will-change: transform, opacity;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        contain: layout style paint;
+    }
+
+    /* Optimize for mobile GPU */
+    .camera-capture-container {
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+    }
+
+    /* Reduce repaints on mobile */
+    .captured-media-container {
+        contain: layout style paint;
+    }
+
+    /* Battery optimization */
+    .camera-preview video {
+        image-rendering: optimizeSpeed;
+        image-rendering: -webkit-optimize-contrast;
+    }
+}
+
+/* Enhanced accessibility for mobile */
+@media (max-width: 768px) {
+    /* Larger touch targets */
+    .camera-controls button {
+        min-width: 48px;
+        min-height: 48px;
+    }
+
+    /* Enhanced focus indicators for mobile */
+    .camera-controls button:focus-visible {
+        outline: 3px solid #3b82f6;
+        outline-offset: 2px;
+        box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Voice control support */
+    .camera-controls button[aria-label] {
+        speak: literal-punctuation;
+    }
+
+    /* Haptic feedback indication */
+    .camera-controls button:active {
+        background-color: rgba(255, 255, 255, 0.9);
+    }
+}
+
+/* Mobile-specific performance monitoring */
+@media (max-width: 768px) {
+    /* Optimize for 60fps on mobile */
+    .camera-controls button {
+        transition-duration: 0.15s;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Reduce animation complexity on low-end devices */
+    @media (max-width: 480px) {
+        .switching-indicator,
+        .camera-switch-success,
+        .camera-switch-error,
+        .capture-success,
+        .capture-error {
+            animation-duration: 0.2s;
+            animation-timing-function: ease-out;
+        }
+    }
+}

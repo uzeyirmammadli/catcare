@@ -19,6 +19,10 @@ def rate_limit(max_requests: int = 100, window_minutes: int = 60):
     def decorator(f):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
+            # Skip rate limiting during testing
+            if current_app.config.get('TESTING'):
+                return f(*args, **kwargs)
+                
             # Get client identifier
             client_id = request.remote_addr
             if current_user.is_authenticated:

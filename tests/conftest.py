@@ -80,15 +80,55 @@ def sample_user(app):
 
 
 @pytest.fixture
-def sample_case(app, sample_user):
+def sample_case(app):
     """Create a sample case for testing"""
     with app.app_context():
+        # Use the same user as auth_headers fixture
+        user = User.query.filter_by(username="testuser").first()
+        if not user:
+            user = User(username="testuser", email="test@example.com")
+            user.set_password("testpass123")
+            db.session.add(user)
+            db.session.commit()
+        
         case = Case(
-            location="Test Location", needs=["Food", "Water"], status="OPEN", user_id=sample_user.id
+            location="Test Location", needs=["Food", "Water"], status="OPEN", user_id=user.id
         )
         db.session.add(case)
         db.session.commit()
         case_id = case.id  # Get the ID before session closes
         db.session.expunge(case)  # Remove from session
         case.id = case_id  # Set the ID back
+        return case
+
+
+@pytest.fixture
+def test_user(app):
+    """Create a test user for media metadata testing"""
+    with app.app_context():
+        user = User(username="testuser", email="test@example.com")
+        user.set_password("testpass123")
+        db.session.add(user)
+        db.session.commit()
+        user_id = user.id
+        db.session.expunge(user)
+        user.id = user_id
+        return user
+
+
+@pytest.fixture
+def test_case(app, test_user):
+    """Create a test case for media metadata testing"""
+    with app.app_context():
+        case = Case(
+            location="Test Location for Media",
+            needs=["Food", "Medical"],
+            status="OPEN",
+            user_id=test_user.id
+        )
+        db.session.add(case)
+        db.session.commit()
+        case_id = case.id
+        db.session.expunge(case)
+        case.id = case_id
         return case

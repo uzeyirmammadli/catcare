@@ -2,35 +2,79 @@
 
 {% block content %}
 
+
          <!-- Report a New Case Form -->
          <div class="bg-white p-8 rounded-lg shadow-md w-full max-w mx-auto">
             <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">{{ _('Report a New Case') }}</h2>
-            <form action="{{ url_for('main.report') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ url_for('main.report') }}" method="POST" enctype="multipart/form-data" id="reportForm">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Photos Upload -->
                     <div class="mb-4">
                         <label for="photos" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Upload Photos') }}</label>
-                        <input type="file" 
-                               id="photos"
-                               class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                               name="photos[]"
-                               accept="image/*"
-                               multiple>
-                        <p class="text-sm text-gray-500 mt-1">{{ _('Select multiple photos') }}</p>
+                        <div class="space-y-3">
+                            <!-- Camera Capture Buttons -->
+                            <div class="grid grid-cols-2 gap-2">
+                                <button type="button" 
+                                        id="capturePhotosBtn"
+                                        class="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center">
+                                    <i class="fas fa-camera mr-2"></i>{{ _('Take Photo') }}
+                                </button>
+                                <button type="button" 
+                                        id="batchCaptureBtn"
+                                        class="bg-purple-500 text-white py-2 px-4 rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 flex items-center justify-center">
+                                    <i class="fas fa-images mr-2"></i>{{ _('Batch Capture') }}
+                                </button>
+                            </div>
+                            
+                            <!-- File Upload Input -->
+                            <input type="file" 
+                                   id="photos"
+                                   class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                                   name="photos[]"
+                                   accept="image/*"
+                                   multiple>
+                            
+                            <!-- Batch Upload Button -->
+                            <button type="button" 
+                                    id="batchUploadBtn"
+                                    class="w-full bg-indigo-500 text-white py-2 px-4 rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 flex items-center justify-center mt-2">
+                                <i class="fas fa-upload mr-2"></i>{{ _('Batch Upload with Progress') }}
+                            </button>
+                            
+                            <p class="text-sm text-gray-500 mt-1">{{ _('Take photos with camera, select files, or use batch upload') }}</p>
+                        </div>
                     </div>
             
                     <!-- Videos Upload -->
                     <div class="mb-4">
                         <label for="videos" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Upload Videos') }}</label>
-                        <input type="file" 
-                               id="videos"
-                               class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                               name="videos[]"
-                               accept="video/*"
-                               multiple>
-                        <p class="text-sm text-gray-500 mt-1">{{ _('Select multiple videos') }}</p>
+                        <div class="space-y-3">
+                            <!-- Camera Capture Button -->
+                            <button type="button" 
+                                    id="captureVideoBtn"
+                                    class="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center justify-center">
+                                <i class="fas fa-video mr-2"></i>{{ _('Record Video') }}
+                            </button>
+                            
+                            <!-- File Upload Input -->
+                            <input type="file" 
+                                   id="videos"
+                                   class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                                   name="videos[]"
+                                   accept="video/*"
+                                   multiple>
+                            <p class="text-sm text-gray-500 mt-1">{{ _('Record video with camera or select files') }}</p>
+                        </div>
                     </div>
                 </div>
+                
+                <!-- Camera Capture Interface Container -->
+                <div id="cameraContainer" class="camera-capture-container hidden mb-6">
+                    <!-- Camera interface will be dynamically inserted here -->
+                </div>
+                
+                <!-- Include Batch Upload Interface -->
+                {% include 'batch_upload_interface.html' %}
                 
                 <div class="mb-4">
                     <label for="location" class="block text-gray-700 text-sm font-bold mb-2">{{ _('Location') }}</label>
@@ -131,7 +175,247 @@
             </form>
         </div>
     </div>
+    <!-- Include Camera Capture and Processing JavaScript -->
+    <script src="{{ url_for('static', filename='js/image-processor.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/adaptive-processor.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/batch-upload-manager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/batch-upload-ui.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/camera-image-processor-integration.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/camera-capture.js') }}"></script>
+    
     <script>
+        // Initialize camera capture functionality
+        let cameraCapture = null;
+        let capturedPhotos = [];
+        let capturedVideos = [];
+        
+        // Initialize camera capture when DOM is loaded
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                cameraCapture = new CameraCapture({
+                    maxRecordingDuration: 120000, // 2 minutes
+                    photoQuality: 0.8,
+                    maxPhotoSize: 10 * 1024 * 1024, // 10MB
+                    // Enable advanced processing features
+                    enableAdvancedProcessing: true,
+                    enableBatchCapture: true,
+                    enableProcessingPreview: true
+                });
+                
+                console.log('Camera capture with advanced processing initialized successfully');
+            } catch (error) {
+                console.error('Camera capture initialization failed:', error);
+            }
+        });
+        
+        // Photo capture button handler
+        document.getElementById('capturePhotosBtn').addEventListener('click', async function() {
+            if (!cameraCapture) {
+                alert('{{ _("Camera not available. Please use file upload instead.") }}');
+                return;
+            }
+            
+            const container = document.getElementById('cameraContainer');
+            container.classList.remove('hidden');
+            
+            try {
+                const success = await cameraCapture.startPhotoCapture(container);
+                if (!success) {
+                    container.classList.add('hidden');
+                    alert('{{ _("Could not access camera. Please use file upload instead.") }}');
+                }
+            } catch (error) {
+                console.error('Photo capture failed:', error);
+                container.classList.add('hidden');
+                alert('{{ _("Camera access failed. Please use file upload instead.") }}');
+            }
+        });
+        
+        // Batch capture button handler
+        document.getElementById('batchCaptureBtn').addEventListener('click', async function() {
+            if (!cameraCapture) {
+                alert('{{ _("Camera not available. Please use file upload instead.") }}');
+                return;
+            }
+            
+            const container = document.getElementById('cameraContainer');
+            container.classList.remove('hidden');
+            
+            try {
+                const success = await cameraCapture.startBatchCapture(container);
+                if (!success) {
+                    container.classList.add('hidden');
+                    alert('{{ _("Could not access camera. Please use file upload instead.") }}');
+                }
+            } catch (error) {
+                console.error('Batch capture failed:', error);
+                container.classList.add('hidden');
+                alert('{{ _("Camera access failed. Please use file upload instead.") }}');
+            }
+        });
+        
+        // Batch upload button handler
+        document.getElementById('batchUploadBtn').addEventListener('click', function() {
+            if (window.batchUploadUI) {
+                window.batchUploadUI.show();
+            } else {
+                alert('{{ _("Batch upload not available. Please use regular file upload.") }}');
+            }
+        });
+
+        // Video capture button handler
+        document.getElementById('captureVideoBtn').addEventListener('click', async function() {
+            if (!cameraCapture) {
+                alert('{{ _("Camera not available. Please use file upload instead.") }}');
+                return;
+            }
+            
+            const container = document.getElementById('cameraContainer');
+            container.classList.remove('hidden');
+            
+            try {
+                const success = await cameraCapture.startVideoCapture(container);
+                if (!success) {
+                    container.classList.add('hidden');
+                    alert('{{ _("Could not access camera. Please use file upload instead.") }}');
+                }
+            } catch (error) {
+                console.error('Video capture failed:', error);
+                container.classList.add('hidden');
+                alert('{{ _("Camera access failed. Please use file upload instead.") }}');
+            }
+        });
+        
+        // Listen for captured media events
+        document.addEventListener('photo:captured', function(event) {
+            const media = event.detail.media;
+            capturedPhotos.push(media);
+            console.log('Photo captured:', media);
+        });
+        
+        document.addEventListener('photo:processed', function(event) {
+            const { media, processedResult } = event.detail;
+            console.log('Photo processed:', processedResult);
+            
+            // Show processing feedback
+            if (processedResult.metadata && processedResult.metadata.compressionRatio > 1) {
+                const savings = Math.round((1 - 1/processedResult.metadata.compressionRatio) * 100);
+                console.log(`Photo compressed: ${savings}% size reduction`);
+            }
+        });
+        
+        document.addEventListener('video:captured', function(event) {
+            const media = event.detail.media;
+            capturedVideos.push(media);
+            console.log('Video captured:', media);
+        });
+        
+        document.addEventListener('camera:batch-started', function(event) {
+            console.log('Batch capture mode started');
+        });
+        
+        // Listen for media removal events
+        document.addEventListener('media:removed', function(event) {
+            const { mediaId, mediaType } = event.detail;
+            if (mediaType === 'photo') {
+                capturedPhotos = capturedPhotos.filter(photo => photo.id !== mediaId);
+            } else if (mediaType === 'video') {
+                capturedVideos = capturedVideos.filter(video => video.id !== mediaId);
+            }
+        });
+        
+        // Listen for batch upload completion
+        document.addEventListener('batchUpload:completed', function(event) {
+            const { batchId, successfulFiles } = event.detail;
+            console.log(`Batch upload completed: ${successfulFiles} files uploaded successfully`);
+            
+            // Show success message
+            const successMessage = document.createElement('div');
+            successMessage.className = 'bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4';
+            successMessage.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span>{{ _('Batch upload completed successfully!') }} ${successfulFiles} {{ _('files uploaded.') }}</span>
+                </div>
+            `;
+            
+            // Insert success message at the top of the form
+            const form = document.getElementById('reportForm');
+            form.insertBefore(successMessage, form.firstChild);
+            
+            // Auto-remove success message after 5 seconds
+            setTimeout(() => {
+                if (successMessage.parentNode) {
+                    successMessage.parentNode.removeChild(successMessage);
+                }
+            }, 5000);
+        });
+        
+        // Handle form submission with captured media
+        document.getElementById('reportForm').addEventListener('submit', async function(event) {
+            // If we have captured media, we need to add it to the form
+            if (capturedPhotos.length > 0 || capturedVideos.length > 0) {
+                event.preventDefault();
+                
+                const formData = new FormData(this);
+                
+                // Add captured photos to form data
+                for (const photo of capturedPhotos) {
+                    const file = new File([photo.blob], `captured_photo_${photo.id}.jpg`, {
+                        type: 'image/jpeg'
+                    });
+                    formData.append('photos[]', file);
+                }
+                
+                // Add captured videos to form data
+                for (const video of capturedVideos) {
+                    const file = new File([video.blob], `captured_video_${video.id}.webm`, {
+                        type: 'video/webm'
+                    });
+                    formData.append('videos[]', file);
+                }
+                
+                // Submit form with captured media
+                try {
+                    const response = await fetch(this.action, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (response.ok) {
+                        // Redirect to success page
+                        window.location.href = response.url || '{{ url_for("main.show_cases") }}';
+                    } else {
+                        throw new Error('Form submission failed');
+                    }
+                } catch (error) {
+                    console.error('Form submission error:', error);
+                    alert('{{ _("Error submitting form. Please try again.") }}');
+                }
+            }
+            // If no captured media, let form submit normally
+        });
+        
+        // Close camera interface when clicking outside
+        document.addEventListener('click', function(event) {
+            const container = document.getElementById('cameraContainer');
+            const captureButtons = [
+                document.getElementById('capturePhotosBtn'),
+                document.getElementById('captureVideoBtn')
+            ];
+            
+            if (!container.classList.contains('hidden') && 
+                !container.contains(event.target) && 
+                !captureButtons.some(btn => btn.contains(event.target))) {
+                
+                // Check if camera is active before closing
+                if (cameraCapture && cameraCapture.getState().isActive) {
+                    cameraCapture.stopCamera();
+                    container.classList.add('hidden');
+                }
+            }
+        });
+        
         document.getElementById('getLocation').addEventListener('click', function() {
             const locationStatus = document.getElementById('locationStatus');
             const button = document.getElementById('getLocation');

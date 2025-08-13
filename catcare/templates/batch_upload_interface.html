@@ -1,0 +1,294 @@
+<!-- Batch Upload Interface Component -->
+<div id="batchUploadModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-bold text-gray-900">{{ _('Batch Upload Manager') }}</h3>
+                <button id="closeBatchUpload" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- File Selection Area -->
+            <div class="mb-6">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors" 
+                     id="dropZone">
+                    <div class="space-y-4">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i>
+                        <div>
+                            <p class="text-lg text-gray-600">{{ _('Drag and drop files here, or') }}</p>
+                            <button type="button" 
+                                    id="selectFilesBtn"
+                                    class="mt-2 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                {{ _('Select Files') }}
+                            </button>
+                            <input type="file" 
+                                   id="batchFileInput" 
+                                   multiple 
+                                   accept="image/*,video/*" 
+                                   class="hidden">
+                        </div>
+                        <p class="text-sm text-gray-500">{{ _('Supports images and videos. Maximum 20 files at once.') }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selected Files List -->
+            <div id="selectedFilesSection" class="mb-6 hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-md font-semibold text-gray-800">{{ _('Selected Files') }}</h4>
+                    <button id="clearAllFiles" class="text-red-600 hover:text-red-800 text-sm">
+                        <i class="fas fa-trash mr-1"></i>{{ _('Clear All') }}
+                    </button>
+                </div>
+                <div id="selectedFilesList" class="space-y-2 max-h-60 overflow-y-auto">
+                    <!-- Selected files will be populated here -->
+                </div>
+            </div>
+
+            <!-- Processing Options -->
+            <div id="processingOptions" class="mb-6 hidden">
+                <h4 class="text-md font-semibold text-gray-800 mb-3">{{ _('Processing Options') }}</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            {{ _('Compression Quality') }}
+                        </label>
+                        <select id="compressionQuality" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                            <option value="0.9">{{ _('High Quality (90%)') }}</option>
+                            <option value="0.8" selected>{{ _('Good Quality (80%)') }}</option>
+                            <option value="0.7">{{ _('Medium Quality (70%)') }}</option>
+                            <option value="0.6">{{ _('Lower Quality (60%)') }}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            {{ _('Max Concurrent Uploads') }}
+                        </label>
+                        <select id="maxConcurrentUploads" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                            <option value="2" selected>2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            {{ _('Processing Threads') }}
+                        </label>
+                        <select id="maxProcessingThreads" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                            <option value="2">2</option>
+                            <option value="3" selected>3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Batch Controls -->
+            <div id="batchControls" class="mb-6 hidden">
+                <div class="flex flex-wrap gap-3">
+                    <button id="startBatchBtn" 
+                            class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-play mr-2"></i>{{ _('Start Upload') }}
+                    </button>
+                    <button id="pauseBatchBtn" 
+                            class="bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed" 
+                            disabled>
+                        <i class="fas fa-pause mr-2"></i>{{ _('Pause') }}
+                    </button>
+                    <button id="resumeBatchBtn" 
+                            class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed" 
+                            disabled>
+                        <i class="fas fa-play mr-2"></i>{{ _('Resume') }}
+                    </button>
+                    <button id="cancelBatchBtn" 
+                            class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed" 
+                            disabled>
+                        <i class="fas fa-stop mr-2"></i>{{ _('Cancel') }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Overview -->
+            <div id="progressOverview" class="mb-6 hidden">
+                <h4 class="text-md font-semibold text-gray-800 mb-3">{{ _('Upload Progress') }}</h4>
+                
+                <!-- Overall Progress -->
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>{{ _('Overall Progress') }}</span>
+                        <span id="overallProgressText">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div id="overallProgressBar" 
+                             class="bg-blue-500 h-3 rounded-full transition-all duration-300" 
+                             style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Upload Progress -->
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>{{ _('Upload Progress') }}</span>
+                        <span id="uploadProgressText">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div id="uploadProgressBar" 
+                             class="bg-green-500 h-3 rounded-full transition-all duration-300" 
+                             style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div class="text-center">
+                        <div id="totalFilesCount" class="text-2xl font-bold text-gray-800">0</div>
+                        <div class="text-sm text-gray-600">{{ _('Total Files') }}</div>
+                    </div>
+                    <div class="text-center">
+                        <div id="completedFilesCount" class="text-2xl font-bold text-green-600">0</div>
+                        <div class="text-sm text-gray-600">{{ _('Completed') }}</div>
+                    </div>
+                    <div class="text-center">
+                        <div id="uploadedFilesCount" class="text-2xl font-bold text-blue-600">0</div>
+                        <div class="text-sm text-gray-600">{{ _('Uploaded') }}</div>
+                    </div>
+                    <div class="text-center">
+                        <div id="errorFilesCount" class="text-2xl font-bold text-red-600">0</div>
+                        <div class="text-sm text-gray-600">{{ _('Errors') }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Individual File Progress -->
+            <div id="fileProgressSection" class="mb-6 hidden">
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="text-md font-semibold text-gray-800">{{ _('File Progress') }}</h4>
+                    <button id="toggleFileProgress" class="text-blue-600 hover:text-blue-800 text-sm">
+                        <i class="fas fa-chevron-down mr-1"></i>{{ _('Show Details') }}
+                    </button>
+                </div>
+                <div id="fileProgressList" class="space-y-2 max-h-80 overflow-y-auto hidden">
+                    <!-- Individual file progress will be populated here -->
+                </div>
+            </div>
+
+            <!-- Error Display -->
+            <div id="errorSection" class="mb-6 hidden">
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="text-md font-semibold text-red-800">{{ _('Errors') }}</h4>
+                    <button id="retryFailedBtn" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">
+                        <i class="fas fa-redo mr-1"></i>{{ _('Retry Failed') }}
+                    </button>
+                </div>
+                <div id="errorList" class="space-y-2 max-h-40 overflow-y-auto">
+                    <!-- Error messages will be populated here -->
+                </div>
+            </div>
+
+            <!-- Batch Results Summary -->
+            <div id="batchResults" class="mb-6 hidden">
+                <h4 class="text-md font-semibold text-gray-800 mb-3">{{ _('Upload Summary') }}</h4>
+                <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-center">
+                            <div id="successfulUploads" class="text-2xl font-bold text-green-600">0</div>
+                            <div class="text-sm text-gray-600">{{ _('Successful Uploads') }}</div>
+                        </div>
+                        <div class="text-center">
+                            <div id="spaceSaved" class="text-2xl font-bold text-blue-600">0 MB</div>
+                            <div class="text-sm text-gray-600">{{ _('Space Saved') }}</div>
+                        </div>
+                        <div class="text-center">
+                            <div id="totalTime" class="text-2xl font-bold text-purple-600">0s</div>
+                            <div class="text-sm text-gray-600">{{ _('Total Time') }}</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <div class="text-sm text-gray-600">
+                            {{ _('Average compression ratio:') }} <span id="avgCompressionRatio" class="font-semibold">1.0x</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-end space-x-3">
+                <button id="closeBatchUploadBtn" 
+                        class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                    {{ _('Close') }}
+                </button>
+                <button id="addToFormBtn" 
+                        class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 hidden">
+                    <i class="fas fa-plus mr-2"></i>{{ _('Add to Form') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Batch Upload CSS -->
+<style>
+.batch-upload-file-item {
+    @apply flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg;
+}
+
+.batch-upload-file-item:hover {
+    @apply bg-gray-50;
+}
+
+.batch-upload-file-progress {
+    @apply w-32 h-2 bg-gray-200 rounded-full overflow-hidden;
+}
+
+.batch-upload-file-progress-fill {
+    @apply h-full transition-all duration-300;
+}
+
+.batch-upload-status {
+    @apply px-2 py-1 rounded text-xs font-medium;
+}
+
+.batch-upload-status.waiting {
+    @apply bg-gray-100 text-gray-700;
+}
+
+.batch-upload-status.processing {
+    @apply bg-yellow-100 text-yellow-800;
+}
+
+.batch-upload-status.uploading {
+    @apply bg-blue-100 text-blue-800;
+}
+
+.batch-upload-status.completed {
+    @apply bg-green-100 text-green-800;
+}
+
+.batch-upload-status.error {
+    @apply bg-red-100 text-red-800;
+}
+
+.batch-upload-status.paused {
+    @apply bg-gray-100 text-gray-700;
+}
+
+.batch-upload-error-item {
+    @apply p-3 bg-red-50 border border-red-200 rounded-lg;
+}
+
+.drop-zone-active {
+    @apply border-blue-400 bg-blue-50;
+}
+
+.file-size-text {
+    @apply text-sm text-gray-500;
+}
+
+.compression-info {
+    @apply text-xs text-green-600;
+}
+</style>

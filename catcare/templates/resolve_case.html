@@ -2,6 +2,8 @@
 
 {% block content %}
 
+
+
 <div class="bg-white shadow-md rounded-lg p-6 max-w mx-auto">
     <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Resolve Case #{{ case.id }}</h2>
     
@@ -54,26 +56,47 @@
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">{{ case.resolution_notes or '' }}</textarea>
         </div>
 
+        <!-- Resolution Photos -->
         <div class="mb-4">
-        <label for="photos" class="block text-sm font-medium text-gray-700 mb-1">Add Resolution Photos</label>
-        <input type="file" 
-               id="photos"
-               name="photos[]"
-               multiple
-               accept="image/*"
-               class="w-full px-3 py-2 border border-gray-300 rounded-md">
-    </div>
+            <label for="photos" class="block text-sm font-medium text-gray-700 mb-1">Add Resolution Photos</label>
+            <div class="space-y-3">
+                <!-- Camera Capture Button -->
+                <button type="button" id="capturePhotosBtn"
+                    class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center">
+                    <i class="fas fa-camera mr-2"></i>Take Photos
+                </button>
 
-    <!-- Videos -->
-    <div class="mb-4">
-        <label for="videos" class="block text-sm font-medium text-gray-700 mb-1">Add Resolution Videos</label>
-        <input type="file" 
-               id="videos"
-               name="videos[]"
-               multiple
-               accept="video/*"
-               class="w-full px-3 py-2 border border-gray-300 rounded-md">
-    </div>
+                <!-- File Upload Input -->
+                <input type="file" 
+                       id="photos"
+                       name="photos[]"
+                       multiple
+                       accept="image/*"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <p class="text-sm text-gray-500 mt-1">Take photos with camera or select files</p>
+            </div>
+        </div>
+
+        <!-- Resolution Videos -->
+        <div class="mb-4">
+            <label for="videos" class="block text-sm font-medium text-gray-700 mb-1">Add Resolution Videos</label>
+            <div class="space-y-3">
+                <!-- Camera Capture Button -->
+                <button type="button" id="captureVideoBtn"
+                    class="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center justify-center">
+                    <i class="fas fa-video mr-2"></i>Record Video
+                </button>
+
+                <!-- File Upload Input -->
+                <input type="file" 
+                       id="videos"
+                       name="videos[]"
+                       multiple
+                       accept="video/*"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                <p class="text-sm text-gray-500 mt-1">Record video with camera or select files</p>
+            </div>
+        </div>
 
     <!-- PDFs -->
     <div class="mb-4">
@@ -100,10 +123,209 @@
         </div>
     </form>
 
+    <!-- Camera Capture Interface Container -->
+    <div id="cameraContainer" class="camera-capture-container hidden mb-6">
+        <!-- Camera interface will be dynamically inserted here -->
+    </div>
+
     <!-- Home Link -->
     <a href="{{ url_for('main.show_cases') }}"
        class="block mt-6 text-center text-blue-500 hover:text-blue-600">
         Back to Home
     </a>
 </div>
+
+<!-- Include Camera Capture JavaScript -->
+<script src="{{ url_for('static', filename='js/camera-capture.js') }}"></script>
+
+<script>
+    // Initialize camera capture functionality
+    let cameraCapture = null;
+    let capturedPhotos = [];
+    let capturedVideos = [];
+
+    // Initialize camera capture when DOM is loaded
+    document.addEventListener('DOMContentLoaded', async function () {
+        try {
+            cameraCapture = new CameraCapture({
+                maxRecordingDuration: 120000, // 2 minutes
+                photoQuality: 0.8,
+                maxPhotoSize: 10 * 1024 * 1024 // 10MB
+            });
+
+            // Initialize camera system
+            await cameraCapture.init();
+
+            console.log('Camera capture initialized successfully');
+        } catch (error) {
+            console.error('Camera capture initialization failed:', error);
+        }
+    });
+
+    // Photo capture button handler
+    document.getElementById('capturePhotosBtn').addEventListener('click', async function () {
+        if (!cameraCapture) {
+            alert('Camera not available. Please use file upload instead.');
+            return;
+        }
+
+        const container = document.getElementById('cameraContainer');
+        container.classList.remove('hidden');
+
+        try {
+            const success = await cameraCapture.startPhotoCapture(container);
+            if (!success) {
+                container.classList.add('hidden');
+                alert('Could not access camera. Please use file upload instead.');
+            }
+        } catch (error) {
+            console.error('Photo capture failed:', error);
+            container.classList.add('hidden');
+            alert('Camera access failed. Please use file upload instead.');
+        }
+    });
+
+    // Video capture button handler
+    document.getElementById('captureVideoBtn').addEventListener('click', async function () {
+        if (!cameraCapture) {
+            alert('Camera not available. Please use file upload instead.');
+            return;
+        }
+
+        const container = document.getElementById('cameraContainer');
+        container.classList.remove('hidden');
+
+        try {
+            const success = await cameraCapture.startVideoCapture(container);
+            if (!success) {
+                container.classList.add('hidden');
+                alert('Could not access camera. Please use file upload instead.');
+            }
+        } catch (error) {
+            console.error('Video capture failed:', error);
+            container.classList.add('hidden');
+            alert('Camera access failed. Please use file upload instead.');
+        }
+    });
+
+    // Listen for captured media events
+    document.addEventListener('photo:captured', function (event) {
+        const media = event.detail.media;
+        capturedPhotos.push(media);
+        console.log('Resolution photo captured:', media);
+    });
+
+    document.addEventListener('video:captured', function (event) {
+        const media = event.detail.media;
+        capturedVideos.push(media);
+        console.log('Resolution video captured:', media);
+    });
+
+    // Listen for media removal events
+    document.addEventListener('media:removed', function (event) {
+        const { mediaId, mediaType } = event.detail;
+        if (mediaType === 'photo') {
+            capturedPhotos = capturedPhotos.filter(photo => photo.id !== mediaId);
+        } else if (mediaType === 'video') {
+            capturedVideos = capturedVideos.filter(video => video.id !== mediaId);
+        }
+    });
+
+    // Close camera interface when clicking outside
+    document.addEventListener('click', function (event) {
+        const container = document.getElementById('cameraContainer');
+        const captureButtons = [
+            document.getElementById('capturePhotosBtn'),
+            document.getElementById('captureVideoBtn')
+        ];
+
+        if (!container.classList.contains('hidden') &&
+            !container.contains(event.target) &&
+            !captureButtons.some(btn => btn.contains(event.target))) {
+
+            // Check if camera is active before closing
+            if (cameraCapture && cameraCapture.getState().isActive) {
+                cameraCapture.stopCamera();
+                container.classList.add('hidden');
+            }
+        }
+    });
+
+    // Handle form submission with captured media
+    document.getElementById('resolveForm').addEventListener('submit', async function (e) {
+        // Only prevent default if we have captured media to process
+        if (capturedPhotos.length > 0 || capturedVideos.length > 0) {
+            e.preventDefault();
+
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerText;
+            submitButton.disabled = true;
+            submitButton.innerText = 'Resolving...';
+
+            const formData = new FormData(this);
+
+            // Add captured photos to form data as resolution photos
+            for (const photo of capturedPhotos) {
+                const file = new File([photo.blob], `resolution_photo_${photo.id}.jpg`, {
+                    type: 'image/jpeg'
+                });
+                formData.append('photos[]', file);
+            }
+
+            // Add captured videos to form data as resolution videos
+            for (const video of capturedVideos) {
+                const file = new File([video.blob], `resolution_video_${video.id}.webm`, {
+                    type: 'video/webm'
+                });
+                formData.append('videos[]', file);
+            }
+
+            // Log form data for debugging
+            console.log('Submitting resolution form with captured media:');
+            for (let pair of formData.entries()) {
+                console.log(pair[0], pair[1] instanceof File ? pair[1].name : pair[1]);
+            }
+
+            try {
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // Check if response is JSON or HTML
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const data = await response.json();
+                    console.log('Server response:', data);
+
+                    if (data.success) {
+                        alert('Case resolved successfully!');
+                        const returnUrl = document.querySelector('input[name="return_to"]')?.value || 
+                                        '{{ url_for("main.show_cases") }}';
+                        window.location.href = returnUrl;
+                    } else {
+                        throw new Error(data.error || 'Resolution failed');
+                    }
+                } else {
+                    // Handle HTML response (redirect)
+                    const returnUrl = document.querySelector('input[name="return_to"]')?.value || 
+                                    '{{ url_for("main.show_cases") }}';
+                    window.location.href = returnUrl;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert(error.message || 'An error occurred during case resolution');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerText = originalText;
+            }
+        }
+        // If no captured media, let form submit normally
+    });
+</script>
+
 {% endblock %}

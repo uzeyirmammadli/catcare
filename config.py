@@ -43,6 +43,46 @@ class Config:
     # Logging
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
     
+    # Image Processing Configuration
+    IMAGE_PROCESSING_ENABLED = True
+    IMAGE_COMPRESSION_QUALITY = {
+        'high_quality': 95,
+        'balanced': 85,
+        'aggressive': 70
+    }
+    IMAGE_COMPRESSION_TARGET_RATIO = 0.7  # Target 70% size reduction
+    IMAGE_MAX_DIMENSION = 2048  # Max width/height for processed images
+    
+    # Thumbnail Configuration
+    THUMBNAIL_SIZES = [
+        (150, 150),   # Small thumbnail
+        (300, 300),   # Medium thumbnail
+        (600, 400)    # Large thumbnail
+    ]
+    THUMBNAIL_QUALITY = 85
+    THUMBNAIL_FORMAT = 'JPEG'
+    
+    # EXIF Processing Configuration
+    EXIF_EXTRACTION_ENABLED = True
+    EXIF_GPS_PRECISION = 6  # Decimal places for GPS coordinates
+    EXIF_STRIP_SENSITIVE_DATA = True  # Remove device serial numbers, etc.
+    
+    # Format Conversion Configuration
+    FORMAT_CONVERSION_ENABLED = True
+    SUPPORTED_INPUT_FORMATS = ['JPEG', 'PNG', 'WEBP', 'HEIC', 'HEIF', 'TIFF']
+    PREFERRED_OUTPUT_FORMAT = 'JPEG'
+    PNG_BACKGROUND_COLOR = (255, 255, 255)  # White background for PNG transparency
+    
+    # Batch Processing Configuration
+    BATCH_PROCESSING_MAX_FILES = 20
+    BATCH_PROCESSING_PARALLEL_LIMIT = 5
+    BATCH_PROCESSING_TIMEOUT = 300  # 5 minutes
+    
+    # Processing Performance Configuration
+    PROCESSING_MEMORY_LIMIT = 512 * 1024 * 1024  # 512MB
+    PROCESSING_TIMEOUT = 60  # 60 seconds per file
+    PROCESSING_TEMP_DIR = '/tmp/media_processing'
+    
     @staticmethod
     def init_app(app):
         """Initialize app with configuration"""
@@ -61,49 +101,49 @@ class DevelopmentConfig(Config):
     TESTING = False
 
 
-class ProductionConfig(Config):
-    """Production configuration for Google App Engine"""
-    DEBUG = False
-    TESTING = False
+# class ProductionConfig(Config):
+#     """Production configuration for Google App Engine"""
+#     DEBUG = False
+#     TESTING = False
     
-    # Database configuration for Cloud SQL
-    db_pass = os.getenv('DB_PASSWORD')
-    if not db_pass:
-        raise ValueError("DB_PASSWORD environment variable is required in production")
+#     # Database configuration for Cloud SQL
+#     db_pass = os.getenv('DB_PASSWORD')
+#     if not db_pass:
+#         raise ValueError("DB_PASSWORD environment variable is required in production")
     
-    # Cloud SQL instance connection
-    cloud_sql_instance = os.getenv('CLOUD_SQL_INSTANCE')
-    if not cloud_sql_instance:
-        raise ValueError("CLOUD_SQL_INSTANCE environment variable is required in production")
+#     # Cloud SQL instance connection
+#     cloud_sql_instance = os.getenv('CLOUD_SQL_INSTANCE')
+#     if not cloud_sql_instance:
+#         raise ValueError("CLOUD_SQL_INSTANCE environment variable is required in production")
     
-    SQLALCHEMY_DATABASE_URI = (
-        f"postgresql+pg8000://postgres:{db_pass}@/cats"
-        f"?unix_sock=/cloudsql/{cloud_sql_instance}/.s.PGSQL.5432"
-    )
+#     SQLALCHEMY_DATABASE_URI = (
+#         f"postgresql+pg8000://postgres:{db_pass}@/cats"
+#         f"?unix_sock=/cloudsql/{cloud_sql_instance}/.s.PGSQL.5432"
+#     )
     
-    # Cloud Storage configuration
-    STORAGE_BUCKET = os.getenv('STORAGE_BUCKET')
-    if not STORAGE_BUCKET:
-        raise ValueError("STORAGE_BUCKET environment variable is required in production")
-    UPLOAD_FOLDER = '/tmp'
-    CLOUD_STORAGE_URL = f"https://storage.googleapis.com/{STORAGE_BUCKET}"
+#     # Cloud Storage configuration
+#     STORAGE_BUCKET = os.getenv('STORAGE_BUCKET')
+#     if not STORAGE_BUCKET:
+#         raise ValueError("STORAGE_BUCKET environment variable is required in production")
+#     UPLOAD_FOLDER = '/tmp'
+#     CLOUD_STORAGE_URL = f"https://storage.googleapis.com/{STORAGE_BUCKET}"
     
-    # Security settings
-    WTF_CSRF_ENABLED = True
-    SESSION_COOKIE_SECURE = True
-    SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
+#     # Security settings
+#     WTF_CSRF_ENABLED = True
+#     SESSION_COOKIE_SECURE = True
+#     SESSION_COOKIE_HTTPONLY = True
+#     SESSION_COOKIE_SAMESITE = 'Lax'
     
-    @staticmethod
-    def init_app(app):
-        Config.init_app(app)
+#     @staticmethod
+#     def init_app(app):
+#         Config.init_app(app)
         
-        # Log to stderr in production
-        import logging
-        from logging import StreamHandler
-        file_handler = StreamHandler()
-        file_handler.setLevel(logging.INFO)
-        app.logger.addHandler(file_handler)
+#         # Log to stderr in production
+#         import logging
+#         from logging import StreamHandler
+#         file_handler = StreamHandler()
+#         file_handler.setLevel(logging.INFO)
+#         app.logger.addHandler(file_handler)
 
 
 class TestingConfig(Config):
@@ -117,7 +157,7 @@ class TestingConfig(Config):
 # Configuration mapping
 config = {
     'development': DevelopmentConfig,
-    'production': ProductionConfig,
+    # 'production': ProductionConfig,
     'testing': TestingConfig,
     'default': DevelopmentConfig
 }
@@ -126,7 +166,7 @@ config = {
 def get_config():
     """Get configuration based on environment"""
     env = os.getenv('FLASK_ENV', 'development')
-    if os.getenv('GAE_ENV', '').startswith('standard'):
-        env = 'production'
+    # if os.getenv('GAE_ENV', '').startswith('standard'):
+    #     env = 'production'
     
     return config.get(env, config['default'])

@@ -3,17 +3,20 @@
 {% block content %}
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-        <script>
+        <div id="flashMessages" style="display: none;">
             {% for category, message in messages %}
-                console.log("{{ category }}: {{ message }}");
+                <div data-category="{{ category }}" data-message="{{ message }}"></div>
             {% endfor %}
-        </script>
+        </div>
     {% endif %}
 {% endwith %}
+
+
+
 <body class="bg-gradient-to-br from-blue-50 to-gray-100 min-h-screen">
-         <div class="w-full max-w">
-          <h1 class="text-2xl font-bold text-center mb-6">Update Case</h1>
-        
+    <div class="w-full max-w-4xl mx-auto p-6">
+        <h1 class="text-2xl font-bold text-center mb-6">Update Case</h1>
+
         <!-- {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -24,211 +27,204 @@
             {% endif %}
         {% endwith %} -->
 
-        <form id="updateForm" action="{{ url_for('main.update', case_id=case.id) }}" method="POST" enctype="multipart/form-data" data-case-id="{{ case.id }}">
+        <form id="updateForm" action="{{ url_for('main.update', case_id=case.id) }}" method="POST"
+            enctype="multipart/form-data" data-case-id="{{ case.id }}">
             <input type="hidden" name="next" value="{{ request.args.get('next') or request.referrer }}">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="mb-4">
                     <label for="photos" class="block text-gray-700 text-sm font-bold mb-2">Upload New Photos</label>
-                    <input type="file" 
-                           id="photos"
-                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                           name="photos[]"
-                           accept="image/*"
-                           multiple>
-                    
+                    <div class="space-y-3">
+                        <!-- Camera Capture Button -->
+                        <button type="button" id="capturePhotosBtn"
+                            class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center">
+                            <i class="fas fa-camera mr-2"></i>Take Photos
+                        </button>
+
+                        <!-- File Upload Input -->
+                        <input type="file" id="photos"
+                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            name="photos[]" accept="image/*" multiple>
+                        <p class="text-sm text-gray-500 mt-1">Take photos with camera or select files</p>
+                    </div>
+
                     <!-- Display existing photos -->
                     <div class="mt-4 grid grid-cols-3 gap-4">
                         {% if case.photos %}
-                            {% for photo in case.photos %}
-                            <div class="relative">
-                                <img src="{{ photo }}" 
-                                     alt="Case photo" 
-                                     class="w-full h-32 object-cover rounded">
-                                <button type="button" onclick="removeMedia('photo', this)" data-url="{{ photo }}" 
-                                        class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
-                                    ×
-                                </button>
-                            </div>
-                            {% endfor %}
+                        {% for photo in case.photos %}
+                        <div class="relative">
+                            <img src="{{ photo }}" alt="Case photo" class="w-full h-32 object-cover rounded">
+                            <button type="button" onclick="removeMedia('photo', this)" data-url="{{ photo }}"
+                                class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
+                                ×
+                            </button>
+                        </div>
+                        {% endfor %}
                         {% elif case.photo %}
-                            <div class="relative">
-                                <img src="{{ case.photo }}" 
-                                     alt="Case photo" 
-                                     class="w-full h-32 object-cover rounded">
-                                <button type="button" onclick="removeMedia('photo', this)" data-url="{{ case.photo }}" 
-                                        class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
-                                    ×
-                                </button>
-                            </div>
-                        {% endif %}
-                    </div>
-        
-                <!-- Videos Upload -->
-                <div class="mb-4">
-                    <label for="videos" class="block text-gray-700 text-sm font-bold mb-2">Upload New Videos</label>
-                    <input type="file" 
-                           id="videos"
-                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                           name="videos[]"
-                           accept="video/*"
-                           multiple>
-                    
-                    <!-- Display existing videos -->
-                    <div class="mt-4 grid grid-cols-3 gap-4">
-                        {% if case.videos %}
-                            {% for video in case.videos %}
-                            <div class="relative">
-                                <video class="w-full h-32 object-cover rounded" controls>
-                                    <source src="{{ video }}" type="video/mp4">
-                                    Your browser does not support the video tag.
-                                </video>
-                                <button type="button" onclick="removeMedia('video', this)" data-url="{{ video }}" 
-                                        class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
-                                    ×
-                                </button>
-                            </div>
-                            {% endfor %}
+                        <div class="relative">
+                            <img src="{{ case.photo }}" alt="Case photo" class="w-full h-32 object-cover rounded">
+                            <button type="button" onclick="removeMedia('photo', this)" data-url="{{ case.photo }}"
+                                class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
+                                ×
+                            </button>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
+
+                <!-- Videos Upload -->
+                <div class="mb-4">
+                    <label for="videos" class="block text-gray-700 text-sm font-bold mb-2">Upload New Videos</label>
+                    <div class="space-y-3">
+                        <!-- Camera Capture Button -->
+                        <button type="button" id="captureVideoBtn"
+                            class="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center justify-center">
+                            <i class="fas fa-video mr-2"></i>Record Video
+                        </button>
+
+                        <!-- File Upload Input -->
+                        <input type="file" id="videos"
+                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            name="videos[]" accept="video/*" multiple>
+                        <p class="text-sm text-gray-500 mt-1">Record video with camera or select files</p>
+                    </div>
+
+                    <!-- Display existing videos -->
+                    <div class="mt-4 grid grid-cols-3 gap-4">
+                        {% if case.videos %}
+                        {% for video in case.videos %}
+                        <div class="relative">
+                            <video class="w-full h-32 object-cover rounded" controls>
+                                <source src="{{ video }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                            <button type="button" onclick="removeMedia('video', this)" data-url="{{ video }}"
+                                class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1">
+                                ×
+                            </button>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Camera Capture Interface Container -->
+            <div id="cameraContainer" class="camera-capture-container hidden mb-6">
+                <!-- Camera interface will be dynamically inserted here -->
             </div>
 
             <div class="mb-4">
                 <label for="location" class="block text-gray-700 text-sm font-bold mb-2">Location</label>
                 <div class="flex items-center gap-2">
-                    <input type="text" 
-                           id="location"
-                           class="flex-1 shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                           name="location" 
-                           value="{{ case.location }}"
-                           required>
-                    <button type="button" 
-                            id="getLocation" 
-                            class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="location"
+                        class="flex-1 shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        name="location" value="{{ case.location }}" required>
+                    <button type="button" id="getLocation"
+                        class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <i class="fas fa-location-dot mr-2"></i>Get Location
                     </button>
                 </div>
                 <!-- Hidden inputs for coordinates -->
                 <input type="hidden" id="latitude" name="latitude" value="{{ case.latitude if case.latitude else '' }}">
-                <input type="hidden" id="longitude" name="longitude" value="{{ case.longitude if case.longitude else '' }}">
+                <input type="hidden" id="longitude" name="longitude"
+                    value="{{ case.longitude if case.longitude else '' }}">
                 <p id="locationStatus" class="mt-1 text-sm text-gray-500"></p>
-            
+
                 <!-- Map div to show current location -->
                 {% if case.latitude and case.longitude %}
-                <div id="currentLocationMap" 
-                     class="mt-4 h-64 rounded-lg shadow-md"
-                     data-latitude="{{ case.latitude }}"
-                     data-longitude="{{ case.longitude }}">
+                <div id="currentLocationMap" class="mt-4 h-64 rounded-lg shadow-md" data-latitude="{{ case.latitude }}"
+                    data-longitude="{{ case.longitude }}">
                 </div>
                 {% endif %}
+            </div>
 
-<!-- Needs Section -->
-<div class="mb-4">
-    <label class="block text-gray-700 text-sm font-bold mb-2">Update Needs</label>
-    <div class="bg-white p-4 rounded shadow">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Medical Care Option -->
-            <div class="flex items-center">
-                <input type="checkbox" 
-                       name="needs[]" 
-                       value="medical" 
-                       class="form-checkbox h-5 w-5 text-blue-600 rounded"
-                       id="need-medical"
-                       {{ 'checked' if (case.needs and 'medical' in case.needs) or (case.need == 'medical') else '' }}>
-                <label for="need-medical" class="ml-2">Medical Care</label>
+            <!-- Needs Section -->
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Update Needs</label>
+                <div class="bg-white p-4 rounded shadow">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Medical Care Option -->
+                        <div class="flex items-center">
+                            <input type="checkbox" name="needs[]" value="medical"
+                                class="form-checkbox h-5 w-5 text-blue-600 rounded" id="need-medical" {{ 'checked' if
+                                (case.needs and 'medical' in case.needs) or (case.need=='medical' ) else '' }}>
+                            <label for="need-medical" class="ml-2">Medical Care</label>
+                        </div>
+
+                        <!-- Food/Water Option -->
+                        <div class="flex items-center">
+                            <input type="checkbox" name="needs[]" value="food"
+                                class="form-checkbox h-5 w-5 text-blue-600 rounded" id="need-food" {{ 'checked' if
+                                (case.needs and 'food' in case.needs) or (case.need=='food' ) else '' }}>
+                            <label for="need-food" class="ml-2">Food/Water</label>
+                        </div>
+
+                        <!-- Shelter Option -->
+                        <div class="flex items-center">
+                            <input type="checkbox" name="needs[]" value="shelter"
+                                class="form-checkbox h-5 w-5 text-blue-600 rounded" id="need-shelter" {{ 'checked' if
+                                (case.needs and 'shelter' in case.needs) or (case.need=='shelter' ) else '' }}>
+                            <label for="need-shelter" class="ml-2">Shelter</label>
+                        </div>
+
+                        <!-- Rescue/Relocation Option -->
+                        <div class="flex items-center">
+                            <input type="checkbox" name="needs[]" value="rescue"
+                                class="form-checkbox h-5 w-5 text-blue-600 rounded" id="need-rescue" {{ 'checked' if
+                                (case.needs and 'rescue' in case.needs) or (case.need=='rescue' ) else '' }}>
+                            <label for="need-rescue" class="ml-2">Rescue/Relocation</label>
+                        </div>
+
+                        <!-- Vaccination Option -->
+                        <div class="flex items-center">
+                            <input type="checkbox" name="needs[]" value="vaccination"
+                                class="form-checkbox h-5 w-5 text-blue-600 rounded" id="need-vaccination" {{ 'checked'
+                                if (case.needs and 'vaccination' in case.needs) or (case.need=='vaccination' ) else ''
+                                }}>
+                            <label for="need-vaccination" class="ml-2">Vaccination</label>
+                        </div>
+
+                        <!-- Sterilization Option -->
+                        <div class="flex items-center">
+                            <input type="checkbox" name="needs[]" value="sterilization"
+                                class="form-checkbox h-5 w-5 text-blue-600 rounded" id="need-sterilization" {{ 'checked'
+                                if (case.needs and 'sterilization' in case.needs) or (case.need=='sterilization' )
+                                else '' }}>
+                            <label for="need-sterilization" class="ml-2">Sterilization</label>
+                        </div>
+
+                        <!-- Other Option -->
+                        <div class="flex items-center">
+                            <input type="checkbox" name="needs[]" value="other"
+                                class="form-checkbox h-5 w-5 text-blue-600 rounded" id="need-other" {{ 'checked' if
+                                (case.needs and 'other' in case.needs) or (case.need=='other' ) else '' }}>
+                            <label for="need-other" class="ml-2">Other</label>
+                        </div>
+                    </div>
+
+                    <p class="text-sm text-gray-500 mt-2">Select all applicable needs</p>
+                </div>
             </div>
-            
-            <!-- Food/Water Option -->
-            <div class="flex items-center">
-                <input type="checkbox" 
-                       name="needs[]" 
-                       value="food" 
-                       class="form-checkbox h-5 w-5 text-blue-600 rounded"
-                       id="need-food"
-                       {{ 'checked' if (case.needs and 'food' in case.needs) or (case.need == 'food') else '' }}>
-                <label for="need-food" class="ml-2">Food/Water</label>
-            </div>
-            
-            <!-- Shelter Option -->
-            <div class="flex items-center">
-                <input type="checkbox" 
-                       name="needs[]" 
-                       value="shelter" 
-                       class="form-checkbox h-5 w-5 text-blue-600 rounded"
-                       id="need-shelter"
-                       {{ 'checked' if (case.needs and 'shelter' in case.needs) or (case.need == 'shelter') else '' }}>
-                <label for="need-shelter" class="ml-2">Shelter</label>
-            </div>
-            
-            <!-- Rescue/Relocation Option -->
-            <div class="flex items-center">
-                <input type="checkbox" 
-                       name="needs[]" 
-                       value="rescue" 
-                       class="form-checkbox h-5 w-5 text-blue-600 rounded"
-                       id="need-rescue"
-                       {{ 'checked' if (case.needs and 'rescue' in case.needs) or (case.need == 'rescue') else '' }}>
-                <label for="need-rescue" class="ml-2">Rescue/Relocation</label>
-            </div>
-            
-            <!-- Vaccination Option -->
-            <div class="flex items-center">
-                <input type="checkbox" 
-                       name="needs[]" 
-                       value="vaccination" 
-                       class="form-checkbox h-5 w-5 text-blue-600 rounded"
-                       id="need-vaccination"
-                       {{ 'checked' if (case.needs and 'vaccination' in case.needs) or (case.need == 'vaccination') else '' }}>
-                <label for="need-vaccination" class="ml-2">Vaccination</label>
-            </div>
-            
-            <!-- Sterilization Option -->
-            <div class="flex items-center">
-                <input type="checkbox" 
-                       name="needs[]" 
-                       value="sterilization" 
-                       class="form-checkbox h-5 w-5 text-blue-600 rounded"
-                       id="need-sterilization"
-                       {{ 'checked' if (case.needs and 'sterilization' in case.needs) or (case.need == 'sterilization') else '' }}>
-                <label for="need-sterilization" class="ml-2">Sterilization</label>
-            </div>
-            
-            <!-- Other Option -->
-            <div class="flex items-center">
-                <input type="checkbox" 
-                       name="needs[]" 
-                       value="other" 
-                       class="form-checkbox h-5 w-5 text-blue-600 rounded"
-                       id="need-other"
-                       {{ 'checked' if (case.needs and 'other' in case.needs) or (case.need == 'other') else '' }}>
-                <label for="need-other" class="ml-2">Other</label>
-            </div>
-        </div>
-        
-        <p class="text-sm text-gray-500 mt-2">Select all applicable needs</p>
-    </div>
-</div>
-            
+
 
             <div class="mb-6">
                 <label for="status" class="block text-gray-700 text-sm font-bold mb-2">Status</label>
                 <select id="status"
-                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                        name="status"
-                        required>
-                    <option value="OPEN" {% if case.status == 'OPEN' %}selected{% endif %}>OPEN</option>
-                    <option value="RESOLVED" {% if case.status == 'RESOLVED' %}selected{% endif %}>RESOLVED</option>
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    name="status" required>
+                    <option value="OPEN" {% if case.status=='OPEN' %}selected{% endif %}>OPEN</option>
+                    <option value="RESOLVED" {% if case.status=='RESOLVED' %}selected{% endif %}>RESOLVED</option>
                 </select>
             </div>
 
             <div class="flex items-center justify-between">
-                <button type="submit" 
-                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                <button type="submit"
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                     Update Case
                 </button>
-                <a href="{{ request.referrer or url_for('main.show_cases') }}" 
-                     class="bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
-                 Cancel
+                <a href="{{ request.referrer or url_for('main.show_cases') }}"
+                    class="bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                    Cancel
                 </a>
             </div>
         </form>
@@ -236,176 +232,322 @@
 
     <script>
 
-document.getElementById('updateForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const submitButton = this.querySelector('button[type="submit"]');
-    submitButton.disabled = true;
-    submitButton.innerText = 'Updating...';
-    
-    const formData = new FormData(this);
-    
-    // Log form data for debugging
-    for (let pair of formData.entries()) {
-        console.log(pair[0], pair[1] instanceof File ? pair[1].name : pair[1]);
-    }
-    
-    fetch(this.action, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Server response:', data);
-        if (data.success) {
-            alert('Case updated successfully!');
-            window.location.href = document.querySelector('input[name="next"]')?.value || '/';
-        } else {
-            throw new Error(data.error || 'Update failed');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert(error.message || 'An error occurred during update');
-    })
-    .finally(() => {
-        submitButton.disabled = false;
-        submitButton.innerText = 'Update Case';
-    });
-});
+        document.getElementById('updateForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const submitButton = this.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.innerText = 'Updating...';
+
+            const formData = new FormData(this);
+
+            // Add captured photos to form data
+            for (const photo of capturedPhotos) {
+                const file = new File([photo.blob], `captured_photo_${photo.id}.jpg`, {
+                    type: 'image/jpeg'
+                });
+                formData.append('photos[]', file);
+            }
+
+            // Add captured videos to form data
+            for (const video of capturedVideos) {
+                const file = new File([video.blob], `captured_video_${video.id}.webm`, {
+                    type: 'video/webm'
+                });
+                formData.append('videos[]', file);
+            }
+
+            // Log form data for debugging
+            for (let pair of formData.entries()) {
+                console.log(pair[0], pair[1] instanceof File ? pair[1].name : pair[1]);
+            }
+
+            try {
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Server response:', data);
+
+                if (data.success) {
+                    alert('Case updated successfully!');
+                    window.location.href = document.querySelector('input[name="next"]')?.value || '/';
+                } else {
+                    throw new Error(data.error || 'Update failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert(error.message || 'An error occurred during update');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerText = 'Update Case';
+            }
+        });
 
 
-// Location handler
-document.getElementById('getLocation').addEventListener('click', function() {
-    const locationStatus = document.getElementById('locationStatus');
-    locationStatus.textContent = 'Getting location...';
-    
-    if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-            
-            // Update hidden inputs
-            document.getElementById('latitude').value = lat;
-            document.getElementById('longitude').value = lon;
-            
-            // Update location display
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+        // Location handler
+        document.getElementById('getLocation').addEventListener('click', function () {
+            const locationStatus = document.getElementById('locationStatus');
+            locationStatus.textContent = 'Getting location...';
+
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+
+                    // Update hidden inputs
+                    document.getElementById('latitude').value = lat;
+                    document.getElementById('longitude').value = lon;
+
+                    // Update location display
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('location').value = data.display_name;
+                            locationStatus.textContent = 'Location updated successfully!';
+                            locationStatus.className = 'text-green-600';
+
+                            // Update map if it exists
+                            if (typeof updateLocationMap === 'function') {
+                                updateLocationMap(lat, lon);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error getting address:', error);
+                            document.getElementById('location').value = `${lat}, ${lon}`;
+                            locationStatus.textContent = 'Got coordinates, but could not get address';
+                            locationStatus.className = 'text-yellow-600';
+                        });
+                }, function (error) {
+                    console.error('Error:', error);
+                    locationStatus.textContent = 'Could not get location. Please enter manually.';
+                    locationStatus.className = 'text-red-600';
+                });
+            } else {
+                locationStatus.textContent = 'Location services not available in your browser.';
+                locationStatus.className = 'text-red-600';
+            }
+        });
+
+        // Media removal handler
+        function removeMedia(type, button) {
+            if (!confirm(`Are you sure you want to remove this ${type}?`)) {
+                return;
+            }
+
+            const url = button.dataset.url;
+            const mediaElement = button.closest('.relative');
+            const caseId = document.querySelector('#updateForm').dataset.caseId;
+
+            console.log('Removing media:', { type, url, caseId });
+
+            fetch(`/remove_media/${caseId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ type, url })
+            })
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('location').value = data.display_name;
-                    locationStatus.textContent = 'Location updated successfully!';
-                    locationStatus.className = 'text-green-600';
-                    
-                    // Update map if it exists
-                    if (typeof updateLocationMap === 'function') {
-                        updateLocationMap(lat, lon);
+                    console.log('Remove media response:', data);
+                    if (data.success) {
+                        mediaElement.remove();
+                        const flashMessage = document.createElement('div');
+                        flashMessage.className = 'mb-4 p-4 rounded bg-green-100 text-green-700';
+                        flashMessage.textContent = data.message;
+                        document.querySelector('#updateForm').insertBefore(flashMessage, document.querySelector('#updateForm').firstChild);
+                        setTimeout(() => flashMessage.remove(), 3000);
+                    } else {
+                        throw new Error(data.error || `Failed to remove ${type}`);
                     }
                 })
                 .catch(error => {
-                    console.error('Error getting address:', error);
-                    document.getElementById('location').value = `${lat}, ${lon}`;
-                    locationStatus.textContent = 'Got coordinates, but could not get address';
-                    locationStatus.className = 'text-yellow-600';
+                    console.error('Error:', error);
+                    alert(error.message || `Failed to remove ${type}`);
                 });
-        }, function(error) {
-            console.error('Error:', error);
-            locationStatus.textContent = 'Could not get location. Please enter manually.';
-            locationStatus.className = 'text-red-600';
-        });
-    } else {
-        locationStatus.textContent = 'Location services not available in your browser.';
-        locationStatus.className = 'text-red-600';
-    }
-});
-
-// Media removal handler
-function removeMedia(type, button) {
-    if (!confirm(`Are you sure you want to remove this ${type}?`)) {
-        return;
-    }
-    
-    const url = button.dataset.url;
-    const mediaElement = button.closest('.relative');
-    const caseId = document.querySelector('#updateForm').dataset.caseId;
-    
-    console.log('Removing media:', { type, url, caseId });
-    
-    fetch(`/remove_media/${caseId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ type, url })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Remove media response:', data);
-        if (data.success) {
-            mediaElement.remove();
-            const flashMessage = document.createElement('div');
-            flashMessage.className = 'mb-4 p-4 rounded bg-green-100 text-green-700';
-            flashMessage.textContent = data.message;
-            document.querySelector('#updateForm').insertBefore(flashMessage, document.querySelector('#updateForm').firstChild);
-            setTimeout(() => flashMessage.remove(), 3000);
-        } else {
-            throw new Error(data.error || `Failed to remove ${type}`);
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert(error.message || `Failed to remove ${type}`);
-    });
-}
 
-  // Modified map initialization code
-  let locationMap = null;
+        // Modified map initialization code
+        let locationMap = null;
 
-function initMap() {
-    const mapDiv = document.getElementById('currentLocationMap');
-    if (!mapDiv) return;
+        function initMap() {
+            const mapDiv = document.getElementById('currentLocationMap');
+            if (!mapDiv) return;
 
-    const lat = mapDiv.dataset.latitude;
-    const lon = mapDiv.dataset.longitude;
-    
-    if (!lat || !lon) return;
+            const lat = mapDiv.dataset.latitude;
+            const lon = mapDiv.dataset.longitude;
 
-    if (!locationMap) {
-        locationMap = L.map('currentLocationMap').setView([lat, lon], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(locationMap);
-        L.marker([lat, lon]).addTo(locationMap);
-    }
-}
+            if (!lat || !lon) return;
 
-function updateLocationMap(lat, lon) {
-    if (!locationMap) {
-        locationMap = L.map('currentLocationMap').setView([lat, lon], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(locationMap);
-    } else {
-        locationMap.setView([lat, lon], 15);
-        // Clear existing markers
-        locationMap.eachLayer((layer) => {
-            if (layer instanceof L.Marker) {
-                locationMap.removeLayer(layer);
+            if (!locationMap) {
+                locationMap = L.map('currentLocationMap').setView([lat, lon], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(locationMap);
+                L.marker([lat, lon]).addTo(locationMap);
+            }
+        }
+
+        function updateLocationMap(lat, lon) {
+            if (!locationMap) {
+                locationMap = L.map('currentLocationMap').setView([lat, lon], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(locationMap);
+            } else {
+                locationMap.setView([lat, lon], 15);
+                // Clear existing markers
+                locationMap.eachLayer((layer) => {
+                    if (layer instanceof L.Marker) {
+                        locationMap.removeLayer(layer);
+                    }
+                });
+            }
+            // Add new marker
+            L.marker([lat, lon]).addTo(locationMap);
+        }
+
+        // Initialize map when document is ready
+        document.addEventListener('DOMContentLoaded', function () {
+            initMap();
+        });
+    </script>
+
+    <!-- Include Camera Capture JavaScript -->
+    <script src="{{ url_for('static', filename='js/camera-capture.js') }}"></script>
+
+    <script>
+        // Initialize camera capture functionality
+        let cameraCapture = null;
+        let capturedPhotos = [];
+        let capturedVideos = [];
+
+        // Initialize camera capture when DOM is loaded
+        document.addEventListener('DOMContentLoaded', async function () {
+            try {
+                cameraCapture = new CameraCapture({
+                    maxRecordingDuration: 120000, // 2 minutes
+                    photoQuality: 0.8,
+                    maxPhotoSize: 10 * 1024 * 1024 // 10MB
+                });
+
+                // Initialize camera system
+                await cameraCapture.init();
+
+                console.log('Camera capture initialized successfully');
+            } catch (error) {
+                console.error('Camera capture initialization failed:', error);
             }
         });
-    }
-    // Add new marker
-    L.marker([lat, lon]).addTo(locationMap);
-}
 
-// Initialize map when document is ready
-document.addEventListener('DOMContentLoaded', function() {
-    initMap();
-});
+        // Photo capture button handler
+        document.getElementById('capturePhotosBtn').addEventListener('click', async function () {
+            if (!cameraCapture) {
+                alert('Camera not available. Please use file upload instead.');
+                return;
+            }
+
+            const container = document.getElementById('cameraContainer');
+            container.classList.remove('hidden');
+
+            try {
+                const success = await cameraCapture.startPhotoCapture(container);
+                if (!success) {
+                    container.classList.add('hidden');
+                    alert('Could not access camera. Please use file upload instead.');
+                }
+            } catch (error) {
+                console.error('Photo capture failed:', error);
+                container.classList.add('hidden');
+                alert('Camera access failed. Please use file upload instead.');
+            }
+        });
+
+        // Video capture button handler
+        document.getElementById('captureVideoBtn').addEventListener('click', async function () {
+            if (!cameraCapture) {
+                alert('Camera not available. Please use file upload instead.');
+                return;
+            }
+
+            const container = document.getElementById('cameraContainer');
+            container.classList.remove('hidden');
+
+            try {
+                const success = await cameraCapture.startVideoCapture(container);
+                if (!success) {
+                    container.classList.add('hidden');
+                    alert('Could not access camera. Please use file upload instead.');
+                }
+            } catch (error) {
+                console.error('Video capture failed:', error);
+                container.classList.add('hidden');
+                alert('Camera access failed. Please use file upload instead.');
+            }
+        });
+
+        // Listen for captured media events
+        document.addEventListener('photo:captured', function (event) {
+            const media = event.detail.media;
+            capturedPhotos.push(media);
+            console.log('Photo captured:', media);
+        });
+
+        document.addEventListener('video:captured', function (event) {
+            const media = event.detail.media;
+            capturedVideos.push(media);
+            console.log('Video captured:', media);
+        });
+
+        // Listen for media removal events
+        document.addEventListener('media:removed', function (event) {
+            const { mediaId, mediaType } = event.detail;
+            if (mediaType === 'photo') {
+                capturedPhotos = capturedPhotos.filter(photo => photo.id !== mediaId);
+            } else if (mediaType === 'video') {
+                capturedVideos = capturedVideos.filter(video => video.id !== mediaId);
+            }
+        });
+
+        // Close camera interface when clicking outside
+        document.addEventListener('click', function (event) {
+            const container = document.getElementById('cameraContainer');
+            const captureButtons = [
+                document.getElementById('capturePhotosBtn'),
+                document.getElementById('captureVideoBtn')
+            ];
+
+            if (!container.classList.contains('hidden') &&
+                !container.contains(event.target) &&
+                !captureButtons.some(btn => btn.contains(event.target))) {
+
+                // Check if camera is active before closing
+                if (cameraCapture && cameraCapture.getState().isActive) {
+                    cameraCapture.stopCamera();
+                    container.classList.add('hidden');
+                }
+            }
+        });
+        
+        // Handle flash messages
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashContainer = document.getElementById('flashMessages');
+            if (flashContainer) {
+                const messages = flashContainer.querySelectorAll('div[data-category]');
+                messages.forEach(function(msgDiv) {
+                    const category = msgDiv.getAttribute('data-category');
+                    const message = msgDiv.getAttribute('data-message');
+                    console.log(category + ': ' + message);
+                });
+            }
+        });
     </script>
-  {% endblock %}
+</body>
+{% endblock %}
